@@ -1,0 +1,12 @@
+[package]
+name = "matrix"
+version = "0.1.0"
+edition = "2021"
+authors = ["Lingxuan Ye <love@lingxuan.io>"]
+description = "A simple matrix implementation."
+readme = "README.md"
+license = "MIT"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
