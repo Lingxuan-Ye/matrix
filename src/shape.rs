@@ -33,3 +33,43 @@ impl std::fmt::Display for Shape {
         write!(f, "Shape({}, {})", self.nrows, self.ncols)
     }
 }
+
+pub trait TryIntoShape {
+    fn try_into_shape(self) -> Result<Shape>;
+}
+
+impl TryIntoShape for Shape {
+    fn try_into_shape(self) -> Result<Shape> {
+        Ok(self)
+    }
+}
+
+impl TryIntoShape for (usize, usize) {
+    fn try_into_shape(self) -> Result<Shape> {
+        let (nrows, ncols) = self;
+        Shape::build(nrows, ncols)
+    }
+}
+
+impl TryIntoShape for [usize; 2] {
+    fn try_into_shape(self) -> Result<Shape> {
+        let [nrows, ncols] = self;
+        Shape::build(nrows, ncols)
+    }
+}
+
+impl TryFrom<(usize, usize)> for Shape {
+    type Error = Error;
+
+    fn try_from(value: (usize, usize)) -> Result<Self> {
+        value.try_into_shape()
+    }
+}
+
+impl TryFrom<[usize; 2]> for Shape {
+    type Error = Error;
+
+    fn try_from(value: [usize; 2]) -> Result<Self> {
+        value.try_into_shape()
+    }
+}
