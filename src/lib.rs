@@ -1,7 +1,7 @@
 pub mod error;
 pub mod shape;
 
-use error::Result;
+use error::{Error, Result};
 pub use shape::Shape;
 use shape::TryIntoShape;
 
@@ -50,5 +50,35 @@ impl<T> Matrix<T> {
 
     pub fn size(&self) -> usize {
         self.shape.size()
+    }
+}
+
+impl<T> Matrix<T> {
+    pub fn reshape<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
+        let shape = shape.try_into_shape()?;
+        let size = shape.size();
+        let datalen = self.data.len();
+        if size != datalen {
+            return Err(Error::SizeMismatch);
+        }
+        self.shape = shape;
+        Ok(())
+    }
+}
+
+impl<T: Default> Matrix<T> {
+    pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
+        let shape = shape.try_into_shape()?;
+        let size = shape.size();
+        let datalen = self.data.len();
+        if size < datalen {
+            self.data.truncate(size);
+        } else {
+            for _ in datalen..size {
+                self.data.push(Default::default())
+            }
+        }
+        self.shape = shape;
+        Ok(())
     }
 }
