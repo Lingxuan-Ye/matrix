@@ -1,3 +1,2 @@
 pub mod error;
-
-pub struct Matrix;
+pub mod shape;
