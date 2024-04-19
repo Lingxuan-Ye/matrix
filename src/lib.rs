@@ -13,27 +13,25 @@ pub struct Matrix<T> {
     data: Vec<T>,
 }
 
-impl<T: Clone + Default> Matrix<T> {
-    pub fn build<S: TryIntoShape>(shape: S) -> Result<Self> {
-        let shape = shape.try_into_shape()?;
-        let data = vec![Default::default(); shape.size()];
-        Ok(Self { shape, data })
+impl<T: Default> Matrix<T> {
+    pub fn new(shape: Shape) -> Self {
+        let data = std::iter::repeat_with(Default::default)
+            .take(shape.size())
+            .collect();
+        Self { shape, data }
     }
 
-    pub fn new<S: TryIntoShape>(shape: S) -> Self {
-        match Self::build(shape) {
-            Ok(matrix) => matrix,
-            Err(error) => panic!("{error}"),
-        }
+    pub fn build<S: TryIntoShape>(shape: S) -> Result<Self> {
+        let shape = shape.try_into_shape()?;
+        Ok(Self::new(shape))
     }
 }
 
 impl<T: Clone> Matrix<T> {
     pub fn from_slice(src: &[T]) -> Self {
-        Self {
-            shape: Shape::build(1, src.len()).expect("this will never fail"),
-            data: src.to_vec(),
-        }
+        let shape = Shape::build(1, src.len()).expect("this will never fail");
+        let data = src.to_vec();
+        Self { shape, data }
     }
 }
 
@@ -67,9 +65,7 @@ impl<T> Matrix<T> {
 impl<T> Matrix<T> {
     pub fn reshape<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
         let shape = shape.try_into_shape()?;
-        let size = shape.size();
-        let datalen = self.data.len();
-        if size != datalen {
+        if shape.size() != self.data.len() {
             return Err(Error::SizeMismatch);
         }
         self.shape = shape;
@@ -80,15 +76,7 @@ impl<T> Matrix<T> {
 impl<T: Default> Matrix<T> {
     pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
         let shape = shape.try_into_shape()?;
-        let size = shape.size();
-        let datalen = self.data.len();
-        if size < datalen {
-            self.data.truncate(size);
-        } else {
-            for _ in datalen..size {
-                self.data.push(Default::default())
-            }
-        }
+        self.data.resize_with(shape.size(), Default::default);
         self.shape = shape;
         Ok(())
     }
