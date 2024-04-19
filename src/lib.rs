@@ -68,22 +68,27 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    pub fn reshape<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
+    pub fn reshape<S: TryIntoShape>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = shape.try_into_shape()?;
         if shape.size() != self.data.len() {
             return Err(Error::SizeMismatch);
         }
+
         self.shape = shape;
-        Ok(())
+
+        Ok(self)
     }
 }
 
 impl<T: Default> Matrix<T> {
-    pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
+    pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = shape.try_into_shape()?;
-        self.data.resize_with(shape.size(), Default::default);
+        let size = Self::check_size(shape.size())?;
+
+        self.data.resize_with(size, Default::default);
         self.shape = shape;
-        Ok(())
+
+        Ok(self)
     }
 }
 
