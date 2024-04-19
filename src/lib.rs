@@ -79,15 +79,7 @@ impl<T> Matrix<T> {
 impl<T: Default> Matrix<T> {
     pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
         let shape = shape.try_into_shape()?;
-        let size = shape.size();
-        let datalen = self.data.len();
-        if size < datalen {
-            self.data.truncate(size);
-        } else {
-            for _ in datalen..size {
-                self.data.push(Default::default())
-            }
-        }
+        self.data.resize_with(shape.size(), Default::default);
         self.shape = shape;
         Ok(())
     }
