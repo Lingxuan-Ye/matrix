@@ -10,7 +10,7 @@ impl std::fmt::Display for Error {
         let content = match self {
             Self::SizeOverflow => "size overflows",
             Self::SizeMismatch => "size does not match",
-            Self::IndexOutOfBounds => "index out of bounds"
+            Self::IndexOutOfBounds => "index out of bounds",
         };
         write!(f, "{content}")
     }

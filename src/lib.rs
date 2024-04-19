@@ -87,55 +87,53 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_new() {
-        let matrix = Matrix {
+    fn test_from_2darray() {
+        let target = Matrix {
             shape: Shape::build(2, 3).unwrap(),
-            data: vec![0; 6],
+            data: vec![0, 1, 2, 3, 4, 5],
         };
 
-        assert_eq!(Matrix::<usize>::new(Shape::build(2, 3).unwrap()), matrix);
-        assert_ne!(Matrix::<usize>::new(Shape::build(3, 2).unwrap()), matrix);
-        assert_eq!(Matrix::<usize>::new((2, 3)), matrix);
-        assert_ne!(Matrix::<usize>::new((3, 2)), matrix);
-        assert_eq!(Matrix::<usize>::new([2, 3]), matrix);
-        assert_ne!(Matrix::<usize>::new([3, 2]), matrix);
+        let array = Box::new([[0, 1, 2], [3, 4, 5]]);
+        let matrix = Matrix::from_2darray(array);
+        assert_eq!(matrix, target);
+
+        let array = Box::new([[0, 1], [2, 3], [4, 5]]);
+        let matrix = Matrix::from_2darray(array);
+        assert_ne!(matrix, target);
     }
 
     #[test]
-    #[should_panic]
-    fn test_new_size_is_zero() {
-        Matrix::<u8>::new((0, 0));
+    fn test_from_literal() {
+        let target = Matrix {
+            shape: Shape::build(2, 3).unwrap(),
+            data: vec![0, 1, 2, 3, 4, 5],
+        };
+
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert_eq!(matrix, target);
+
+        let matrix = matrix![[0, 1], [2, 3], [4, 5]];
+        assert_ne!(matrix, target);
     }
 
     #[test]
-    #[should_panic]
-    fn test_new_size_overflows() {
-        Matrix::<u8>::new((usize::MAX, 2));
+    fn test_new() {
+        let target = matrix![[0, 0, 0], [0, 0, 0]];
+
+        assert_eq!(Matrix::new(Shape::build(2, 3).unwrap()), target);
+        assert_ne!(Matrix::new(Shape::build(3, 2).unwrap()), target);
     }
 
     #[test]
     fn test_build() {
-        let matrix = Matrix {
-            shape: Shape::build(2, 3).unwrap(),
-            data: vec![0; 6],
-        };
+        let target = matrix![[0, 0, 0], [0, 0, 0]];
 
-        assert_eq!(
-            Matrix::<u8>::build(Shape::build(2, 3).unwrap()).unwrap(),
-            matrix
-        );
-        assert_ne!(
-            Matrix::<u8>::build(Shape::build(3, 2).unwrap()).unwrap(),
-            matrix
-        );
-        assert_eq!(Matrix::<u8>::build((2, 3)).unwrap(), matrix);
-        assert_ne!(Matrix::<u8>::build((3, 2)).unwrap(), matrix);
-        assert_eq!(Matrix::<u8>::build([2, 3]).unwrap(), matrix);
-        assert_ne!(Matrix::<u8>::build([3, 2]).unwrap(), matrix);
-
-        assert_eq!(Matrix::<u8>::build((0, 0)).unwrap_err(), Error::ZeroSize);
-        assert_eq!(Matrix::<u8>::build((0, 1)).unwrap_err(), Error::ZeroSize);
-        assert_eq!(Matrix::<u8>::build((1, 0)).unwrap_err(), Error::ZeroSize);
+        assert_eq!(Matrix::build(Shape::build(2, 3).unwrap()).unwrap(), target);
+        assert_ne!(Matrix::build(Shape::build(3, 2).unwrap()).unwrap(), target);
+        assert_eq!(Matrix::build((2, 3)).unwrap(), target);
+        assert_ne!(Matrix::build((3, 2)).unwrap(), target);
+        assert_eq!(Matrix::build([2, 3]).unwrap(), target);
+        assert_ne!(Matrix::build([3, 2]).unwrap(), target);
 
         assert_eq!(
             Matrix::<u8>::build((usize::MAX, 2)).unwrap_err(),
@@ -153,50 +151,64 @@ mod test {
 
     #[test]
     fn test_from_slice() {
-        let slice = [0, 1, 2, 3, 4, 5];
-        let matrix = Matrix {
-            shape: Shape::build(1, 6).unwrap(),
-            data: slice.to_vec(),
-        };
+        let target = matrix![[0, 1, 2, 3, 4, 5]];
 
-        assert_eq!(Matrix::<u8>::from_slice(&slice), matrix);
+        let slice = [0, 1, 2, 3, 4, 5];
+        assert_eq!(Matrix::from_slice(&slice), target);
+
+        let slice = [0; 6];
+        assert_ne!(Matrix::from_slice(&slice), target);
     }
 
     #[test]
     fn test_reshape() {
-        let mut matrix = Matrix::<u8>::new((1, 6));
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         matrix.reshape((2, 3)).unwrap();
-        assert_eq!(matrix.shape, Shape::build(2, 3).unwrap());
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
 
         matrix.reshape((3, 2)).unwrap();
-        assert_eq!(matrix.shape, Shape::build(3, 2).unwrap());
+        assert_eq!(matrix, matrix![[0, 1], [2, 3], [4, 5]]);
 
-        assert_eq!(matrix.reshape((0, 1)).unwrap_err(), Error::ZeroSize);
+        matrix.reshape((1, 6)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2, 3, 4, 5]]);
+
+        matrix.reshape((6, 1)).unwrap();
+        assert_eq!(matrix, matrix![[0], [1], [2], [3], [4], [5]]);
+
+        matrix.reshape((2, 3)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
 
         assert_eq!(
             matrix.reshape((usize::MAX, 2)).unwrap_err(),
             Error::SizeOverflow
         );
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
 
-        assert_eq!(matrix.reshape((3, 4)).unwrap_err(), Error::SizeMismatch);
+        assert_eq!(matrix.reshape((2, 2)).unwrap_err(), Error::SizeMismatch);
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
     #[test]
     fn test_resize() {
-        let slice = [0, 1, 2, 3, 4, 5];
-        let mut matrix = Matrix::from_slice(&slice);
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         matrix.resize((2, 3)).unwrap();
-        assert_eq!(matrix.shape, Shape::build(2, 3).unwrap());
-        assert_eq!(matrix.data, slice.to_vec());
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
 
         matrix.resize((2, 2)).unwrap();
-        assert_eq!(matrix.shape, Shape::build(2, 2).unwrap());
-        assert_eq!(matrix.data, vec![0, 1, 2, 3]);
+        assert_eq!(matrix, matrix![[0, 1], [2, 3]]);
 
         matrix.resize((3, 3)).unwrap();
-        assert_eq!(matrix.shape, Shape::build(3, 3).unwrap());
-        assert_eq!(matrix.data, vec![0, 1, 2, 3, 0, 0, 0, 0, 0]);
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0], [0, 0, 0]]);
+
+        matrix.resize((2, 3)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+
+        assert_eq!(
+            matrix.resize((usize::MAX, 2)).unwrap_err(),
+            Error::SizeOverflow
+        );
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
     }
 }
