@@ -8,9 +8,6 @@ pub struct Shape {
 
 impl Shape {
     pub fn build(nrows: usize, ncols: usize) -> Result<Self> {
-        if nrows == 0 || ncols == 0 {
-            return Err(Error::ZeroSize);
-        }
         nrows.checked_mul(ncols).ok_or(Error::SizeOverflow)?;
         Ok(Self { nrows, ncols })
     }

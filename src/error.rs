@@ -1,6 +1,5 @@
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
-    ZeroSize,
     SizeOverflow,
     SizeMismatch,
     IndexOutOfBounds,
@@ -9,7 +8,6 @@ pub enum Error {
 impl std::fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let content = match self {
-            Self::ZeroSize => "size cannot be zero",
             Self::SizeOverflow => "size overflows",
             Self::SizeMismatch => "size does not match",
             Self::IndexOutOfBounds => "index out of bounds"
