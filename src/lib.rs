@@ -1,8 +1,8 @@
-pub mod error;
+mod error;
 mod index;
-pub mod shape;
+mod shape;
 
-use error::{Error, Result};
+pub use error::{Error, Result};
 pub use index::Index;
 pub use shape::{Shape, TryIntoShape};
 
