@@ -108,6 +108,45 @@ mod test {
     use super::*;
 
     #[test]
+    fn test_new() {
+        let target: Matrix<u8> = Matrix {
+            shape: Shape::build(2, 3).unwrap(),
+            data: Vec::with_capacity(6),
+        };
+
+        assert_eq!(Matrix::new(Shape::build(2, 3).unwrap()), target);
+        assert_ne!(Matrix::new(Shape::build(3, 2).unwrap()), target);
+    }
+
+    #[test]
+    fn test_build() {
+        let target: Matrix<u8> = Matrix {
+            shape: Shape::build(2, 3).unwrap(),
+            data: Vec::with_capacity(6),
+        };
+
+        assert_eq!(Matrix::build(Shape::build(2, 3).unwrap()).unwrap(), target);
+        assert_ne!(Matrix::build(Shape::build(3, 2).unwrap()).unwrap(), target);
+        assert_eq!(Matrix::build((2, 3)).unwrap(), target);
+        assert_ne!(Matrix::build((3, 2)).unwrap(), target);
+        assert_eq!(Matrix::build([2, 3]).unwrap(), target);
+        assert_ne!(Matrix::build([3, 2]).unwrap(), target);
+
+        assert_eq!(
+            Matrix::<u8>::build((usize::MAX, 2)).unwrap_err(),
+            Error::SizeOverflow
+        );
+        assert_eq!(
+            Matrix::<u8>::build((2, usize::MAX)).unwrap_err(),
+            Error::SizeOverflow
+        );
+        assert_eq!(
+            Matrix::<u8>::build((usize::MAX, usize::MAX)).unwrap_err(),
+            Error::SizeOverflow
+        );
+    }
+
+    #[test]
     fn test_from_2darray() {
         let target = Matrix {
             shape: Shape::build(2, 3).unwrap(),
@@ -135,39 +174,6 @@ mod test {
 
         let matrix = matrix![[0, 1], [2, 3], [4, 5]];
         assert_ne!(matrix, target);
-    }
-
-    #[test]
-    fn test_new() {
-        let target = matrix![[0, 0, 0], [0, 0, 0]];
-
-        assert_eq!(Matrix::new(Shape::build(2, 3).unwrap()), target);
-        assert_ne!(Matrix::new(Shape::build(3, 2).unwrap()), target);
-    }
-
-    #[test]
-    fn test_build() {
-        let target = matrix![[0, 0, 0], [0, 0, 0]];
-
-        assert_eq!(Matrix::build(Shape::build(2, 3).unwrap()).unwrap(), target);
-        assert_ne!(Matrix::build(Shape::build(3, 2).unwrap()).unwrap(), target);
-        assert_eq!(Matrix::build((2, 3)).unwrap(), target);
-        assert_ne!(Matrix::build((3, 2)).unwrap(), target);
-        assert_eq!(Matrix::build([2, 3]).unwrap(), target);
-        assert_ne!(Matrix::build([3, 2]).unwrap(), target);
-
-        assert_eq!(
-            Matrix::<u8>::build((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
-        assert_eq!(
-            Matrix::<u8>::build((2, usize::MAX)).unwrap_err(),
-            Error::SizeOverflow
-        );
-        assert_eq!(
-            Matrix::<u8>::build((usize::MAX, usize::MAX)).unwrap_err(),
-            Error::SizeOverflow
-        );
     }
 
     #[test]
