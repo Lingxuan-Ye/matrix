@@ -1,4 +1,3 @@
-use crate::error::Error;
 use crate::Matrix;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -38,7 +37,7 @@ impl<T> Matrix<T> {
     fn flatten_index<I: Into<Index>>(&self, index: I) -> usize {
         let index: Index = index.into();
         if index.row() >= self.nrows() || index.col() >= self.ncols() {
-            panic!("{}", Error::IndexOutOfBounds);
+            panic!("index out of bounds");
         }
         index.row() * self.ncols() + index.col()
     }
