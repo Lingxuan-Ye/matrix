@@ -13,17 +13,22 @@ pub struct Matrix<T> {
     data: Vec<T>,
 }
 
-impl<T: Default> Matrix<T> {
-    pub fn new(shape: Shape) -> Self {
-        let data = std::iter::repeat_with(Default::default)
-            .take(shape.size())
-            .collect();
-        Self { shape, data }
+impl<T> Matrix<T> {
+    pub fn new<S: TryIntoShape>(shape: S) -> Self {
+        match Self::build(shape) {
+            Ok(matrix) => matrix,
+            Err(error) => panic!("{error}"),
+        }
     }
 
     pub fn build<S: TryIntoShape>(shape: S) -> Result<Self> {
         let shape = shape.try_into_shape()?;
-        Ok(Self::new(shape))
+        let size = Self::check_size(shape.size())?;
+
+        let capacity = size.max(0xFF);
+        let data = Vec::with_capacity(capacity);
+
+        Ok(Self { shape, data })
     }
 }
 
@@ -63,22 +68,38 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    pub fn reshape<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
+    pub fn reshape<S: TryIntoShape>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = shape.try_into_shape()?;
         if shape.size() != self.data.len() {
             return Err(Error::SizeMismatch);
         }
+
         self.shape = shape;
-        Ok(())
+
+        Ok(self)
     }
 }
 
 impl<T: Default> Matrix<T> {
-    pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
+    pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = shape.try_into_shape()?;
-        self.data.resize_with(shape.size(), Default::default);
+        let size = Self::check_size(shape.size())?;
+
+        self.data.resize_with(size, Default::default);
         self.shape = shape;
-        Ok(())
+
+        Ok(self)
+    }
+}
+
+impl<T> Matrix<T> {
+    fn check_size(size: usize) -> Result<usize> {
+        // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
+        if std::mem::size_of::<T>() != 0 && size > isize::MAX as usize {
+            Err(Error::SizeOverflow)
+        } else {
+            Ok(size)
+        }
     }
 }
 
