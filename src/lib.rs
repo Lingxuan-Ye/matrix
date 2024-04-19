@@ -29,10 +29,9 @@ impl<T: Default> Matrix<T> {
 
 impl<T: Clone> Matrix<T> {
     pub fn from_slice(src: &[T]) -> Self {
-        Self {
-            shape: Shape::build(1, src.len()).expect("this will never fail"),
-            data: src.to_vec(),
-        }
+        let shape = Shape::build(1, src.len()).expect("this will never fail");
+        let data = src.to_vec();
+        Self { shape, data }
     }
 }
 
@@ -66,9 +65,7 @@ impl<T> Matrix<T> {
 impl<T> Matrix<T> {
     pub fn reshape<S: TryIntoShape>(&mut self, shape: S) -> Result<()> {
         let shape = shape.try_into_shape()?;
-        let size = shape.size();
-        let datalen = self.data.len();
-        if size != datalen {
+        if shape.size() != self.data.len() {
             return Err(Error::SizeMismatch);
         }
         self.shape = shape;
