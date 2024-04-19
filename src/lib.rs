@@ -1,9 +1,10 @@
 pub mod error;
+mod index;
 pub mod shape;
 
 use error::{Error, Result};
-pub use shape::Shape;
-use shape::TryIntoShape;
+pub use index::Index;
+pub use shape::{Shape, TryIntoShape};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Matrix<T> {
