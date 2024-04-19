@@ -37,6 +37,15 @@ impl<T: Clone> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    pub fn from_2darray<const R: usize, const C: usize>(src: Box<[[T; C]; R]>) -> Self {
+        let shape = Shape::build(R, C).expect("this will never fail");
+        let ptr = Box::leak(src).as_mut_ptr() as *mut T;
+        let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
+        Self { shape, data }
+    }
+}
+
+impl<T> Matrix<T> {
     pub fn shape(&self) -> &Shape {
         &self.shape
     }
