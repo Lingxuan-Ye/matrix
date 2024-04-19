@@ -1,5 +1,6 @@
 mod error;
 mod index;
+mod macros;
 mod shape;
 
 pub use error::{Error, Result};
