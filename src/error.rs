@@ -3,6 +3,7 @@ pub enum Error {
     ZeroSize,
     SizeOverflow,
     SizeMismatch,
+    IndexOutOfBounds,
 }
 
 impl std::fmt::Display for Error {
@@ -11,6 +12,7 @@ impl std::fmt::Display for Error {
             Self::ZeroSize => "size cannot be zero",
             Self::SizeOverflow => "size overflows",
             Self::SizeMismatch => "size does not match",
+            Self::IndexOutOfBounds => "index out of bounds"
         };
         write!(f, "{content}")
     }
