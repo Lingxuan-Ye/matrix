@@ -14,16 +14,20 @@ pub struct Matrix<T> {
 }
 
 impl<T: Default> Matrix<T> {
-    pub fn new(shape: Shape) -> Self {
-        let data = std::iter::repeat_with(Default::default)
-            .take(shape.size())
-            .collect();
-        Self { shape, data }
+    pub fn new<S: TryIntoShape>(shape: S) -> Self {
+        match Self::build(shape) {
+            Ok(matrix) => matrix,
+            Err(error) => panic!("{error}"),
+        }
     }
 
     pub fn build<S: TryIntoShape>(shape: S) -> Result<Self> {
         let shape = shape.try_into_shape()?;
-        Ok(Self::new(shape))
+        let size = Self::check_size(shape.size())?;
+        let data = std::iter::repeat_with(Default::default)
+            .take(size)
+            .collect();
+        Ok(Self { shape, data })
     }
 }
 
