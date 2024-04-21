@@ -37,8 +37,7 @@ impl<T> Matrix<T> {
 impl<T: Default> Matrix<T> {
     pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = shape.try_into_shape()?;
-        let size = Self::check_size(shape.size())?;
-
+        let size = Self::check_size(&shape)?;
         self.data.resize_with(size, Default::default);
         self.shape = shape;
 
