@@ -2,6 +2,7 @@
 pub enum Error {
     SizeOverflow,
     SizeMismatch,
+    CapacityExceeded,
     IndexOutOfBounds,
 }
 
@@ -10,6 +11,7 @@ impl std::fmt::Display for Error {
         let content = match self {
             Self::SizeOverflow => "size overflows",
             Self::SizeMismatch => "size does not match",
+            Self::CapacityExceeded => "capacity exceeds",
             Self::IndexOutOfBounds => "index out of bounds",
         };
         write!(f, "{content}")

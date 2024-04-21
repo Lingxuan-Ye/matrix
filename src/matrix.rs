@@ -1,12 +1,15 @@
 mod constructor;
+mod dimension;
+mod internal;
 mod method;
 mod ops;
-mod property;
 
-use crate::shape::Shape;
+use crate::layout::MemoryLayout;
+use dimension::Dimension;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Matrix<T> {
-    shape: Shape,
     data: Vec<T>,
+    layout: MemoryLayout,
+    dimension: Dimension,
 }
