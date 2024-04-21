@@ -2,7 +2,6 @@ mod constructor;
 mod dimension;
 mod method;
 mod ops;
-mod property;
 
 use crate::shape::Shape;
 
