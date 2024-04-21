@@ -1,5 +1,6 @@
 mod constructor;
 mod dimension;
+mod internal;
 mod method;
 mod ops;
 
