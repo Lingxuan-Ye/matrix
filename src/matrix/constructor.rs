@@ -77,9 +77,12 @@ mod test {
 
     #[test]
     fn test_from_2darray() {
+        let shape = Shape::build(2, 3).unwrap();
+        let layout = DEFAULT_LAYOUT;
         let target = Matrix {
-            shape: Shape::build(2, 3).unwrap(),
             data: vec![0, 1, 2, 3, 4, 5],
+            layout,
+            dimension: Dimension::from_shape(shape, layout),
         };
 
         let array = Box::new([[0, 1, 2], [3, 4, 5]]);
@@ -93,10 +96,8 @@ mod test {
 
     #[test]
     fn test_from_literal() {
-        let target = Matrix {
-            shape: Shape::build(2, 3).unwrap(),
-            data: vec![0, 1, 2, 3, 4, 5],
-        };
+        let array = Box::new([[0, 1, 2], [3, 4, 5]]);
+        let target = Matrix::from_2darray(array);
 
         let matrix = matrix![[0, 1, 2], [3, 4, 5]];
         assert_eq!(matrix, target);
