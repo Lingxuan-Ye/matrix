@@ -1,6 +1,6 @@
 use crate::error::{Error, Result};
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Shape {
     nrows: usize,
     ncols: usize,

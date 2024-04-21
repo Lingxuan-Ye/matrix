@@ -15,6 +15,12 @@ impl std::ops::Not for MemoryLayout {
     }
 }
 
+impl Default for MemoryLayout {
+    fn default() -> Self {
+        Self::RowMajor
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
