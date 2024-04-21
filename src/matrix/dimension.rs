@@ -1,7 +1,7 @@
 use crate::layout::MemoryLayout;
 use crate::shape::Shape;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub(super) struct Dimension {
     major: usize,
     minor: usize,

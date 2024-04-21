@@ -58,7 +58,7 @@ impl<T: Default> Matrix<T> {
     pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = shape.try_into_shape()?;
         let size = Self::check_size(&shape)?;
-        self.data.resize_with(size, Default::default);
+        self.data.resize_with(size, T::default);
         self.dimension = Dimension::from_shape(shape, self.layout);
         Ok(self)
     }
