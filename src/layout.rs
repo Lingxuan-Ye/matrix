@@ -9,8 +9,8 @@ impl std::ops::Not for MemoryLayout {
 
     fn not(self) -> Self::Output {
         match self {
-            MemoryLayout::RowMajor => MemoryLayout::ColMajor,
-            MemoryLayout::ColMajor => MemoryLayout::RowMajor,
+            Self::RowMajor => Self::ColMajor,
+            Self::ColMajor => Self::RowMajor,
         }
     }
 }
