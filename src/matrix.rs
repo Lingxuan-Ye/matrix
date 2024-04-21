@@ -1,4 +1,5 @@
 mod constructor;
+mod dimension;
 mod method;
 mod ops;
 mod property;
