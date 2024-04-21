@@ -1,6 +1,10 @@
+use super::dimension::Dimension;
 use super::Matrix;
 use crate::error::Result;
+use crate::layout::MemoryLayout;
 use crate::shape::{Shape, TryIntoShape};
+
+const DEFAULT_LAYOUT: MemoryLayout = MemoryLayout::RowMajor;
 
 impl<T: Default> Matrix<T> {
     pub fn new<S: TryIntoShape>(shape: S) -> Self {
@@ -16,7 +20,14 @@ impl<T: Default> Matrix<T> {
         let data = std::iter::repeat_with(Default::default)
             .take(size)
             .collect();
-        Ok(Self { shape, data })
+        let layout = DEFAULT_LAYOUT;
+        let dimension = Dimension::from_shape(shape, layout);
+
+        Ok(Self {
+            data,
+            layout,
+            dimension,
+        })
     }
 }
 
@@ -24,7 +35,14 @@ impl<T: Clone> Matrix<T> {
     pub fn from_slice(src: &[T]) -> Self {
         let shape = Shape::build(1, src.len()).expect("this will never fail");
         let data = src.to_vec();
-        Self { shape, data }
+        let layout = DEFAULT_LAYOUT;
+        let dimension = Dimension::from_shape(shape, layout);
+
+        Self {
+            data,
+            layout,
+            dimension,
+        }
     }
 }
 
@@ -33,7 +51,14 @@ impl<T> Matrix<T> {
         let shape = Shape::build(R, C).expect("this will never fail");
         let ptr = Box::leak(src).as_mut_ptr() as *mut T;
         let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
-        Self { shape, data }
+        let layout = DEFAULT_LAYOUT;
+        let dimension = Dimension::from_shape(shape, layout);
+
+        Self {
+            data,
+            layout,
+            dimension,
+        }
     }
 }
 
