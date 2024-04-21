@@ -13,3 +13,21 @@ impl<T> Matrix<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_check_size() {
+        assert!(Matrix::<u8>::check_size(&Shape::build(isize::MAX as usize, 1).unwrap()).is_ok());
+        assert_eq!(
+            Matrix::<u8>::check_size(&Shape::build(isize::MAX as usize + 1, 1).unwrap())
+                .unwrap_err(),
+            Error::CapacityExceeded
+        );
+        assert!(
+            Matrix::<()>::check_size(&Shape::build(isize::MAX as usize + 1, 1).unwrap()).is_ok()
+        );
+    }
+}
