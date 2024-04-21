@@ -14,3 +14,14 @@ impl std::ops::Not for MemoryLayout {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_not() {
+        assert_eq!(!MemoryLayout::RowMajor, MemoryLayout::ColMajor);
+        assert_eq!(!MemoryLayout::ColMajor, MemoryLayout::RowMajor);
+    }
+}
