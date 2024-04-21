@@ -15,7 +15,7 @@ impl<T: Default> Matrix<T> {
     pub fn build<S: TryIntoShape>(shape: S) -> Result<Self> {
         let shape = shape.try_into_shape()?;
         let size = Self::check_size(&shape)?;
-        let data = std::iter::repeat_with(Default::default)
+        let data = std::iter::repeat_with(T::default)
             .take(size)
             .collect();
         let layout = MemoryLayout::default();
