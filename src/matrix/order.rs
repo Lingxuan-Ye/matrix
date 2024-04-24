@@ -1,10 +1,10 @@
-#[derive(Copy, Clone, Debug, PartialEq, Eq)]
-pub enum MemoryLayout {
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Order {
     RowMajor,
     ColMajor,
 }
 
-impl std::ops::Not for MemoryLayout {
+impl std::ops::Not for Order {
     type Output = Self;
 
     fn not(self) -> Self::Output {
@@ -15,7 +15,7 @@ impl std::ops::Not for MemoryLayout {
     }
 }
 
-impl Default for MemoryLayout {
+impl Default for Order {
     fn default() -> Self {
         Self::RowMajor
     }
@@ -27,7 +27,7 @@ mod test {
 
     #[test]
     fn test_not() {
-        assert_eq!(!MemoryLayout::RowMajor, MemoryLayout::ColMajor);
-        assert_eq!(!MemoryLayout::ColMajor, MemoryLayout::RowMajor);
+        assert_eq!(!Order::RowMajor, Order::ColMajor);
+        assert_eq!(!Order::ColMajor, Order::RowMajor);
     }
 }

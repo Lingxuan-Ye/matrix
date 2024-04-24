@@ -1,11 +1,10 @@
-mod error;
-mod index;
-mod layout;
-mod matrix;
-mod shape;
+pub mod error;
+pub mod matrix;
+
+mod macros;
 
 pub use error::{Error, Result};
-pub use index::Index;
-pub use layout::MemoryLayout;
+pub use matrix::index::Index;
+pub use matrix::order::Order;
+pub use matrix::shape::{Shape, TryIntoShape};
 pub use matrix::Matrix;
-pub use shape::{Shape, TryIntoShape};
