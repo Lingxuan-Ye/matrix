@@ -1,4 +1,5 @@
 pub mod index;
+pub mod iter;
 pub mod order;
 pub mod shape;
 
