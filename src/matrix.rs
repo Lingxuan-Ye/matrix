@@ -1,15 +1,18 @@
+pub mod index;
+pub mod order;
+pub mod shape;
+
 mod constructor;
-mod dimension;
 mod internal;
 mod method;
-mod ops;
+mod property;
 
-use crate::layout::MemoryLayout;
-use dimension::Dimension;
+use order::Order;
+use shape::AxisShape;
 
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Matrix<T> {
     data: Vec<T>,
-    layout: MemoryLayout,
-    dimension: Dimension,
+    order: Order,
+    shape: AxisShape,
 }

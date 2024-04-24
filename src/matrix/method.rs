@@ -1,65 +1,41 @@
-use super::dimension::Dimension;
+use super::shape::{AxisShape, TryIntoShape};
 use super::Matrix;
 use crate::error::{Error, Result};
-use crate::shape::{Shape, TryIntoShape};
-use crate::MemoryLayout;
-
-impl<T> Matrix<T> {
-    pub fn shape(&self) -> Shape {
-        self.dimension.to_shape(self.layout)
-    }
-
-    pub fn nrows(&self) -> usize {
-        self.dimension.get_nrows(self.layout)
-    }
-
-    pub fn ncols(&self) -> usize {
-        self.dimension.get_ncols(self.layout)
-    }
-
-    pub fn size(&self) -> usize {
-        self.dimension.size()
-    }
-
-    pub fn layout(&self) -> MemoryLayout {
-        self.layout
-    }
-}
+use crate::Order;
 
 impl<T> Matrix<T> {
     pub fn transpose(&mut self) -> &mut Self {
-        self.layout = !self.layout;
+        self.order = !self.order;
         self
     }
 
-    pub fn switch_layout(&mut self) -> &mut Self {
+    pub fn switch_order(&mut self) -> &mut Self {
         // should rearrange self.data when implement it
         unimplemented!();
     }
 
-    pub fn set_layout(&mut self, layout: MemoryLayout) -> &mut Self {
-        if layout != self.layout {
-            self.switch_layout();
+    pub fn set_order(&mut self, order: Order) -> &mut Self {
+        if order != self.order {
+            self.switch_order();
         }
         self
     }
 
     pub fn reshape<S: TryIntoShape>(&mut self, shape: S) -> Result<&mut Self> {
-        let shape = shape.try_into_shape()?;
+        let shape = AxisShape::build(shape, self.order).map_err(|_| Error::SizeMismatch)?;
         if shape.size() != self.data.len() {
             return Err(Error::SizeMismatch);
         }
-        self.dimension = Dimension::from_shape(shape, self.layout);
+        self.shape = shape;
         Ok(self)
     }
 }
 
 impl<T: Default> Matrix<T> {
     pub fn resize<S: TryIntoShape>(&mut self, shape: S) -> Result<&mut Self> {
-        let shape = shape.try_into_shape()?;
-        let size = Self::check_size(&shape)?;
+        let shape = AxisShape::build(shape, self.order)?;
+        let size = Self::check_size(shape.size())?;
         self.data.resize_with(size, T::default);
-        self.dimension = Dimension::from_shape(shape, self.layout);
         Ok(self)
     }
 }
@@ -88,13 +64,10 @@ mod test {
         matrix.reshape((2, 3)).unwrap();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
 
-        assert_eq!(
-            matrix.reshape((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
-        );
+        assert_eq!(matrix.reshape((usize::MAX, 2)), Err(Error::SizeMismatch));
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
 
-        assert_eq!(matrix.reshape((2, 2)).unwrap_err(), Error::SizeMismatch);
+        assert_eq!(matrix.reshape((2, 2)), Err(Error::SizeMismatch));
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
@@ -114,10 +87,16 @@ mod test {
         matrix.resize((2, 3)).unwrap();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
 
+        assert_eq!(matrix.resize((usize::MAX, 2)), Err(Error::SizeOverflow));
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+
         assert_eq!(
-            matrix.resize((usize::MAX, 2)).unwrap_err(),
-            Error::SizeOverflow
+            matrix.resize((isize::MAX as usize + 1, 1)),
+            Err(Error::CapacityExceeded)
         );
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+
+        matrix.resize((2, 0)).unwrap();
+        assert_eq!(matrix, matrix![[], []]);
     }
 }
