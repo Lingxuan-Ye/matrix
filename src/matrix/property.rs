@@ -22,4 +22,20 @@ impl<T> Matrix<T> {
     pub fn order(&self) -> Order {
         self.order
     }
+
+    pub(crate) fn major(&self) -> usize {
+        self.shape.major()
+    }
+
+    pub(crate) fn minor(&self) -> usize {
+        self.shape.minor()
+    }
+
+    pub(crate) fn major_stride(&self) -> usize {
+        self.shape.minor()
+    }
+
+    pub(crate) const fn minor_stride(&self) -> usize {
+        1
+    }
 }
