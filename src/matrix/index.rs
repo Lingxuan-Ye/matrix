@@ -1,6 +1,6 @@
-use super::shape::{Shape, TryIntoShape};
+use super::order::Order;
 use super::Matrix;
-use crate::error::Result;
+use crate::error::{Error, Result};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Index {
@@ -11,18 +11,6 @@ pub struct Index {
 impl Index {
     pub fn new(row: usize, col: usize) -> Self {
         Self { row, col }
-    }
-
-    pub fn flatten_for(&self, shape: Shape) -> usize {
-        if self.row >= shape.nrows() || self.col >= shape.ncols() {
-            panic!("index out of bounds");
-        }
-        self.row * shape.ncols() + self.col
-    }
-
-    pub fn try_flatten_for<S: TryIntoShape>(&self, shape: S) -> Result<usize> {
-        let shape = shape.try_into_shape()?;
-        Ok(self.flatten_for(shape))
     }
 }
 
@@ -46,6 +34,56 @@ impl From<[usize; 2]> for Index {
     }
 }
 
+impl<T> Matrix<T> {
+    pub(crate) fn flatten_index<I: Into<Index>>(&self, index: I) -> usize {
+        let index: Index = index.into();
+        let (nrows, ncols, row_stride, col_stride) = match self.order {
+            Order::RowMajor => (
+                self.major(),
+                self.minor(),
+                self.major_stride(),
+                self.minor_stride(),
+            ),
+            Order::ColMajor => (
+                self.minor(),
+                self.major(),
+                self.minor_stride(),
+                self.major_stride(),
+            ),
+        };
+
+        if index.row >= nrows || index.col >= ncols {
+            panic!("index out of bounds");
+        }
+
+        index.row * row_stride + index.col * col_stride
+    }
+
+    pub(crate) fn try_flatten_index<I: Into<Index>>(&self, index: I) -> Result<usize> {
+        let index: Index = index.into();
+        let (nrows, ncols, row_stride, col_stride) = match self.order {
+            Order::RowMajor => (
+                self.major(),
+                self.minor(),
+                self.major_stride(),
+                self.minor_stride(),
+            ),
+            Order::ColMajor => (
+                self.minor(),
+                self.major(),
+                self.minor_stride(),
+                self.major_stride(),
+            ),
+        };
+
+        if index.row >= nrows || index.col >= ncols {
+            return Err(Error::IndexOutOfBounds);
+        }
+
+        Ok(index.row * row_stride + index.col * col_stride)
+    }
+}
+
 impl<T, I> std::ops::Index<I> for Matrix<T>
 where
     I: Into<Index>,
@@ -53,8 +91,7 @@ where
     type Output = T;
 
     fn index(&self, index: I) -> &Self::Output {
-        let index: Index = index.into();
-        let flattened = index.flatten_for(self.shape());
+        let flattened = self.flatten_index(index);
         &self.data[flattened]
     }
 }
@@ -64,8 +101,7 @@ where
     I: Into<Index>,
 {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
-        let index: Index = index.into();
-        let flattened = index.flatten_for(self.shape());
+        let flattened = self.flatten_index(index);
         &mut self.data[flattened]
     }
 }
