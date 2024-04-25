@@ -33,7 +33,7 @@ struct MajorAxisIter<'a, T> {
 
 impl<'a, T> MajorAxisIter<'a, T> {
     fn new(matrix: &'a Matrix<T>) -> Self {
-        let total = matrix.shape.major();
+        let total = matrix.major();
         let count = Count::new(total);
         Self { matrix, count }
     }
@@ -47,7 +47,7 @@ impl<'a, T> Iterator for MajorAxisIter<'a, T> {
             return None;
         }
 
-        let major_stride = self.matrix.shape.minor();
+        let major_stride = self.matrix.major_stride();
         let start = self.count.forth * major_stride;
         let end = start + major_stride;
         let iter = self.matrix.data[start..end].iter();
@@ -64,7 +64,7 @@ impl<'a, T> DoubleEndedIterator for MajorAxisIter<'a, T> {
             return None;
         }
 
-        let major_stride = self.matrix.shape.minor();
+        let major_stride = self.matrix.major_stride();
         let end = (self.count.total - self.count.back) * major_stride;
         let start = end - major_stride;
         let iter = self.matrix.data[start..end].iter();
@@ -83,7 +83,7 @@ struct MinorAxisIter<'a, T> {
 
 impl<'a, T> MinorAxisIter<'a, T> {
     fn new(matrix: &'a Matrix<T>) -> Self {
-        let total = matrix.shape.minor();
+        let total = matrix.minor();
         let count = Count::new(total);
         Self { matrix, count }
     }
@@ -97,7 +97,7 @@ impl<'a, T> Iterator for MinorAxisIter<'a, T> {
             return None;
         }
 
-        let major_stride = self.matrix.shape.minor();
+        let major_stride = self.matrix.major_stride();
         let iter = self
             .matrix
             .data
@@ -117,7 +117,7 @@ impl<'a, T> DoubleEndedIterator for MinorAxisIter<'a, T> {
             return None;
         }
 
-        let major_stride = self.matrix.shape.minor();
+        let major_stride = self.matrix.major_stride();
         let iter = self
             .matrix
             .data
