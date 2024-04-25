@@ -4,6 +4,7 @@ pub mod order;
 pub mod shape;
 
 mod constructor;
+mod fmt;
 mod internal;
 mod method;
 mod property;
@@ -11,7 +12,7 @@ mod property;
 use order::Order;
 use shape::AxisShape;
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(Clone, Default, PartialEq, Eq)]
 pub struct Matrix<T> {
     data: Vec<T>,
     order: Order,
