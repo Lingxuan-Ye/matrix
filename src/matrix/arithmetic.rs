@@ -1,3 +1,6 @@
+mod add;
+mod sub;
+
 use super::index::AxisIndex;
 use super::Matrix;
 use crate::error::{Error, Result};
