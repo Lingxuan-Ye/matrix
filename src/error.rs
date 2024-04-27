@@ -4,6 +4,7 @@ pub enum Error {
     SizeMismatch,
     CapacityExceeded,
     IndexOutOfBounds,
+    MatricesInconformable,
 }
 
 impl std::fmt::Display for Error {
@@ -13,6 +14,7 @@ impl std::fmt::Display for Error {
             Self::SizeMismatch => "size does not match",
             Self::CapacityExceeded => "capacity exceeds",
             Self::IndexOutOfBounds => "index out of bounds",
+            Self::MatricesInconformable => "matrices not conformable",
         };
         write!(f, "{content}")
     }

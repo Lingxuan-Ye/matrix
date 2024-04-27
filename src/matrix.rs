@@ -3,6 +3,7 @@ pub mod iter;
 pub mod order;
 pub mod shape;
 
+mod arithmetic;
 mod fmt;
 
 use crate::error::{Error, Result};
