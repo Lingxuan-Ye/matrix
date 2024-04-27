@@ -1,4 +1,4 @@
-use super::index::Index;
+use super::index::AxisIndex;
 use super::Matrix;
 
 const LEFT_DELIMITER: &'static str = "[";
@@ -8,12 +8,15 @@ const SPACE: &'static str = " ";
 const TAB: &'static str = "    ";
 const SEP_LEN: usize = 2;
 
-impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
+impl<T> std::fmt::Debug for Matrix<T>
+where
+    T: std::fmt::Debug,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let size = self.size();
         let index_max_len = format!("{size}").chars().count();
         let mut element_max_len = 0;
-        let mut cache = Vec::<String>::with_capacity(size);
+        let mut cache = Vec::with_capacity(size);
         for element in self.data.iter() {
             let string = format!("{element:?}");
             let len = string.chars().count();
@@ -44,7 +47,8 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                 if col != 0 {
                     write! {f, "{COMMA:<SEP_LEN$}"}?;
                 }
-                let index = self.flatten_index(Index::new(row, col));
+                let index =
+                    AxisIndex::new((row, col), self.order).flatten_for_unchecked(self.shape);
                 let element = &cache[index];
                 write!(
                     f,
@@ -63,11 +67,14 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
     }
 }
 
-impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
+impl<T> std::fmt::Display for Matrix<T>
+where
+    T: std::fmt::Display,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let size = self.size();
         let mut element_max_len = 0;
-        let mut cache = Vec::<String>::with_capacity(size);
+        let mut cache = Vec::with_capacity(size);
         for element in self.data.iter() {
             let string = format!("{element}");
             let len = string.chars().count();
@@ -85,7 +92,8 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
                 if col != 0 {
                     write! {f, "{COMMA:<SEP_LEN$}"}?;
                 }
-                let index = self.flatten_index(Index::new(row, col));
+                let index =
+                    AxisIndex::new((row, col), self.order).flatten_for_unchecked(self.shape);
                 let element = &cache[index];
                 write!(f, "{element:>element_max_len$}")?;
             }
