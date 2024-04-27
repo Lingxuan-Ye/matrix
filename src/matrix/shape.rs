@@ -84,8 +84,9 @@ impl AxisShape {
         self.major * self.minor
     }
 
-    pub fn transpose(&mut self) {
+    pub fn transpose(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
+        self
     }
 
     pub fn interpret_with(&self, order: Order) -> Shape {

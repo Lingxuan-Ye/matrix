@@ -51,6 +51,15 @@ impl AxisIndex {
         Self { major, minor }
     }
 
+    pub fn is_out_of_bounds(&self, shape: AxisShape) -> bool {
+        self.major >= shape.major() || self.minor >= shape.minor()
+    }
+
+    pub fn transpose(&mut self) -> &mut Self {
+        (self.major, self.minor) = (self.minor, self.major);
+        self
+    }
+
     pub fn from_flattened_unchecked(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
         // let minor = (index % shape.major_stride()) / shape.minor();
@@ -89,10 +98,6 @@ impl AxisIndex {
             Ok(index) => index,
             Err(error) => panic!("{error}"),
         }
-    }
-
-    pub fn is_out_of_bounds(&self, shape: AxisShape) -> bool {
-        self.major >= shape.major() || self.minor >= shape.minor()
     }
 
     pub fn interpret_with(&self, order: Order) -> Index {
@@ -202,6 +207,23 @@ mod test {
         );
     }
 
+    #[test]
+    fn test_axis_index_is_out_of_bounds() {
+        assert!(!AxisIndex { major: 1, minor: 0 }.is_out_of_bounds(shape(2, 3)));
+        assert!(AxisIndex { major: 2, minor: 3 }.is_out_of_bounds(shape(2, 3)));
+    }
+
+    #[test]
+    fn test_axis_index_transpose() {
+        let mut index = AxisIndex { major: 2, minor: 3 };
+
+        index.transpose();
+        assert_eq!(index, AxisIndex { major: 3, minor: 2 });
+
+        index.transpose();
+        assert_eq!(index, AxisIndex { major: 2, minor: 3 });
+    }
+
     fn shape(major: usize, minor: usize) -> AxisShape {
         AxisShape::build((major, minor), Order::RowMajor).unwrap()
     }
@@ -300,12 +322,6 @@ mod test {
     #[should_panic]
     fn test_axis_index_flatten_for_fails() {
         AxisIndex { major: 2, minor: 3 }.flatten_for(shape(2, 3));
-    }
-
-    #[test]
-    fn test_axis_index_is_out_of_bounds() {
-        assert!(!AxisIndex { major: 1, minor: 0 }.is_out_of_bounds(shape(2, 3)));
-        assert!(AxisIndex { major: 2, minor: 3 }.is_out_of_bounds(shape(2, 3)));
     }
 
     #[test]
