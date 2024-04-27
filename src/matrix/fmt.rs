@@ -8,7 +8,10 @@ const SPACE: &'static str = " ";
 const TAB: &'static str = "    ";
 const SEP_LEN: usize = 2;
 
-impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
+impl<T> std::fmt::Debug for Matrix<T>
+where
+    T: std::fmt::Debug,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let size = self.size();
         let index_max_len = format!("{size}").chars().count();
@@ -64,7 +67,10 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
     }
 }
 
-impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
+impl<T> std::fmt::Display for Matrix<T>
+where
+    T: std::fmt::Display,
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let size = self.size();
         let mut element_max_len = 0;

@@ -42,7 +42,10 @@ pub(crate) struct AxisIndex {
 }
 
 impl AxisIndex {
-    pub fn new<I: Into<Index>>(index: I, order: Order) -> Self {
+    pub fn new<I>(index: I, order: Order) -> Self
+    where
+        I: Into<Index>,
+    {
         let index: Index = index.into();
         let (major, minor) = match order {
             Order::RowMajor => (index.row, index.col),
@@ -124,7 +127,10 @@ impl AxisIndex {
 }
 
 impl<T> Matrix<T> {
-    pub fn get<I: Into<Index>>(&self, index: I) -> Option<&T> {
+    pub fn get<I>(&self, index: I) -> Option<&T>
+    where
+        I: Into<Index>,
+    {
         let index = AxisIndex::new(index, self.order)
             .try_flatten_for(self.shape)
             .ok()?;

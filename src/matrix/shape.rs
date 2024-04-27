@@ -52,7 +52,10 @@ pub(crate) struct AxisShape {
 }
 
 impl AxisShape {
-    pub fn build<S: Into<Shape>>(shape: S, order: Order) -> Result<Self> {
+    pub fn build<S>(shape: S, order: Order) -> Result<Self>
+    where
+        S: Into<Shape>,
+    {
         let shape: Shape = shape.into();
         if shape.size().is_none() {
             return Err(Error::SizeOverflow);
