@@ -1,8 +1,12 @@
+use super::order::Order;
 use super::shape::Shape;
 use super::Matrix;
-use crate::Order;
 
 impl<T> Matrix<T> {
+    pub fn order(&self) -> Order {
+        self.order
+    }
+
     pub fn shape(&self) -> Shape {
         self.shape.interpret_with(self.order)
     }
@@ -15,12 +19,16 @@ impl<T> Matrix<T> {
         self.shape.interpret_ncols_with(self.order)
     }
 
-    pub fn size(&self) -> usize {
-        self.shape.size()
+    pub fn row_stride(&self) -> usize {
+        self.ncols()
     }
 
-    pub fn order(&self) -> Order {
-        self.order
+    pub const fn col_stride(&self) -> usize {
+        1
+    }
+
+    pub fn size(&self) -> usize {
+        self.shape.size()
     }
 
     pub(crate) fn major(&self) -> usize {
@@ -32,10 +40,11 @@ impl<T> Matrix<T> {
     }
 
     pub(crate) fn major_stride(&self) -> usize {
-        self.shape.minor()
+        self.shape.major_stride()
     }
 
+    #[allow(unused)]
     pub(crate) const fn minor_stride(&self) -> usize {
-        1
+        self.shape.minor_stride()
     }
 }
