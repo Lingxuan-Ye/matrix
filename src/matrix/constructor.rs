@@ -1,17 +1,17 @@
 use super::order::Order;
-use super::shape::{AxisShape, TryIntoShape};
+use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::Result;
 
 impl<T: Default> Matrix<T> {
-    pub fn new<S: TryIntoShape>(shape: S) -> Self {
+    pub fn new<S: Into<Shape>>(shape: S) -> Self {
         match Self::build(shape) {
             Ok(matrix) => matrix,
             Err(error) => panic!("{error}"),
         }
     }
 
-    pub fn build<S: TryIntoShape>(shape: S) -> Result<Self> {
+    pub fn build<S: Into<Shape>>(shape: S) -> Result<Self> {
         let order = Order::default();
         let shape = AxisShape::build(shape, order)?;
         let size = Self::check_size(shape.size())?;

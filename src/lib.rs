@@ -7,5 +7,5 @@ pub use error::{Error, Result};
 pub use matrix::index::Index;
 pub use matrix::iter::{MatrixIter, VectorIter};
 pub use matrix::order::Order;
-pub use matrix::shape::{Shape, TryIntoShape};
+pub use matrix::shape::Shape;
 pub use matrix::Matrix;
