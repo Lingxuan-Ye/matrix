@@ -1,69 +1,71 @@
 use super::super::Matrix;
 
-impl<T, U, V> std::ops::Add<&Matrix<U>> for &Matrix<T>
+impl<L, R, T> std::ops::Add<&Matrix<R>> for &Matrix<L>
 where
-    T: std::ops::Add<U, Output = V> + Clone,
-    U: Clone,
+    L: std::ops::Add<R, Output = T> + Clone,
+    R: Clone,
 {
-    type Output = Matrix<V>;
+    type Output = Matrix<T>;
 
-    fn add(self, rhs: &Matrix<U>) -> Self::Output {
+    fn add(self, rhs: &Matrix<R>) -> Self::Output {
         match self.elementwise_operation(rhs, |(x, y)| x.clone() + y.clone()) {
             Err(error) => panic!("{error}"),
-            Ok(result) => result,
+            Ok(output) => output,
         }
     }
 }
 
-impl<T, U, V> std::ops::Add<Matrix<U>> for &Matrix<T>
+impl<L, R, T> std::ops::Add<Matrix<R>> for &Matrix<L>
 where
-    T: std::ops::Add<U, Output = V> + Clone,
+    L: std::ops::Add<R, Output = T> + Clone,
+    R: Clone,
 {
-    type Output = Matrix<V>;
+    type Output = Matrix<T>;
 
-    fn add(self, rhs: Matrix<U>) -> Self::Output {
+    fn add(self, rhs: Matrix<R>) -> Self::Output {
         match self.elementwise_operation_consume_rhs(rhs, |(x, y)| x.clone() + y) {
             Err(error) => panic!("{error}"),
-            Ok(result) => result,
+            Ok(output) => output,
         }
     }
 }
 
-impl<T, U, V> std::ops::Add<&Matrix<U>> for Matrix<T>
+impl<L, R, T> std::ops::Add<&Matrix<R>> for Matrix<L>
 where
-    T: std::ops::Add<U, Output = V>,
-    U: Clone,
+    L: std::ops::Add<R, Output = T>,
+    R: Clone,
 {
-    type Output = Matrix<V>;
+    type Output = Matrix<T>;
 
-    fn add(self, rhs: &Matrix<U>) -> Self::Output {
+    fn add(self, rhs: &Matrix<R>) -> Self::Output {
         match self.elementwise_operation_consume_self(rhs, |(x, y)| x + y.clone()) {
             Err(error) => panic!("{error}"),
-            Ok(result) => result,
+            Ok(output) => output,
         }
     }
 }
 
-impl<T, U, V> std::ops::Add<Matrix<U>> for Matrix<T>
+impl<L, R, T> std::ops::Add<Matrix<R>> for Matrix<L>
 where
-    T: std::ops::Add<U, Output = V>,
+    L: std::ops::Add<R, Output = T>,
+    R: Clone,
 {
-    type Output = Matrix<V>;
+    type Output = Matrix<T>;
 
-    fn add(self, rhs: Matrix<U>) -> Self::Output {
+    fn add(self, rhs: Matrix<R>) -> Self::Output {
         match self.elementwise_operation_consume_both(rhs, |(x, y)| x + y) {
             Err(error) => panic!("{error}"),
-            Ok(result) => result,
+            Ok(output) => output,
         }
     }
 }
 
-impl<T, U> std::ops::AddAssign<&Matrix<U>> for Matrix<T>
+impl<L, R> std::ops::AddAssign<&Matrix<R>> for Matrix<L>
 where
-    T: std::ops::AddAssign<U>,
-    U: Clone,
+    L: std::ops::AddAssign<R>,
+    R: Clone,
 {
-    fn add_assign(&mut self, rhs: &Matrix<U>) {
+    fn add_assign(&mut self, rhs: &Matrix<R>) {
         match self.elementwise_operation_assign(rhs, |(x, y)| *x += y.clone()) {
             Err(error) => panic!("{error}"),
             _ => (),
@@ -71,11 +73,12 @@ where
     }
 }
 
-impl<T, U> std::ops::AddAssign<Matrix<U>> for Matrix<T>
+impl<L, R> std::ops::AddAssign<Matrix<R>> for Matrix<L>
 where
-    T: std::ops::AddAssign<U>,
+    L: std::ops::AddAssign<R>,
+    R: Clone,
 {
-    fn add_assign(&mut self, rhs: Matrix<U>) {
+    fn add_assign(&mut self, rhs: Matrix<R>) {
         match self.elementwise_operation_assign_consume_rhs(rhs, |(x, y)| *x += y) {
             Err(error) => panic!("{error}"),
             _ => (),
