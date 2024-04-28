@@ -1,9 +1,9 @@
+pub mod arithmetic;
 pub mod index;
 pub mod iter;
 pub mod order;
 pub mod shape;
 
-mod arithmetic;
 mod fmt;
 
 use crate::error::{Error, Result};
@@ -21,8 +21,8 @@ pub struct Matrix<T> {
 impl<T: Default> Matrix<T> {
     pub fn new<S: Into<Shape>>(shape: S) -> Self {
         match Self::build(shape) {
-            Ok(matrix) => matrix,
             Err(error) => panic!("{error}"),
+            Ok(matrix) => matrix,
         }
     }
 
@@ -130,13 +130,6 @@ impl<T> Matrix<T> {
         let old_shape = self.shape;
         self.shape.transpose();
         let new_shape = self.shape;
-        let mut index_mapping = Vec::with_capacity(size);
-        for index in 0..size {
-            let new_index = AxisIndex::from_flattened_unchecked(index, old_shape)
-                .transpose()
-                .flatten_for_unchecked(new_shape);
-            index_mapping.push(new_index);
-        }
 
         let mut visited = vec![false; size];
         for index in 0..size {
@@ -146,7 +139,9 @@ impl<T> Matrix<T> {
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
-                let next = index_mapping[current];
+                let next = AxisIndex::from_flattened_unchecked(current, old_shape)
+                    .transpose()
+                    .flatten_for_unchecked(new_shape);
                 self.data.swap(index, next);
                 current = next;
             }
