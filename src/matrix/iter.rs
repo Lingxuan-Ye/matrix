@@ -24,4 +24,18 @@ impl<T> Matrix<T> {
             Order::ColMajor => Box::new(MajorAxisMatrixIter::new(self)),
         }
     }
+
+    pub fn iter_nth_row(&self, n: usize) -> VectorIter<&T> {
+        match self.order {
+            Order::RowMajor => Box::new(MajorAxisVectorIter::new(self, n)),
+            Order::ColMajor => Box::new(MinorAxisVectorIter::new(self, n)),
+        }
+    }
+
+    pub fn iter_nth_col(&self, n: usize) -> VectorIter<&T> {
+        match self.order {
+            Order::RowMajor => Box::new(MinorAxisVectorIter::new(self, n)),
+            Order::ColMajor => Box::new(MajorAxisVectorIter::new(self, n)),
+        }
+    }
 }
