@@ -36,7 +36,7 @@ impl From<[usize; 2]> for Index {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(crate) struct AxisIndex {
+pub(super) struct AxisIndex {
     pub major: usize,
     pub minor: usize,
 }

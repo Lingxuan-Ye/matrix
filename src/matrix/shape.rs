@@ -46,7 +46,7 @@ impl From<[usize; 2]> for Shape {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(crate) struct AxisShape {
+pub(super) struct AxisShape {
     major: usize,
     minor: usize,
 }
