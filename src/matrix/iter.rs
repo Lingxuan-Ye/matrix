@@ -39,3 +39,132 @@ impl<T> Matrix<T> {
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::matrix;
+
+    #[test]
+    fn test_iter_rows() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        {
+            let mut iter = matrix.iter_rows();
+            let row_0: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(row_0, vec![&0, &1, &2]);
+            let row_1: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(row_1, vec![&3, &4, &5]);
+
+            let mut iter = matrix.iter_rows();
+            let row_1: Vec<&u8> = iter.next_back().unwrap().collect();
+            assert_eq!(row_1, vec![&3, &4, &5]);
+            let row_0: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(row_0, vec![&0, &1, &2]);
+            assert!(iter.next_back().is_none());
+            assert!(iter.next().is_none());
+        }
+
+        matrix.switch_order();
+
+        {
+            let mut iter = matrix.iter_rows();
+            let row_0: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(row_0, vec![&0, &1, &2]);
+            let row_1: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(row_1, vec![&3, &4, &5]);
+
+            let mut iter = matrix.iter_rows();
+            let row_1: Vec<&u8> = iter.next_back().unwrap().collect();
+            assert_eq!(row_1, vec![&3, &4, &5]);
+            let row_0: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(row_0, vec![&0, &1, &2]);
+            assert!(iter.next_back().is_none());
+            assert!(iter.next().is_none());
+        }
+    }
+
+    #[test]
+    fn test_iter_cols() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        {
+            let mut iter = matrix.iter_cols();
+            let col_0: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(col_0, vec![&0, &3]);
+            let col_1: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(col_1, vec![&1, &4]);
+            let col_2: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(col_2, vec![&2, &5]);
+
+            let mut iter = matrix.iter_cols();
+            let col_2: Vec<&u8> = iter.next_back().unwrap().collect();
+            assert_eq!(col_2, vec![&2, &5]);
+            let col_0: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(col_0, vec![&0, &3]);
+            let col_1: Vec<&u8> = iter.next_back().unwrap().collect();
+            assert_eq!(col_1, vec![&1, &4]);
+            assert!(iter.next_back().is_none());
+            assert!(iter.next().is_none());
+        }
+
+        matrix.switch_order();
+
+        {
+            let mut iter = matrix.iter_cols();
+            let col_0: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(col_0, vec![&0, &3]);
+            let col_1: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(col_1, vec![&1, &4]);
+            let col_2: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(col_2, vec![&2, &5]);
+
+            let mut iter = matrix.iter_cols();
+            let col_2: Vec<&u8> = iter.next_back().unwrap().collect();
+            assert_eq!(col_2, vec![&2, &5]);
+            let col_0: Vec<&u8> = iter.next().unwrap().collect();
+            assert_eq!(col_0, vec![&0, &3]);
+            let col_1: Vec<&u8> = iter.next_back().unwrap().collect();
+            assert_eq!(col_1, vec![&1, &4]);
+            assert!(iter.next_back().is_none());
+            assert!(iter.next().is_none());
+        }
+    }
+
+    #[test]
+    fn test_iter_nth_row() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let row_0: Vec<&u8> = matrix.iter_nth_row(0).collect();
+        assert_eq!(row_0, vec![&0, &1, &2]);
+        let row_1: Vec<&u8> = matrix.iter_nth_row(1).collect();
+        assert_eq!(row_1, vec![&3, &4, &5]);
+
+        matrix.switch_order();
+
+        let row_0: Vec<&u8> = matrix.iter_nth_row(0).collect();
+        assert_eq!(row_0, vec![&0, &1, &2]);
+        let row_1: Vec<&u8> = matrix.iter_nth_row(1).collect();
+        assert_eq!(row_1, vec![&3, &4, &5]);
+    }
+
+    #[test]
+    fn test_iter_nth_col() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let col_0: Vec<&u8> = matrix.iter_nth_col(0).collect();
+        assert_eq!(col_0, vec![&0, &3]);
+        let col_1: Vec<&u8> = matrix.iter_nth_col(1).collect();
+        assert_eq!(col_1, vec![&1, &4]);
+        let col_2: Vec<&u8> = matrix.iter_nth_col(2).collect();
+        assert_eq!(col_2, vec![&2, &5]);
+
+        matrix.switch_order();
+
+        let col_0: Vec<&u8> = matrix.iter_nth_col(0).collect();
+        assert_eq!(col_0, vec![&0, &3]);
+        let col_1: Vec<&u8> = matrix.iter_nth_col(1).collect();
+        assert_eq!(col_1, vec![&1, &4]);
+        let col_2: Vec<&u8> = matrix.iter_nth_col(2).collect();
+        assert_eq!(col_2, vec![&2, &5]);
+    }
+}
