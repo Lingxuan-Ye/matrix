@@ -6,10 +6,10 @@ pub mod shape;
 
 mod fmt;
 
+use self::index::AxisIndex;
+use self::order::Order;
+use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
-use index::AxisIndex;
-use order::Order;
-use shape::{AxisShape, Shape};
 
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Matrix<T> {
@@ -19,14 +19,14 @@ pub struct Matrix<T> {
 }
 
 impl<T: Default> Matrix<T> {
-    pub fn new<S: Into<Shape>>(shape: S) -> Self {
+    pub fn new<S: ShapeLike>(shape: S) -> Self {
         match Self::build(shape) {
             Err(error) => panic!("{error}"),
             Ok(matrix) => matrix,
         }
     }
 
-    pub fn build<S: Into<Shape>>(shape: S) -> Result<Self> {
+    pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
         let shape = AxisShape::build(shape, order)?;
         let size = Self::check_size(shape.size())?;
@@ -71,14 +71,6 @@ impl<T> Matrix<T> {
         self.shape.interpret_ncols_with(self.order)
     }
 
-    pub fn row_stride(&self) -> usize {
-        self.ncols()
-    }
-
-    pub const fn col_stride(&self) -> usize {
-        1
-    }
-
     pub fn size(&self) -> usize {
         self.shape.size()
     }
@@ -102,16 +94,17 @@ impl<T> Matrix<T> {
 }
 
 impl<T: Default> Matrix<T> {
-    pub fn resize<S: Into<Shape>>(&mut self, shape: S) -> Result<&mut Self> {
+    pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = AxisShape::build(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
         self.data.resize_with(size, T::default);
+        self.shape = shape;
         Ok(self)
     }
 }
 
 impl<T> Matrix<T> {
-    pub fn reshape<S: Into<Shape>>(&mut self, shape: S) -> Result<&mut Self> {
+    pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = AxisShape::build(shape, self.order).map_err(|_| Error::SizeMismatch)?;
         if shape.size() != self.data.len() {
             return Err(Error::SizeMismatch);
@@ -176,7 +169,7 @@ mod test {
     use crate::matrix;
 
     fn shape(major: usize, minor: usize) -> AxisShape {
-        AxisShape::build((major, minor), Order::RowMajor).unwrap()
+        AxisShape::build((major, minor), Order::default()).unwrap()
     }
 
     #[test]

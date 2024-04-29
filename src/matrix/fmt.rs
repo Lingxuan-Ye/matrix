@@ -6,22 +6,21 @@ const RIGHT_DELIMITER: &'static str = "]";
 const COMMA: &'static str = ",";
 const SPACE: &'static str = " ";
 const TAB: &'static str = "    ";
+const SET_DIM: &'static str = "\u{001b}[2m";
+const UNSET_DIM: &'static str = "\u{001b}[22m";
 const SEP_LEN: usize = 2;
 
-impl<T> std::fmt::Debug for Matrix<T>
-where
-    T: std::fmt::Debug,
-{
+impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let size = self.size();
-        let index_max_len = format!("{size}").chars().count();
-        let mut element_max_len = 0;
+        let index_max_width = format!("{size}").chars().count();
+        let mut element_max_width = 0;
         let mut cache = Vec::with_capacity(size);
         for element in self.data.iter() {
             let string = format!("{element:?}");
-            let len = string.chars().count();
-            if len > element_max_len {
-                element_max_len = len;
+            let width = string.chars().count();
+            if width > element_max_width {
+                element_max_width = width;
             }
             cache.push(string);
         }
@@ -29,20 +28,27 @@ where
         writeln!(f, "Matrix{SPACE}{{")?;
         writeln!(f, "{TAB}data:")?;
 
-        write!(f, "{TAB}{TAB}{LEFT_DELIMITER:<index_max_len$}{TAB}{SPACE}")?;
+        write!(f, "{TAB}{TAB}")?;
+        write!(f, "{LEFT_DELIMITER}")?;
+        write!(f, "{SPACE:<index_max_width$}")?;
+        write!(f, "{TAB}")?;
+        write!(f, "{SPACE}")?;
         for col in 0..self.ncols() {
             if col != 0 {
                 write! {f, "{SPACE:<SEP_LEN$}"}?;
             }
-            write!(
-                f,
-                "{col:>index_max_len$}{SPACE:<SEP_LEN$}{SPACE:>element_max_len$}"
-            )?;
+            write!(f, "{SET_DIM}{col:>index_max_width$}{UNSET_DIM}")?;
+            write!(f, "{SPACE}")?;
+            write!(f, "{SPACE:>element_max_width$}")?;
         }
         writeln!(f)?;
 
         for row in 0..self.nrows() {
-            write!(f, "{TAB}{TAB}{row:>index_max_len$}{TAB}{LEFT_DELIMITER}")?;
+            write!(f, "{TAB}{TAB}")?;
+            write!(f, "{SPACE}")?;
+            write!(f, "{SET_DIM}{row:>index_max_width$}{UNSET_DIM}")?;
+            write!(f, "{TAB}")?;
+            write!(f, "{LEFT_DELIMITER}")?;
             for col in 0..self.ncols() {
                 if col != 0 {
                     write! {f, "{COMMA:<SEP_LEN$}"}?;
@@ -50,36 +56,31 @@ where
                 let index =
                     AxisIndex::new((row, col), self.order).flatten_for_unchecked(self.shape);
                 let element = &cache[index];
-                write!(
-                    f,
-                    "{index:>index_max_len$}{SPACE:<SEP_LEN$}{element:>element_max_len$}"
-                )?;
+                write!(f, "{SET_DIM}{index:>index_max_width$}{UNSET_DIM}")?;
+                write!(f, "{SPACE}")?;
+                write!(f, "{element:>element_max_width$}")?;
             }
             writeln!(f, "{RIGHT_DELIMITER}{COMMA}")?;
         }
 
         writeln!(f, "{TAB}{TAB}{RIGHT_DELIMITER}")?;
-        writeln!(f)?;
+
         writeln!(f, "{TAB}order:{SPACE}{:?}", self.order)?;
-        writeln!(f)?;
         writeln!(f, "{TAB}shape:{SPACE}{:?}", self.shape)?;
         writeln!(f, "}}")
     }
 }
 
-impl<T> std::fmt::Display for Matrix<T>
-where
-    T: std::fmt::Display,
-{
+impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let size = self.size();
-        let mut element_max_len = 0;
+        let mut element_max_width = 0;
         let mut cache = Vec::with_capacity(size);
         for element in self.data.iter() {
             let string = format!("{element}");
-            let len = string.chars().count();
-            if len > element_max_len {
-                element_max_len = len;
+            let width = string.chars().count();
+            if width > element_max_width {
+                element_max_width = width;
             }
             cache.push(string);
         }
@@ -95,7 +96,7 @@ where
                 let index =
                     AxisIndex::new((row, col), self.order).flatten_for_unchecked(self.shape);
                 let element = &cache[index];
-                write!(f, "{element:>element_max_len$}")?;
+                write!(f, "{element:>element_max_width$}")?;
             }
             writeln!(f, "{RIGHT_DELIMITER}{COMMA}")?;
         }

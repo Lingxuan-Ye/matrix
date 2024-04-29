@@ -1,5 +1,5 @@
 use super::order::Order;
-use super::shape::AxisShape;
+use super::shape::{AxisShape, ShapeLike};
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -21,17 +21,43 @@ impl std::fmt::Display for Index {
     }
 }
 
-impl From<(usize, usize)> for Index {
-    fn from(value: (usize, usize)) -> Self {
-        let (row, col) = value;
-        Self { row, col }
+pub trait IndexLike {
+    fn row(&self) -> usize;
+
+    fn col(&self) -> usize;
+
+    fn is_out_of_bounds_of<S: ShapeLike>(&self, shape: S) -> bool {
+        self.row() >= shape.nrows() || self.col() >= shape.ncols()
     }
 }
 
-impl From<[usize; 2]> for Index {
-    fn from(value: [usize; 2]) -> Self {
-        let [row, col] = value;
-        Self { row, col }
+impl IndexLike for Index {
+    fn row(&self) -> usize {
+        self.row
+    }
+
+    fn col(&self) -> usize {
+        self.col
+    }
+}
+
+impl IndexLike for (usize, usize) {
+    fn row(&self) -> usize {
+        self.0
+    }
+
+    fn col(&self) -> usize {
+        self.1
+    }
+}
+
+impl IndexLike for [usize; 2] {
+    fn row(&self) -> usize {
+        self[0]
+    }
+
+    fn col(&self) -> usize {
+        self[1]
     }
 }
 
@@ -42,20 +68,12 @@ pub(super) struct AxisIndex {
 }
 
 impl AxisIndex {
-    pub fn new<I>(index: I, order: Order) -> Self
-    where
-        I: Into<Index>,
-    {
-        let index: Index = index.into();
+    pub fn new<I: IndexLike>(index: I, order: Order) -> Self {
         let (major, minor) = match order {
-            Order::RowMajor => (index.row, index.col),
-            Order::ColMajor => (index.col, index.row),
+            Order::RowMajor => (index.row(), index.col()),
+            Order::ColMajor => (index.col(), index.row()),
         };
         Self { major, minor }
-    }
-
-    pub fn is_out_of_bounds(&self, shape: AxisShape) -> bool {
-        self.major >= shape.major() || self.minor >= shape.minor()
     }
 
     pub fn transpose(&mut self) -> &mut Self {
@@ -63,13 +81,26 @@ impl AxisIndex {
         self
     }
 
+    pub fn interpret_with(&self, order: Order) -> Index {
+        let (row, col) = match order {
+            Order::RowMajor => (self.major, self.minor),
+            Order::ColMajor => (self.minor, self.major),
+        };
+        Index { row, col }
+    }
+
+    pub fn is_out_of_bounds_of(&self, shape: AxisShape) -> bool {
+        self.major >= shape.major() || self.minor >= shape.minor()
+    }
+
     pub fn from_flattened_unchecked(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
-        // let minor = (index % shape.major_stride()) / shape.minor();
+        // let minor = (index % shape.major_stride()) / shape.minor_stride();
         let minor = index % shape.major_stride();
         Self { major, minor }
     }
 
+    #[allow(unused)]
     pub fn try_from_flattened(index: usize, shape: AxisShape) -> Result<Self> {
         if index >= shape.size() {
             return Err(Error::IndexOutOfBounds);
@@ -77,6 +108,7 @@ impl AxisIndex {
         Ok(Self::from_flattened_unchecked(index, shape))
     }
 
+    #[allow(unused)]
     pub fn from_flattened(index: usize, shape: AxisShape) -> Self {
         match Self::try_from_flattened(index, shape) {
             Err(error) => panic!("{error}"),
@@ -90,10 +122,10 @@ impl AxisIndex {
     }
 
     pub fn try_flatten_for(&self, shape: AxisShape) -> Result<usize> {
-        if self.is_out_of_bounds(shape) {
+        if self.is_out_of_bounds_of(shape) {
             return Err(Error::IndexOutOfBounds);
         }
-        Ok(Self::flatten_for_unchecked(self, shape))
+        Ok(self.flatten_for_unchecked(shape))
     }
 
     pub fn flatten_for(&self, shape: AxisShape) -> usize {
@@ -102,52 +134,11 @@ impl AxisIndex {
             Ok(index) => index,
         }
     }
-
-    pub fn interpret_with(&self, order: Order) -> Index {
-        let (row, col) = match order {
-            Order::RowMajor => (self.major, self.minor),
-            Order::ColMajor => (self.minor, self.major),
-        };
-        Index { row, col }
-    }
-
-    pub fn interpret_row_with(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.major,
-            Order::ColMajor => self.minor,
-        }
-    }
-
-    pub fn interpret_col_with(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.minor,
-            Order::ColMajor => self.major,
-        }
-    }
-}
-
-impl<T> Matrix<T> {
-    pub fn get<I>(&self, index: I) -> Option<&T>
-    where
-        I: Into<Index>,
-    {
-        let index = AxisIndex::new(index, self.order)
-            .try_flatten_for(self.shape)
-            .ok()?;
-        self.data.get(index)
-    }
-
-    pub fn get_mut<I: Into<Index>>(&mut self, index: I) -> Option<&mut T> {
-        let index = AxisIndex::new(index, self.order)
-            .try_flatten_for(self.shape)
-            .ok()?;
-        self.data.get_mut(index)
-    }
 }
 
 impl<T, I> std::ops::Index<I> for Matrix<T>
 where
-    I: Into<Index>,
+    I: IndexLike,
 {
     type Output = T;
 
@@ -159,7 +150,7 @@ where
 
 impl<T, I> std::ops::IndexMut<I> for Matrix<T>
 where
-    I: Into<Index>,
+    I: IndexLike,
 {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
         let index = AxisIndex::new(index, self.order).flatten_for(self.shape);
@@ -167,8 +158,25 @@ where
     }
 }
 
+impl<T> Matrix<T> {
+    pub fn get<I: IndexLike>(&self, index: I) -> Option<&T> {
+        let index = AxisIndex::new(index, self.order)
+            .try_flatten_for(self.shape)
+            .ok()?;
+        self.data.get(index)
+    }
+
+    pub fn get_mut<I: IndexLike>(&mut self, index: I) -> Option<&mut T> {
+        let index = AxisIndex::new(index, self.order)
+            .try_flatten_for(self.shape)
+            .ok()?;
+        self.data.get_mut(index)
+    }
+}
+
 #[cfg(test)]
 mod test {
+    use super::super::shape::Shape;
     use super::*;
     use crate::matrix;
 
@@ -187,14 +195,29 @@ mod test {
     }
 
     #[test]
-    fn test_index_from() {
-        let target = Index { row: 2, col: 3 };
+    fn test_index_like() {
+        let shape = Shape::new(2, 3);
 
-        assert_eq!(Index::from((2, 3)), target);
-        assert_ne!(Index::from((3, 2)), target);
+        assert_eq!(Index::new(2, 3).row(), 2);
+        assert_eq!(Index::new(2, 3).col(), 3);
+        assert!(!Index::new(1, 2).is_out_of_bounds_of(shape));
+        assert!(Index::new(1, 3).is_out_of_bounds_of(shape));
+        assert!(Index::new(2, 2).is_out_of_bounds_of(shape));
+        assert!(Index::new(2, 3).is_out_of_bounds_of(shape));
 
-        assert_eq!(Index::from([2, 3]), target);
-        assert_ne!(Index::from([3, 2]), target);
+        assert_eq!((2, 3).row(), 2);
+        assert_eq!((2, 3).col(), 3);
+        assert!(!(1, 2).is_out_of_bounds_of(shape));
+        assert!((1, 3).is_out_of_bounds_of(shape));
+        assert!((2, 2).is_out_of_bounds_of(shape));
+        assert!((2, 3).is_out_of_bounds_of(shape));
+
+        assert_eq!([2, 3].row(), 2);
+        assert_eq!([2, 3].col(), 3);
+        assert!(![1, 2].is_out_of_bounds_of(shape));
+        assert!([1, 3].is_out_of_bounds_of(shape));
+        assert!([2, 2].is_out_of_bounds_of(shape));
+        assert!([2, 3].is_out_of_bounds_of(shape));
     }
 
     #[test]
@@ -214,12 +237,6 @@ mod test {
     }
 
     #[test]
-    fn test_axis_index_is_out_of_bounds() {
-        assert!(!AxisIndex { major: 1, minor: 0 }.is_out_of_bounds(shape(2, 3)));
-        assert!(AxisIndex { major: 2, minor: 3 }.is_out_of_bounds(shape(2, 3)));
-    }
-
-    #[test]
     fn test_axis_index_transpose() {
         let mut index = AxisIndex { major: 2, minor: 3 };
 
@@ -230,142 +247,134 @@ mod test {
         assert_eq!(index, AxisIndex { major: 2, minor: 3 });
     }
 
-    fn shape(major: usize, minor: usize) -> AxisShape {
-        AxisShape::build((major, minor), Order::RowMajor).unwrap()
+    #[test]
+    fn test_axis_index_interpret_with() {
+        let index = AxisIndex { major: 2, minor: 3 };
+
+        assert_eq!(index.interpret_with(Order::RowMajor), Index::new(2, 3));
+        assert_eq!(index.interpret_with(Order::ColMajor), Index::new(3, 2));
+    }
+
+    #[test]
+    fn test_axis_index_is_out_of_bounds_of() {
+        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
+
+        assert!(!AxisIndex { major: 1, minor: 2 }.is_out_of_bounds_of(shape));
+        assert!(AxisIndex { major: 1, minor: 3 }.is_out_of_bounds_of(shape));
+        assert!(AxisIndex { major: 2, minor: 2 }.is_out_of_bounds_of(shape));
+        assert!(AxisIndex { major: 2, minor: 3 }.is_out_of_bounds_of(shape));
     }
 
     #[test]
     fn test_axis_index_from_flattened_unchecked() {
+        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
+
         assert_eq!(
-            AxisIndex::from_flattened_unchecked(3, shape(2, 3)),
-            AxisIndex { major: 1, minor: 0 }
+            AxisIndex::from_flattened_unchecked(4, shape),
+            AxisIndex { major: 1, minor: 1 }
         );
         assert_eq!(
-            AxisIndex::from_flattened_unchecked(3, shape(3, 2)),
-            AxisIndex { major: 1, minor: 1 }
+            AxisIndex::from_flattened_unchecked(5, shape),
+            AxisIndex { major: 1, minor: 2 }
         );
         // out of bounds
         assert_eq!(
-            AxisIndex::from_flattened_unchecked(6, shape(2, 3)),
+            AxisIndex::from_flattened_unchecked(6, shape),
             AxisIndex { major: 2, minor: 0 }
         );
     }
 
     #[test]
     fn test_axis_index_try_from_flattened() {
+        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
+
         assert_eq!(
-            AxisIndex::try_from_flattened(3, shape(2, 3)),
-            Ok(AxisIndex { major: 1, minor: 0 })
-        );
-        assert_eq!(
-            AxisIndex::try_from_flattened(3, shape(3, 2)),
+            AxisIndex::try_from_flattened(4, shape),
             Ok(AxisIndex { major: 1, minor: 1 })
         );
         assert_eq!(
-            AxisIndex::try_from_flattened(6, shape(2, 3)),
+            AxisIndex::try_from_flattened(5, shape),
+            Ok(AxisIndex { major: 1, minor: 2 })
+        );
+        assert_eq!(
+            AxisIndex::try_from_flattened(6, shape),
             Err(Error::IndexOutOfBounds)
         );
     }
 
     #[test]
     fn test_axis_index_from_flattened() {
+        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
+
         assert_eq!(
-            AxisIndex::from_flattened(3, shape(2, 3)),
-            AxisIndex { major: 1, minor: 0 }
+            AxisIndex::from_flattened(4, shape),
+            AxisIndex { major: 1, minor: 1 }
         );
         assert_eq!(
-            AxisIndex::from_flattened(3, shape(3, 2)),
-            AxisIndex { major: 1, minor: 1 }
+            AxisIndex::from_flattened(5, shape),
+            AxisIndex { major: 1, minor: 2 }
         );
     }
 
     #[test]
     #[should_panic]
     fn test_axis_index_from_flattened_fails() {
-        AxisIndex::from_flattened(6, shape(2, 3));
+        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
+
+        AxisIndex::from_flattened(6, shape);
     }
 
     #[test]
     fn test_axis_index_flatten_for_unchecked() {
+        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
+
         assert_eq!(
-            AxisIndex { major: 1, minor: 1 }.flatten_for_unchecked(shape(2, 3)),
+            AxisIndex { major: 1, minor: 1 }.flatten_for_unchecked(shape),
             4
         );
         assert_eq!(
-            AxisIndex { major: 1, minor: 1 }.flatten_for_unchecked(shape(3, 2)),
-            3
+            AxisIndex { major: 1, minor: 2 }.flatten_for_unchecked(shape),
+            5
         );
         // out of bounds
         assert_eq!(
-            AxisIndex { major: 2, minor: 3 }.flatten_for_unchecked(shape(2, 3)),
-            9
+            AxisIndex { major: 1, minor: 3 }.flatten_for_unchecked(shape),
+            6
         );
     }
 
     #[test]
     fn test_axis_index_try_flatten_for() {
+        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
+
         assert_eq!(
-            AxisIndex { major: 1, minor: 1 }.try_flatten_for(shape(2, 3)),
+            AxisIndex { major: 1, minor: 1 }.try_flatten_for(shape),
             Ok(4)
         );
         assert_eq!(
-            AxisIndex { major: 1, minor: 1 }.try_flatten_for(shape(3, 2)),
-            Ok(3)
+            AxisIndex { major: 1, minor: 2 }.try_flatten_for(shape),
+            Ok(5)
         );
         assert_eq!(
-            AxisIndex { major: 2, minor: 3 }.try_flatten_for(shape(2, 3)),
+            AxisIndex { major: 1, minor: 3 }.try_flatten_for(shape),
             Err(Error::IndexOutOfBounds)
         );
     }
 
     #[test]
     fn test_axis_index_flatten_for() {
-        assert_eq!(AxisIndex { major: 1, minor: 1 }.flatten_for(shape(2, 3)), 4);
-        assert_eq!(AxisIndex { major: 1, minor: 1 }.flatten_for(shape(3, 2)), 3);
+        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
+
+        assert_eq!(AxisIndex { major: 1, minor: 1 }.flatten_for(shape), 4);
+        assert_eq!(AxisIndex { major: 1, minor: 2 }.flatten_for(shape), 5);
     }
 
     #[test]
     #[should_panic]
     fn test_axis_index_flatten_for_fails() {
-        AxisIndex { major: 2, minor: 3 }.flatten_for(shape(2, 3));
-    }
+        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
 
-    #[test]
-    fn test_axis_index_interpret() {
-        let index = AxisIndex { major: 2, minor: 3 };
-
-        assert_eq!(index.interpret_with(Order::RowMajor), Index::new(2, 3));
-        assert_eq!(index.interpret_with(Order::ColMajor), Index::new(3, 2));
-
-        assert_eq!(index.interpret_row_with(Order::RowMajor), 2);
-        assert_eq!(index.interpret_row_with(Order::ColMajor), 3);
-
-        assert_eq!(index.interpret_col_with(Order::RowMajor), 3);
-        assert_eq!(index.interpret_col_with(Order::ColMajor), 2);
-    }
-
-    #[test]
-    fn test_matrix_get() {
-        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.get((0, 0)), Some(&0));
-        assert_eq!(matrix.get((0, 1)), Some(&1));
-        assert_eq!(matrix.get((0, 2)), Some(&2));
-        assert_eq!(matrix.get((1, 0)), Some(&3));
-        assert_eq!(matrix.get((1, 1)), Some(&4));
-        assert_eq!(matrix.get((1, 2)), Some(&5));
-        assert_eq!(matrix.get((2, 0)), None);
-    }
-
-    #[test]
-    fn test_matrix_get_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.get_mut((0, 0)), Some(&mut 0));
-        assert_eq!(matrix.get_mut((0, 1)), Some(&mut 1));
-        assert_eq!(matrix.get_mut((0, 2)), Some(&mut 2));
-        assert_eq!(matrix.get_mut((1, 0)), Some(&mut 3));
-        assert_eq!(matrix.get_mut((1, 1)), Some(&mut 4));
-        assert_eq!(matrix.get_mut((1, 2)), Some(&mut 5));
-        assert_eq!(matrix.get_mut((2, 0)), None);
+        AxisIndex { major: 1, minor: 3 }.flatten_for(shape);
     }
 
     #[test]
@@ -403,5 +412,29 @@ mod test {
     fn test_col_out_of_bounds() {
         let matrix = matrix![[0, 1, 2], [3, 4, 5]];
         matrix[(0, 3)];
+    }
+
+    #[test]
+    fn test_matrix_get() {
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert_eq!(matrix.get((0, 0)), Some(&0));
+        assert_eq!(matrix.get((0, 1)), Some(&1));
+        assert_eq!(matrix.get((0, 2)), Some(&2));
+        assert_eq!(matrix.get((1, 0)), Some(&3));
+        assert_eq!(matrix.get((1, 1)), Some(&4));
+        assert_eq!(matrix.get((1, 2)), Some(&5));
+        assert_eq!(matrix.get((2, 0)), None);
+    }
+
+    #[test]
+    fn test_matrix_get_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert_eq!(matrix.get_mut((0, 0)), Some(&mut 0));
+        assert_eq!(matrix.get_mut((0, 1)), Some(&mut 1));
+        assert_eq!(matrix.get_mut((0, 2)), Some(&mut 2));
+        assert_eq!(matrix.get_mut((1, 0)), Some(&mut 3));
+        assert_eq!(matrix.get_mut((1, 1)), Some(&mut 4));
+        assert_eq!(matrix.get_mut((1, 2)), Some(&mut 5));
+        assert_eq!(matrix.get_mut((2, 0)), None);
     }
 }

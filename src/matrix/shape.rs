@@ -11,18 +11,6 @@ impl Shape {
     pub fn new(nrows: usize, ncols: usize) -> Self {
         Self { nrows, ncols }
     }
-
-    pub fn row_stride(&self) -> usize {
-        self.ncols
-    }
-
-    pub const fn col_stride(&self) -> usize {
-        1
-    }
-
-    pub fn size(&self) -> Option<usize> {
-        self.nrows.checked_mul(self.ncols)
-    }
 }
 
 impl std::fmt::Display for Shape {
@@ -31,17 +19,43 @@ impl std::fmt::Display for Shape {
     }
 }
 
-impl From<(usize, usize)> for Shape {
-    fn from(value: (usize, usize)) -> Self {
-        let (nrows, ncols) = value;
-        Self::new(nrows, ncols)
+pub trait ShapeLike {
+    fn nrows(&self) -> usize;
+
+    fn ncols(&self) -> usize;
+
+    fn size(&self) -> Option<usize> {
+        self.nrows().checked_mul(self.ncols())
     }
 }
 
-impl From<[usize; 2]> for Shape {
-    fn from(value: [usize; 2]) -> Self {
-        let [nrows, ncols] = value;
-        Self::new(nrows, ncols)
+impl ShapeLike for Shape {
+    fn nrows(&self) -> usize {
+        self.nrows
+    }
+
+    fn ncols(&self) -> usize {
+        self.ncols
+    }
+}
+
+impl ShapeLike for (usize, usize) {
+    fn nrows(&self) -> usize {
+        self.0
+    }
+
+    fn ncols(&self) -> usize {
+        self.1
+    }
+}
+
+impl ShapeLike for [usize; 2] {
+    fn nrows(&self) -> usize {
+        self[0]
+    }
+
+    fn ncols(&self) -> usize {
+        self[1]
     }
 }
 
@@ -52,17 +66,13 @@ pub(super) struct AxisShape {
 }
 
 impl AxisShape {
-    pub fn build<S>(shape: S, order: Order) -> Result<Self>
-    where
-        S: Into<Shape>,
-    {
-        let shape: Shape = shape.into();
+    pub fn build<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
         if shape.size().is_none() {
             return Err(Error::SizeOverflow);
         }
         let (major, minor) = match order {
-            Order::RowMajor => (shape.nrows, shape.ncols),
-            Order::ColMajor => (shape.ncols, shape.nrows),
+            Order::RowMajor => (shape.nrows(), shape.ncols()),
+            Order::ColMajor => (shape.ncols(), shape.nrows()),
         };
         Ok(Self { major, minor })
     }
@@ -128,41 +138,27 @@ mod test {
     }
 
     #[test]
-    fn test_shape_row_stride() {
-        assert_eq!(Shape::new(2, 3).row_stride(), 3);
-        assert_eq!(Shape::new(3, 2).row_stride(), 2);
-    }
-
-    #[test]
-    fn test_shape_col_stride() {
-        assert_eq!(Shape::new(2, 3).col_stride(), 1);
-        assert_eq!(Shape::new(3, 2).col_stride(), 1);
-    }
-
-    #[test]
-    fn test_shape_size() {
-        assert_eq!(Shape::new(2, 2).size(), Some(4));
-        assert_eq!(Shape::new(2, 3).size(), Some(6));
-        assert_eq!(Shape::new(3, 2).size(), Some(6));
-        assert_eq!(Shape::new(3, 3).size(), Some(9));
-        assert_eq!(Shape::new(2, usize::MAX).size(), None);
-    }
-
-    #[test]
     fn test_shape_display() {
         assert_eq!(Shape::new(2, 3).to_string(), "(2, 3)");
         assert_eq!(Shape::new(3, 2).to_string(), "(3, 2)");
     }
 
     #[test]
-    fn test_shape_from() {
-        let target = Shape::new(2, 3);
+    fn test_shape_like() {
+        assert_eq!(Shape::new(2, 3).nrows(), 2);
+        assert_eq!(Shape::new(2, 3).ncols(), 3);
+        assert_eq!(Shape::new(2, 3).size(), Some(6));
+        assert_eq!(Shape::new(2, usize::MAX).size(), None);
 
-        assert_eq!(Shape::from((2, 3)), target);
-        assert_ne!(Shape::from((3, 2)), target);
+        assert_eq!((2, 3).nrows(), 2);
+        assert_eq!((2, 3).ncols(), 3);
+        assert_eq!((2, 3).size(), Some(6));
+        assert_eq!((2, usize::MAX).size(), None);
 
-        assert_eq!(Shape::from([2, 3]), target);
-        assert_ne!(Shape::from([3, 2]), target);
+        assert_eq!([2, 3].nrows(), 2);
+        assert_eq!([2, 3].ncols(), 3);
+        assert_eq!([2, 3].size(), Some(6));
+        assert_eq!([2, usize::MAX].size(), None);
     }
 
     #[test]
@@ -180,7 +176,6 @@ mod test {
             AxisShape::build((3, 2), Order::RowMajor),
             Ok(AxisShape { major: 3, minor: 2 })
         );
-
         assert_eq!(
             AxisShape::build((2, usize::MAX), Order::RowMajor),
             Err(Error::SizeOverflow)
