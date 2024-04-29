@@ -155,10 +155,9 @@ impl<T> Matrix<T> {
 impl<T> Matrix<T> {
     fn check_size(size: usize) -> Result<usize> {
         // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
-        if std::mem::size_of::<T>() != 0 && size > isize::MAX as usize {
-            Err(Error::CapacityExceeded)
-        } else {
-            Ok(size)
+        match std::mem::size_of::<T>().checked_mul(size) {
+            Some(bytes) if (bytes <= isize::MAX as usize) => Ok(size),
+            _ => Err(Error::CapacityExceeded),
         }
     }
 }
