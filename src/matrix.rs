@@ -98,6 +98,7 @@ impl<T: Default> Matrix<T> {
         let shape = AxisShape::build(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
         self.data.resize_with(size, T::default);
+        self.shape = shape;
         Ok(self)
     }
 }
@@ -168,7 +169,7 @@ mod test {
     use crate::matrix;
 
     fn shape(major: usize, minor: usize) -> AxisShape {
-        AxisShape::build((major, minor), Order::RowMajor).unwrap()
+        AxisShape::build((major, minor), Order::default()).unwrap()
     }
 
     #[test]
