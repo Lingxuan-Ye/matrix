@@ -76,13 +76,21 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    pub fn is_out_of_bounds(&self, shape: AxisShape) -> bool {
-        self.major >= shape.major() || self.minor >= shape.minor()
-    }
-
     pub fn transpose(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
+    }
+
+    pub fn interpret_with(&self, order: Order) -> Index {
+        let (row, col) = match order {
+            Order::RowMajor => (self.major, self.minor),
+            Order::ColMajor => (self.minor, self.major),
+        };
+        Index { row, col }
+    }
+
+    pub fn is_out_of_bounds_of(&self, shape: AxisShape) -> bool {
+        self.major >= shape.major() || self.minor >= shape.minor()
     }
 
     pub fn from_flattened_unchecked(index: usize, shape: AxisShape) -> Self {
@@ -92,6 +100,7 @@ impl AxisIndex {
         Self { major, minor }
     }
 
+    #[allow(unused)]
     pub fn try_from_flattened(index: usize, shape: AxisShape) -> Result<Self> {
         if index >= shape.size() {
             return Err(Error::IndexOutOfBounds);
@@ -99,6 +108,7 @@ impl AxisIndex {
         Ok(Self::from_flattened_unchecked(index, shape))
     }
 
+    #[allow(unused)]
     pub fn from_flattened(index: usize, shape: AxisShape) -> Self {
         match Self::try_from_flattened(index, shape) {
             Err(error) => panic!("{error}"),
@@ -112,10 +122,10 @@ impl AxisIndex {
     }
 
     pub fn try_flatten_for(&self, shape: AxisShape) -> Result<usize> {
-        if self.is_out_of_bounds(shape) {
+        if self.is_out_of_bounds_of(shape) {
             return Err(Error::IndexOutOfBounds);
         }
-        Ok(Self::flatten_for_unchecked(self, shape))
+        Ok(self.flatten_for_unchecked(shape))
     }
 
     pub fn flatten_for(&self, shape: AxisShape) -> usize {
@@ -123,47 +133,6 @@ impl AxisIndex {
             Err(error) => panic!("{error}"),
             Ok(index) => index,
         }
-    }
-
-    pub fn interpret_with(&self, order: Order) -> Index {
-        let (row, col) = match order {
-            Order::RowMajor => (self.major, self.minor),
-            Order::ColMajor => (self.minor, self.major),
-        };
-        Index { row, col }
-    }
-
-    pub fn interpret_row_with(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.major,
-            Order::ColMajor => self.minor,
-        }
-    }
-
-    pub fn interpret_col_with(&self, order: Order) -> usize {
-        match order {
-            Order::RowMajor => self.minor,
-            Order::ColMajor => self.major,
-        }
-    }
-}
-
-impl<T> Matrix<T> {
-    pub fn get<I>(&self, index: I) -> Option<&T>
-    where
-        I: Into<Index>,
-    {
-        let index = AxisIndex::new(index, self.order)
-            .try_flatten_for(self.shape)
-            .ok()?;
-        self.data.get(index)
-    }
-
-    pub fn get_mut<I: Into<Index>>(&mut self, index: I) -> Option<&mut T> {
-        let index = AxisIndex::new(index, self.order)
-            .try_flatten_for(self.shape)
-            .ok()?;
-        self.data.get_mut(index)
     }
 }
 
