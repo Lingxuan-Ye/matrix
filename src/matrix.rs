@@ -9,7 +9,7 @@ mod fmt;
 use crate::error::{Error, Result};
 use index::AxisIndex;
 use order::Order;
-use shape::{AxisShape, Shape};
+use shape::{AxisShape, Shape, ShapeLike};
 
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Matrix<T> {
@@ -19,14 +19,14 @@ pub struct Matrix<T> {
 }
 
 impl<T: Default> Matrix<T> {
-    pub fn new<S: Into<Shape>>(shape: S) -> Self {
+    pub fn new<S: ShapeLike>(shape: S) -> Self {
         match Self::build(shape) {
             Err(error) => panic!("{error}"),
             Ok(matrix) => matrix,
         }
     }
 
-    pub fn build<S: Into<Shape>>(shape: S) -> Result<Self> {
+    pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
         let shape = AxisShape::build(shape, order)?;
         let size = Self::check_size(shape.size())?;
@@ -94,7 +94,7 @@ impl<T> Matrix<T> {
 }
 
 impl<T: Default> Matrix<T> {
-    pub fn resize<S: Into<Shape>>(&mut self, shape: S) -> Result<&mut Self> {
+    pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = AxisShape::build(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
         self.data.resize_with(size, T::default);
@@ -103,7 +103,7 @@ impl<T: Default> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    pub fn reshape<S: Into<Shape>>(&mut self, shape: S) -> Result<&mut Self> {
+    pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = AxisShape::build(shape, self.order).map_err(|_| Error::SizeMismatch)?;
         if shape.size() != self.data.len() {
             return Err(Error::SizeMismatch);
