@@ -6,10 +6,10 @@ pub mod shape;
 
 mod fmt;
 
+use self::index::AxisIndex;
+use self::order::Order;
+use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
-use index::AxisIndex;
-use order::Order;
-use shape::{AxisShape, Shape, ShapeLike};
 
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Matrix<T> {

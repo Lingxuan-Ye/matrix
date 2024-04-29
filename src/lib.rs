@@ -3,9 +3,9 @@ pub mod matrix;
 
 mod macros;
 
-pub use error::{Error, Result};
-pub use matrix::index::Index;
-pub use matrix::iter::{MatrixIter, VectorIter};
-pub use matrix::order::Order;
-pub use matrix::shape::Shape;
-pub use matrix::Matrix;
+pub use self::error::{Error, Result};
+pub use self::matrix::index::{Index, IndexLike};
+pub use self::matrix::iter::{MatrixIter, VectorIter};
+pub use self::matrix::order::Order;
+pub use self::matrix::shape::{Shape, ShapeLike};
+pub use self::matrix::Matrix;

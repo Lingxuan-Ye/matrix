@@ -2,10 +2,10 @@ mod count;
 mod major_axis;
 mod minor_axis;
 
+use self::major_axis::{MajorAxisMatrixIter, MajorAxisVectorIter};
+use self::minor_axis::{MinorAxisMatrixIter, MinorAxisVectorIter};
 use super::order::Order;
 use super::Matrix;
-use major_axis::{MajorAxisMatrixIter, MajorAxisVectorIter};
-use minor_axis::{MinorAxisMatrixIter, MinorAxisVectorIter};
 
 pub type VectorIter<'a, T> = Box<dyn Iterator<Item = T> + 'a>;
 pub type MatrixIter<'a, T> = Box<dyn DoubleEndedIterator<Item = VectorIter<'a, T>> + 'a>;
