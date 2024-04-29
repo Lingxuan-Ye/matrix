@@ -12,14 +12,6 @@ impl Shape {
         Self { nrows, ncols }
     }
 
-    pub fn row_stride(&self) -> usize {
-        self.ncols
-    }
-
-    pub const fn col_stride(&self) -> usize {
-        1
-    }
-
     pub fn size(&self) -> Option<usize> {
         self.nrows.checked_mul(self.ncols)
     }
@@ -125,18 +117,6 @@ mod test {
 
         assert_eq!(Shape::new(2, 3), target);
         assert_ne!(Shape::new(3, 2), target);
-    }
-
-    #[test]
-    fn test_shape_row_stride() {
-        assert_eq!(Shape::new(2, 3).row_stride(), 3);
-        assert_eq!(Shape::new(3, 2).row_stride(), 2);
-    }
-
-    #[test]
-    fn test_shape_col_stride() {
-        assert_eq!(Shape::new(2, 3).col_stride(), 1);
-        assert_eq!(Shape::new(3, 2).col_stride(), 1);
     }
 
     #[test]

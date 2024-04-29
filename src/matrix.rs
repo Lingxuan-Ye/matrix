@@ -71,14 +71,6 @@ impl<T> Matrix<T> {
         self.shape.interpret_ncols_with(self.order)
     }
 
-    pub fn row_stride(&self) -> usize {
-        self.ncols()
-    }
-
-    pub const fn col_stride(&self) -> usize {
-        1
-    }
-
     pub fn size(&self) -> usize {
         self.shape.size()
     }
