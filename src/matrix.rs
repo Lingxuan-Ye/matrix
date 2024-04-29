@@ -1,3 +1,5 @@
+//! The main module, which defines [`Matrix`] and related components.
+
 pub mod arithmetic;
 pub mod index;
 pub mod iter;
@@ -11,6 +13,19 @@ use self::order::Order;
 use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
 
+/// Matrix means matrix.
+///
+/// Instead of using constructor methods, you may prefer to create a
+/// matrix using the [`matrix!`] macro:
+///
+///
+/// ```
+/// use matreex::matrix;
+///
+/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+/// ```
+///
+/// [`matrix!`]: crate::matrix
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Matrix<T> {
     data: Vec<T>,
@@ -19,6 +34,12 @@ pub struct Matrix<T> {
 }
 
 impl<T: Default> Matrix<T> {
+    /// Creates a new [`Matrix`] instance with default values.
+    ///
+    /// # Panics
+    ///
+    /// Panic if size exceeds [`usize::MAX`], or total bytes stored
+    /// exceeds [`isize::MAX`].
     pub fn new<S: ShapeLike>(shape: S) -> Self {
         match Self::build(shape) {
             Err(error) => panic!("{error}"),
@@ -26,6 +47,11 @@ impl<T: Default> Matrix<T> {
         }
     }
 
+    /// Builds a new [`Matrix`] instance with default values.
+    ///
+    /// Return [`Error::SizeOverflow`] if size exceeds [`usize::MAX`],
+    /// and [`Error::CapacityExceeded`] if total bytes stored exceeds
+    /// [`isize::MAX`].
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
         let shape = AxisShape::build(shape, order)?;
@@ -36,6 +62,10 @@ impl<T: Default> Matrix<T> {
 }
 
 impl<T: Clone> Matrix<T> {
+    /// Creates a new [`Matrix`] instance from the given slice with
+    /// shape `(1, src.len())`.
+    ///
+    /// This will never fail.
     pub fn from_slice(src: &[T]) -> Self {
         let data = src.to_vec();
         let order = Order::default();
@@ -45,6 +75,9 @@ impl<T: Clone> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    /// Creates a new [`Matrix`] instance from the given 2D array.
+    ///
+    /// This will never fail.
     pub fn from_2darray<const R: usize, const C: usize>(src: Box<[[T; C]; R]>) -> Self {
         let ptr = Box::leak(src).as_mut_ptr() as *mut T;
         let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
