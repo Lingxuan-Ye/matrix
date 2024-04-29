@@ -36,7 +36,7 @@ impl From<[usize; 2]> for Index {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(crate) struct AxisIndex {
+pub(super) struct AxisIndex {
     pub major: usize,
     pub minor: usize,
 }
@@ -79,8 +79,8 @@ impl AxisIndex {
 
     pub fn from_flattened(index: usize, shape: AxisShape) -> Self {
         match Self::try_from_flattened(index, shape) {
-            Ok(index) => index,
             Err(error) => panic!("{error}"),
+            Ok(index) => index,
         }
     }
 
@@ -98,8 +98,8 @@ impl AxisIndex {
 
     pub fn flatten_for(&self, shape: AxisShape) -> usize {
         match self.try_flatten_for(shape) {
-            Ok(index) => index,
             Err(error) => panic!("{error}"),
+            Ok(index) => index,
         }
     }
 
