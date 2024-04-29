@@ -87,7 +87,7 @@ impl AxisIndex {
 
     pub fn from_flattened_unchecked(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
-        // let minor = (index % shape.major_stride()) / shape.minor();
+        // let minor = (index % shape.major_stride()) / shape.minor_stride();
         let minor = index % shape.major_stride();
         Self { major, minor }
     }
