@@ -85,3 +85,52 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::matrix;
+
+    #[test]
+    fn test_sub() {
+        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut rhs = matrix![[1, 1, 1], [2, 2, 2]];
+        let target = matrix![[-1, 0, 1], [1, 2, 3]];
+
+        assert_eq!(&lhs - &rhs, target);
+        assert_eq!(&lhs - rhs.clone(), target);
+        assert_eq!(lhs.clone() - &rhs, target);
+        assert_eq!(lhs.clone() - rhs.clone(), target);
+
+        rhs.switch_order();
+        let result = &lhs - &rhs;
+        assert_eq!(result, target);
+        assert_eq!(result.order, lhs.order);
+        assert_ne!(result.order, rhs.order);
+        rhs.switch_order();
+
+        lhs.switch_order();
+        let mut result = &lhs - &rhs;
+        assert_ne!(result, target);
+        assert_eq!(result.order, lhs.order);
+        result.switch_order();
+        assert_eq!(result, target);
+        lhs.switch_order();
+
+        let mut lhs_clone = lhs.clone();
+        lhs_clone -= &rhs;
+        assert_eq!(lhs_clone, target);
+
+        let mut lhs_clone = lhs.clone();
+        lhs_clone -= rhs;
+        assert_eq!(lhs_clone, target);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_sub_fails() {
+        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let rhs = matrix![[1, 1], [2, 2], [3, 3]];
+
+        let _ = lhs - rhs;
+    }
+}
