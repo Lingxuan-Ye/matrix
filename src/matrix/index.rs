@@ -1,5 +1,5 @@
 use super::order::Order;
-use super::shape::{AxisShape, ShapeLike};
+use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -26,8 +26,9 @@ pub trait IndexLike {
 
     fn col(&self) -> usize;
 
-    fn is_out_of_bounds_of<S: ShapeLike>(&self, shape: S) -> bool {
-        self.row() >= shape.nrows() || self.col() >= shape.ncols()
+    fn is_out_of_bounds_of<T>(&self, matrix: &Matrix<T>) -> bool {
+        let shape = matrix.shape();
+        self.row() >= shape.nrows || self.col() >= shape.ncols
     }
 }
 
