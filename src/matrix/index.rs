@@ -173,7 +173,6 @@ pub(super) fn translate_index_between_orders_unchecked(
 
 #[cfg(test)]
 mod test {
-    use super::super::shape::Shape;
     use super::*;
     use crate::matrix;
 
@@ -193,185 +192,78 @@ mod test {
 
     #[test]
     fn test_index_like() {
-        let shape = Shape::new(2, 3);
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         assert_eq!(Index::new(2, 3).row(), 2);
         assert_eq!(Index::new(2, 3).col(), 3);
-        assert!(!Index::new(1, 2).is_out_of_bounds_of(shape));
-        assert!(Index::new(1, 3).is_out_of_bounds_of(shape));
-        assert!(Index::new(2, 2).is_out_of_bounds_of(shape));
-        assert!(Index::new(2, 3).is_out_of_bounds_of(shape));
+        assert!(!Index::new(1, 2).is_out_of_bounds_of(&matrix));
+        assert!(Index::new(1, 3).is_out_of_bounds_of(&matrix));
+        assert!(Index::new(2, 2).is_out_of_bounds_of(&matrix));
+        assert!(Index::new(2, 3).is_out_of_bounds_of(&matrix));
 
         assert_eq!((2, 3).row(), 2);
         assert_eq!((2, 3).col(), 3);
-        assert!(!(1, 2).is_out_of_bounds_of(shape));
-        assert!((1, 3).is_out_of_bounds_of(shape));
-        assert!((2, 2).is_out_of_bounds_of(shape));
-        assert!((2, 3).is_out_of_bounds_of(shape));
+        assert!(!(1, 2).is_out_of_bounds_of(&matrix));
+        assert!((1, 3).is_out_of_bounds_of(&matrix));
+        assert!((2, 2).is_out_of_bounds_of(&matrix));
+        assert!((2, 3).is_out_of_bounds_of(&matrix));
 
         assert_eq!([2, 3].row(), 2);
         assert_eq!([2, 3].col(), 3);
-        assert!(![1, 2].is_out_of_bounds_of(shape));
-        assert!([1, 3].is_out_of_bounds_of(shape));
-        assert!([2, 2].is_out_of_bounds_of(shape));
-        assert!([2, 3].is_out_of_bounds_of(shape));
+        assert!(![1, 2].is_out_of_bounds_of(&matrix));
+        assert!([1, 3].is_out_of_bounds_of(&matrix));
+        assert!([2, 2].is_out_of_bounds_of(&matrix));
+        assert!([2, 3].is_out_of_bounds_of(&matrix));
     }
 
     #[test]
-    fn test_axis_index_new() {
-        assert_eq!(
-            AxisIndex::new((2, 3), Order::RowMajor),
-            AxisIndex { major: 2, minor: 3 }
-        );
-        assert_eq!(
-            AxisIndex::new((2, 3), Order::ColMajor),
-            AxisIndex { major: 3, minor: 2 }
-        );
-        assert_eq!(
-            AxisIndex::new((3, 2), Order::RowMajor),
-            AxisIndex { major: 3, minor: 2 }
-        );
+    fn test_matrix_get() {
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert_eq!(matrix.get((0, 0)), Some(&0));
+        assert_eq!(matrix.get((0, 1)), Some(&1));
+        assert_eq!(matrix.get((0, 2)), Some(&2));
+        assert_eq!(matrix.get((1, 0)), Some(&3));
+        assert_eq!(matrix.get((1, 1)), Some(&4));
+        assert_eq!(matrix.get((1, 2)), Some(&5));
+        assert_eq!(matrix.get((2, 0)), None);
     }
 
     #[test]
-    fn test_axis_index_transpose() {
-        let mut index = AxisIndex { major: 2, minor: 3 };
-
-        index.transpose();
-        assert_eq!(index, AxisIndex { major: 3, minor: 2 });
-
-        index.transpose();
-        assert_eq!(index, AxisIndex { major: 2, minor: 3 });
+    fn test_matrix_get_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        assert_eq!(matrix.get_mut((0, 0)), Some(&mut 0));
+        assert_eq!(matrix.get_mut((0, 1)), Some(&mut 1));
+        assert_eq!(matrix.get_mut((0, 2)), Some(&mut 2));
+        assert_eq!(matrix.get_mut((1, 0)), Some(&mut 3));
+        assert_eq!(matrix.get_mut((1, 1)), Some(&mut 4));
+        assert_eq!(matrix.get_mut((1, 2)), Some(&mut 5));
+        assert_eq!(matrix.get_mut((2, 0)), None);
     }
 
     #[test]
-    fn test_axis_index_interpret_with() {
-        let index = AxisIndex { major: 2, minor: 3 };
-
-        assert_eq!(index.interpret_with(Order::RowMajor), Index::new(2, 3));
-        assert_eq!(index.interpret_with(Order::ColMajor), Index::new(3, 2));
+    fn test_matrix_get_unchecked() {
+        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        unsafe {
+            assert_eq!(matrix.get_unchecked((0, 0)), &0);
+            assert_eq!(matrix.get_unchecked((0, 1)), &1);
+            assert_eq!(matrix.get_unchecked((0, 2)), &2);
+            assert_eq!(matrix.get_unchecked((1, 0)), &3);
+            assert_eq!(matrix.get_unchecked((1, 1)), &4);
+            assert_eq!(matrix.get_unchecked((1, 2)), &5);
+        }
     }
 
     #[test]
-    fn test_axis_index_is_out_of_bounds_of() {
-        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
-
-        assert!(!AxisIndex { major: 1, minor: 2 }.is_out_of_bounds_of(shape));
-        assert!(AxisIndex { major: 1, minor: 3 }.is_out_of_bounds_of(shape));
-        assert!(AxisIndex { major: 2, minor: 2 }.is_out_of_bounds_of(shape));
-        assert!(AxisIndex { major: 2, minor: 3 }.is_out_of_bounds_of(shape));
-    }
-
-    #[test]
-    fn test_axis_index_from_flattened_unchecked() {
-        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
-
-        assert_eq!(
-            AxisIndex::from_flattened_unchecked(4, shape),
-            AxisIndex { major: 1, minor: 1 }
-        );
-        assert_eq!(
-            AxisIndex::from_flattened_unchecked(5, shape),
-            AxisIndex { major: 1, minor: 2 }
-        );
-        // out of bounds
-        assert_eq!(
-            AxisIndex::from_flattened_unchecked(6, shape),
-            AxisIndex { major: 2, minor: 0 }
-        );
-    }
-
-    #[test]
-    fn test_axis_index_try_from_flattened() {
-        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
-
-        assert_eq!(
-            AxisIndex::try_from_flattened(4, shape),
-            Ok(AxisIndex { major: 1, minor: 1 })
-        );
-        assert_eq!(
-            AxisIndex::try_from_flattened(5, shape),
-            Ok(AxisIndex { major: 1, minor: 2 })
-        );
-        assert_eq!(
-            AxisIndex::try_from_flattened(6, shape),
-            Err(Error::IndexOutOfBounds)
-        );
-    }
-
-    #[test]
-    fn test_axis_index_from_flattened() {
-        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
-
-        assert_eq!(
-            AxisIndex::from_flattened(4, shape),
-            AxisIndex { major: 1, minor: 1 }
-        );
-        assert_eq!(
-            AxisIndex::from_flattened(5, shape),
-            AxisIndex { major: 1, minor: 2 }
-        );
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_axis_index_from_flattened_fails() {
-        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
-
-        AxisIndex::from_flattened(6, shape);
-    }
-
-    #[test]
-    fn test_axis_index_flatten_for_unchecked() {
-        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
-
-        assert_eq!(
-            AxisIndex { major: 1, minor: 1 }.flatten_for_unchecked(shape),
-            4
-        );
-        assert_eq!(
-            AxisIndex { major: 1, minor: 2 }.flatten_for_unchecked(shape),
-            5
-        );
-        // out of bounds
-        assert_eq!(
-            AxisIndex { major: 1, minor: 3 }.flatten_for_unchecked(shape),
-            6
-        );
-    }
-
-    #[test]
-    fn test_axis_index_try_flatten_for() {
-        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
-
-        assert_eq!(
-            AxisIndex { major: 1, minor: 1 }.try_flatten_for(shape),
-            Ok(4)
-        );
-        assert_eq!(
-            AxisIndex { major: 1, minor: 2 }.try_flatten_for(shape),
-            Ok(5)
-        );
-        assert_eq!(
-            AxisIndex { major: 1, minor: 3 }.try_flatten_for(shape),
-            Err(Error::IndexOutOfBounds)
-        );
-    }
-
-    #[test]
-    fn test_axis_index_flatten_for() {
-        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
-
-        assert_eq!(AxisIndex { major: 1, minor: 1 }.flatten_for(shape), 4);
-        assert_eq!(AxisIndex { major: 1, minor: 2 }.flatten_for(shape), 5);
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_axis_index_flatten_for_fails() {
-        let shape = AxisShape::build((2, 3), Order::default()).unwrap();
-
-        AxisIndex { major: 1, minor: 3 }.flatten_for(shape);
+    fn test_matrix_get_unchecked_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        unsafe {
+            assert_eq!(matrix.get_unchecked_mut((0, 0)), &mut 0);
+            assert_eq!(matrix.get_unchecked_mut((0, 1)), &mut 1);
+            assert_eq!(matrix.get_unchecked_mut((0, 2)), &mut 2);
+            assert_eq!(matrix.get_unchecked_mut((1, 0)), &mut 3);
+            assert_eq!(matrix.get_unchecked_mut((1, 1)), &mut 4);
+            assert_eq!(matrix.get_unchecked_mut((1, 2)), &mut 5);
+        }
     }
 
     #[test]
@@ -409,29 +301,5 @@ mod test {
     fn test_col_out_of_bounds() {
         let matrix = matrix![[0, 1, 2], [3, 4, 5]];
         matrix[(0, 3)];
-    }
-
-    #[test]
-    fn test_matrix_get() {
-        let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.get((0, 0)), Some(&0));
-        assert_eq!(matrix.get((0, 1)), Some(&1));
-        assert_eq!(matrix.get((0, 2)), Some(&2));
-        assert_eq!(matrix.get((1, 0)), Some(&3));
-        assert_eq!(matrix.get((1, 1)), Some(&4));
-        assert_eq!(matrix.get((1, 2)), Some(&5));
-        assert_eq!(matrix.get((2, 0)), None);
-    }
-
-    #[test]
-    fn test_matrix_get_mut() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.get_mut((0, 0)), Some(&mut 0));
-        assert_eq!(matrix.get_mut((0, 1)), Some(&mut 1));
-        assert_eq!(matrix.get_mut((0, 2)), Some(&mut 2));
-        assert_eq!(matrix.get_mut((1, 0)), Some(&mut 3));
-        assert_eq!(matrix.get_mut((1, 1)), Some(&mut 4));
-        assert_eq!(matrix.get_mut((1, 2)), Some(&mut 5));
-        assert_eq!(matrix.get_mut((2, 0)), None);
     }
 }
