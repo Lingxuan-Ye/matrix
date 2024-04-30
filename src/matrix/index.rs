@@ -62,13 +62,13 @@ impl IndexLike for [usize; 2] {
 }
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub(super) struct AxisIndex {
+struct AxisIndex {
     pub major: usize,
     pub minor: usize,
 }
 
 impl AxisIndex {
-    pub fn new<I: IndexLike>(index: I, order: Order) -> Self {
+    fn new<I: IndexLike>(index: I, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (index.row(), index.col()),
             Order::ColMajor => (index.col(), index.row()),
@@ -76,63 +76,64 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    pub fn transpose(&mut self) -> &mut Self {
+    fn transpose(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
     }
 
-    pub fn interpret_with(&self, order: Order) -> Index {
-        let (row, col) = match order {
-            Order::RowMajor => (self.major, self.minor),
-            Order::ColMajor => (self.minor, self.major),
-        };
-        Index { row, col }
-    }
-
-    pub fn is_out_of_bounds_of(&self, shape: AxisShape) -> bool {
-        self.major >= shape.major() || self.minor >= shape.minor()
-    }
-
-    pub fn from_flattened_unchecked(index: usize, shape: AxisShape) -> Self {
+    fn from_flattened_unchecked(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
         // let minor = (index % shape.major_stride()) / shape.minor_stride();
         let minor = index % shape.major_stride();
         Self { major, minor }
     }
 
-    #[allow(unused)]
-    pub fn try_from_flattened(index: usize, shape: AxisShape) -> Result<Self> {
-        if index >= shape.size() {
-            return Err(Error::IndexOutOfBounds);
-        }
-        Ok(Self::from_flattened_unchecked(index, shape))
-    }
-
-    #[allow(unused)]
-    pub fn from_flattened(index: usize, shape: AxisShape) -> Self {
-        match Self::try_from_flattened(index, shape) {
-            Err(error) => panic!("{error}"),
-            Ok(index) => index,
-        }
-    }
-
-    pub fn flatten_for_unchecked(&self, shape: AxisShape) -> usize {
+    fn to_flattened_unchecked(&self, shape: AxisShape) -> usize {
         // self.major * shape.major_stride() + self.minor * shape.minor_stride()
         self.major * shape.major_stride() + self.minor
     }
+}
 
-    pub fn try_flatten_for(&self, shape: AxisShape) -> Result<usize> {
-        if self.is_out_of_bounds_of(shape) {
-            return Err(Error::IndexOutOfBounds);
-        }
-        Ok(self.flatten_for_unchecked(shape))
+impl<T> Matrix<T> {
+    pub(super) fn flatten_index_unchecked<I: IndexLike>(&self, index: I) -> usize {
+        AxisIndex::new(index, self.order).to_flattened_unchecked(self.shape)
     }
 
-    pub fn flatten_for(&self, shape: AxisShape) -> usize {
-        match self.try_flatten_for(shape) {
+    pub(super) fn try_flatten_index<I: IndexLike>(&self, index: I) -> Result<usize> {
+        let index = AxisIndex::new(index, self.order);
+        if index.major >= self.major() || index.minor >= self.minor() {
+            return Err(Error::IndexOutOfBounds);
+        }
+        Ok(index.to_flattened_unchecked(self.shape))
+    }
+
+    pub(super) fn flatten_index<I: IndexLike>(&self, index: I) -> usize {
+        match self.try_flatten_index(index) {
             Err(error) => panic!("{error}"),
             Ok(index) => index,
         }
+    }
+}
+
+impl<T> Matrix<T> {
+    pub fn get<I: IndexLike>(&self, index: I) -> Option<&T> {
+        let index = self.try_flatten_index(index).ok()?;
+        unsafe { Some(self.data.get_unchecked(index)) }
+    }
+
+    pub fn get_mut<I: IndexLike>(&mut self, index: I) -> Option<&mut T> {
+        let index = self.try_flatten_index(index).ok()?;
+        unsafe { Some(self.data.get_unchecked_mut(index)) }
+    }
+
+    pub unsafe fn get_unchecked<I: IndexLike>(&self, index: I) -> &T {
+        let index = self.flatten_index_unchecked(index);
+        unsafe { self.data.get_unchecked(index) }
+    }
+
+    pub unsafe fn get_unchecked_mut<I: IndexLike>(&mut self, index: I) -> &mut T {
+        let index = self.flatten_index_unchecked(index);
+        unsafe { self.data.get_unchecked_mut(index) }
     }
 }
 
@@ -143,7 +144,7 @@ where
     type Output = T;
 
     fn index(&self, index: I) -> &Self::Output {
-        let index = AxisIndex::new(index, self.order).flatten_for(self.shape);
+        let index = self.flatten_index(index);
         &self.data[index]
     }
 }
@@ -153,25 +154,20 @@ where
     I: IndexLike,
 {
     fn index_mut(&mut self, index: I) -> &mut Self::Output {
-        let index = AxisIndex::new(index, self.order).flatten_for(self.shape);
+        let index = self.flatten_index(index);
         &mut self.data[index]
     }
 }
 
-impl<T> Matrix<T> {
-    pub fn get<I: IndexLike>(&self, index: I) -> Option<&T> {
-        let index = AxisIndex::new(index, self.order)
-            .try_flatten_for(self.shape)
-            .ok()?;
-        unsafe { Some(self.data.get_unchecked(index)) }
-    }
-
-    pub fn get_mut<I: IndexLike>(&mut self, index: I) -> Option<&mut T> {
-        let index = AxisIndex::new(index, self.order)
-            .try_flatten_for(self.shape)
-            .ok()?;
-        unsafe { Some(self.data.get_unchecked_mut(index)) }
-    }
+pub(super) fn translate_index_between_orders_unchecked(
+    index: usize,
+    src_shape: AxisShape,
+) -> usize {
+    let mut index = AxisIndex::from_flattened_unchecked(index, src_shape);
+    index.transpose();
+    let mut dest_shape = src_shape;
+    dest_shape.transpose();
+    index.to_flattened_unchecked(dest_shape)
 }
 
 #[cfg(test)]
