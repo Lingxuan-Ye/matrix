@@ -1,4 +1,3 @@
-use super::index::AxisIndex;
 use super::Matrix;
 
 const LEFT_DELIMITER: &'static str = "[";
@@ -53,8 +52,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                 if col != 0 {
                     write! {f, "{COMMA:<SEP_LEN$}"}?;
                 }
-                let index =
-                    AxisIndex::new((row, col), self.order).flatten_for_unchecked(self.shape);
+                let index = self.flatten_index_unchecked((row, col));
                 let element = &cache[index];
                 write!(f, "{SET_DIM}{index:>index_max_width$}{UNSET_DIM}")?;
                 write!(f, "{SPACE}")?;
@@ -93,8 +91,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
                 if col != 0 {
                     write! {f, "{COMMA:<SEP_LEN$}"}?;
                 }
-                let index =
-                    AxisIndex::new((row, col), self.order).flatten_for_unchecked(self.shape);
+                let index = self.flatten_index_unchecked((row, col));
                 let element = &cache[index];
                 write!(f, "{element:>element_max_width$}")?;
             }

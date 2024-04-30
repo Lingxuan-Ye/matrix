@@ -2,7 +2,7 @@ mod add;
 mod mul;
 mod sub;
 
-use super::index::AxisIndex;
+use super::index::translate_index_between_orders_unchecked;
 use super::iter::VectorIter;
 use super::order::Order;
 use super::shape::AxisShape;
@@ -52,10 +52,10 @@ impl<L> Matrix<L> {
             self.data
                 .iter()
                 .enumerate()
-                .map(|(index, element)| {
-                    let index = AxisIndex::from_flattened_unchecked(index, self.shape)
-                        .interpret_with(self.order);
-                    op((element, &rhs[index]))
+                .map(|(index, left)| {
+                    let index = translate_index_between_orders_unchecked(index, self.shape);
+                    let right = unsafe { rhs.data.get_unchecked(index) };
+                    op((left, right))
                 })
                 .collect()
         };
@@ -84,13 +84,14 @@ impl<L> Matrix<L> {
             self.data
                 .iter()
                 .enumerate()
-                .map(|(index, element)| {
-                    let index = AxisIndex::from_flattened_unchecked(index, self.shape)
-                        .interpret_with(self.order);
-                    op((element, rhs[index].clone()))
+                .map(|(index, left)| {
+                    let index = translate_index_between_orders_unchecked(index, self.shape);
+                    let right = unsafe { rhs.data.get_unchecked(index).clone() };
+                    op((left, right))
                 })
                 .collect()
         };
+
         Ok(Matrix {
             data,
             order: self.order,
@@ -114,10 +115,10 @@ impl<L> Matrix<L> {
             self.data
                 .into_iter()
                 .enumerate()
-                .map(|(index, element)| {
-                    let index = AxisIndex::from_flattened_unchecked(index, self.shape)
-                        .interpret_with(self.order);
-                    op((element, &rhs[index]))
+                .map(|(index, left)| {
+                    let index = translate_index_between_orders_unchecked(index, self.shape);
+                    let right = unsafe { rhs.data.get_unchecked(index) };
+                    op((left, right))
                 })
                 .collect()
         };
@@ -150,10 +151,10 @@ impl<L> Matrix<L> {
             self.data
                 .into_iter()
                 .enumerate()
-                .map(|(index, element)| {
-                    let index = AxisIndex::from_flattened_unchecked(index, self.shape)
-                        .interpret_with(self.order);
-                    op((element, rhs[index].clone()))
+                .map(|(index, left)| {
+                    let index = translate_index_between_orders_unchecked(index, self.shape);
+                    let right = unsafe { rhs.data.get_unchecked(index).clone() };
+                    op((left, right))
                 })
                 .collect()
         };
@@ -174,14 +175,11 @@ impl<L> Matrix<L> {
         if self.order == rhs.order {
             self.data.iter_mut().zip(rhs.data.iter()).for_each(op);
         } else {
-            self.data
-                .iter_mut()
-                .enumerate()
-                .for_each(|(index, element)| {
-                    let index = AxisIndex::from_flattened_unchecked(index, self.shape)
-                        .interpret_with(self.order);
-                    op((element, &rhs[index]))
-                });
+            self.data.iter_mut().enumerate().for_each(|(index, left)| {
+                let index = translate_index_between_orders_unchecked(index, self.shape);
+                let right = unsafe { rhs.data.get_unchecked(index) };
+                op((left, right))
+            });
         }
 
         Ok(())
@@ -201,14 +199,11 @@ impl<L> Matrix<L> {
         if self.order == rhs.order {
             self.data.iter_mut().zip(rhs.data.into_iter()).for_each(op);
         } else {
-            self.data
-                .iter_mut()
-                .enumerate()
-                .for_each(|(index, element)| {
-                    let index = AxisIndex::from_flattened_unchecked(index, self.shape)
-                        .interpret_with(self.order);
-                    op((element, rhs[index].clone()))
-                });
+            self.data.iter_mut().enumerate().for_each(|(index, left)| {
+                let index = translate_index_between_orders_unchecked(index, self.shape);
+                let right = unsafe { rhs.data.get_unchecked(index).clone() };
+                op((left, right))
+            });
         }
 
         Ok(())

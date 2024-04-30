@@ -8,7 +8,7 @@ pub mod shape;
 
 mod fmt;
 
-use self::index::AxisIndex;
+use self::index::translate_index_between_orders_unchecked;
 use self::order::Order;
 use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
@@ -153,9 +153,8 @@ impl<T> Matrix<T> {
 
     pub fn switch_order(&mut self) -> &mut Self {
         let size = self.size();
-        let old_shape = self.shape;
+        let src_shape = self.shape;
         self.shape.transpose();
-        let new_shape = self.shape;
 
         let mut visited = vec![false; size];
         for index in 0..size {
@@ -165,9 +164,7 @@ impl<T> Matrix<T> {
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
-                let next = AxisIndex::from_flattened_unchecked(current, old_shape)
-                    .transpose()
-                    .flatten_for_unchecked(new_shape);
+                let next = translate_index_between_orders_unchecked(current, src_shape);
                 self.data.swap(index, next);
                 current = next;
             }
