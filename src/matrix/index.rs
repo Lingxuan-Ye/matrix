@@ -163,14 +163,14 @@ impl<T> Matrix<T> {
         let index = AxisIndex::new(index, self.order)
             .try_flatten_for(self.shape)
             .ok()?;
-        self.data.get(index)
+        unsafe { Some(self.data.get_unchecked(index)) }
     }
 
     pub fn get_mut<I: IndexLike>(&mut self, index: I) -> Option<&mut T> {
         let index = AxisIndex::new(index, self.order)
             .try_flatten_for(self.shape)
             .ok()?;
-        self.data.get_mut(index)
+        unsafe { Some(self.data.get_unchecked_mut(index)) }
     }
 }
 
