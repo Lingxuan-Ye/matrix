@@ -10,7 +10,8 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        match self.multiplication_like_operation(rhs, vector_dot_product) {
+        let result = self.multiplication_like_operation(rhs, vector_dot_product);
+        match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -26,7 +27,8 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        match self.multiplication_like_operation(&rhs, vector_dot_product) {
+        let result = self.multiplication_like_operation(&rhs, vector_dot_product);
+        match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -42,7 +44,8 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        match self.multiplication_like_operation(rhs, vector_dot_product) {
+        let result = self.multiplication_like_operation(rhs, vector_dot_product);
+        match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -58,7 +61,8 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        match self.multiplication_like_operation(&rhs, vector_dot_product) {
+        let result = self.multiplication_like_operation(&rhs, vector_dot_product);
+        match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }

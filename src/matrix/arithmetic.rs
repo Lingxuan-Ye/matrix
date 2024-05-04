@@ -79,7 +79,7 @@ impl<L> Matrix<L> {
         ensure_elementwise_operation_conformable(self, &rhs)?;
 
         let data = if self.order == rhs.order {
-            self.data.iter().zip(rhs.data.into_iter()).map(op).collect()
+            self.data.iter().zip(rhs.data).map(op).collect()
         } else {
             self.data
                 .iter()
@@ -142,11 +142,7 @@ impl<L> Matrix<L> {
         ensure_elementwise_operation_conformable(&self, &rhs)?;
 
         let data = if self.order == rhs.order {
-            self.data
-                .into_iter()
-                .zip(rhs.data.into_iter())
-                .map(op)
-                .collect()
+            self.data.into_iter().zip(rhs.data).map(op).collect()
         } else {
             self.data
                 .into_iter()
@@ -197,7 +193,7 @@ impl<L> Matrix<L> {
         ensure_elementwise_operation_conformable(self, &rhs)?;
 
         if self.order == rhs.order {
-            self.data.iter_mut().zip(rhs.data.into_iter()).for_each(op);
+            self.data.iter_mut().zip(rhs.data).for_each(op);
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
                 let index = translate_index_between_orders_unchecked(index, self.shape);

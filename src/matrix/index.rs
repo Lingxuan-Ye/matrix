@@ -89,7 +89,7 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    fn to_flattened_unchecked(&self, shape: AxisShape) -> usize {
+    fn into_flattened_unchecked(self, shape: AxisShape) -> usize {
         // self.major * shape.major_stride() + self.minor * shape.minor_stride()
         self.major * shape.major_stride() + self.minor
     }
@@ -97,7 +97,7 @@ impl AxisIndex {
 
 impl<T> Matrix<T> {
     pub(super) fn flatten_index_unchecked<I: IndexLike>(&self, index: I) -> usize {
-        AxisIndex::new(index, self.order).to_flattened_unchecked(self.shape)
+        AxisIndex::new(index, self.order).into_flattened_unchecked(self.shape)
     }
 
     pub(super) fn try_flatten_index<I: IndexLike>(&self, index: I) -> Result<usize> {
@@ -105,7 +105,7 @@ impl<T> Matrix<T> {
         if index.major >= self.major() || index.minor >= self.minor() {
             return Err(Error::IndexOutOfBounds);
         }
-        Ok(index.to_flattened_unchecked(self.shape))
+        Ok(index.into_flattened_unchecked(self.shape))
     }
 
     pub(super) fn flatten_index<I: IndexLike>(&self, index: I) -> usize {
@@ -168,7 +168,7 @@ pub(super) fn translate_index_between_orders_unchecked(
     index.transpose();
     let mut dest_shape = src_shape;
     dest_shape.transpose();
-    index.to_flattened_unchecked(dest_shape)
+    index.into_flattened_unchecked(dest_shape)
 }
 
 #[cfg(test)]
@@ -293,13 +293,13 @@ mod test {
     #[should_panic]
     fn test_row_out_of_bounds() {
         let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        matrix[(2, 0)];
+        let _ = matrix[(2, 0)];
     }
 
     #[test]
     #[should_panic]
     fn test_col_out_of_bounds() {
         let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        matrix[(0, 3)];
+        let _ = matrix[(0, 3)];
     }
 }
