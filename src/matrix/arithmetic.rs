@@ -32,7 +32,7 @@ pub fn vector_dot_product<L, R, T>(lhs: VectorIter<&L>, rhs: VectorIter<&R>) -> 
 where
     L: std::ops::Mul<R, Output = T> + Clone,
     R: Clone,
-    T: std::ops::Add<Output = T> + Default,
+    T: std::ops::Add<Output = T>,
 {
     lhs.zip(rhs)
         .map(|(x, y)| x.clone() * y.clone())
@@ -213,8 +213,7 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<Matrix<T>>
     where
-        L: std::ops::Mul<R, Output = T>,
-        T: std::ops::Add<Output = T> + Default,
+        T: Default,
         F: FnMut(VectorIter<&L>, VectorIter<&R>) -> Option<T>,
     {
         ensure_multiplication_conformable(self, rhs)?;
