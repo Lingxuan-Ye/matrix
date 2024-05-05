@@ -9,36 +9,6 @@ use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
-pub fn ensure_elementwise_operation_conformable<L, R>(
-    lhs: &Matrix<L>,
-    rhs: &Matrix<R>,
-) -> Result<()> {
-    if lhs.shape() != rhs.shape() {
-        Err(Error::MatricesInconformable)
-    } else {
-        Ok(())
-    }
-}
-
-pub fn ensure_multiplication_conformable<L, R>(lhs: &Matrix<L>, rhs: &Matrix<R>) -> Result<()> {
-    if lhs.ncols() != rhs.nrows() {
-        Err(Error::MatricesInconformable)
-    } else {
-        Ok(())
-    }
-}
-
-pub fn vector_dot_product<L, R, T>(lhs: VectorIter<&L>, rhs: VectorIter<&R>) -> Option<T>
-where
-    L: std::ops::Mul<R, Output = T> + Clone,
-    R: Clone,
-    T: std::ops::Add<Output = T>,
-{
-    lhs.zip(rhs)
-        .map(|(x, y)| x.clone() * y.clone())
-        .reduce(|acc, v| acc + v)
-}
-
 impl<L> Matrix<L> {
     pub fn elementwise_operation<R, T, F>(&self, rhs: &Matrix<R>, mut op: F) -> Result<Matrix<T>>
     where
@@ -256,4 +226,34 @@ impl<L> Matrix<L> {
 
         Ok(Matrix { data, order, shape })
     }
+}
+
+pub fn ensure_elementwise_operation_conformable<L, R>(
+    lhs: &Matrix<L>,
+    rhs: &Matrix<R>,
+) -> Result<()> {
+    if lhs.shape() != rhs.shape() {
+        Err(Error::MatricesInconformable)
+    } else {
+        Ok(())
+    }
+}
+
+pub fn ensure_multiplication_conformable<L, R>(lhs: &Matrix<L>, rhs: &Matrix<R>) -> Result<()> {
+    if lhs.ncols() != rhs.nrows() {
+        Err(Error::MatricesInconformable)
+    } else {
+        Ok(())
+    }
+}
+
+pub fn vector_dot_product<L, R, T>(lhs: VectorIter<&L>, rhs: VectorIter<&R>) -> Option<T>
+where
+    L: std::ops::Mul<R, Output = T> + Clone,
+    R: Clone,
+    T: std::ops::Add<Output = T>,
+{
+    lhs.zip(rhs)
+        .map(|(x, y)| x.clone() * y.clone())
+        .reduce(|acc, v| acc + v)
 }
