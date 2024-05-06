@@ -14,8 +14,7 @@ pub enum Error {
     /// [`Vec::with_capacity`] for more information.
     CapacityExceeded,
 
-    /// Error for accessing an index out of bounds. Not exposed in current
-    /// public APIs.
+    /// Error for accessing an index out of bounds.
     IndexOutOfBounds,
 
     /// Error for shape mismatch in arithmetic operations between matrices.

@@ -3,6 +3,8 @@ use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
+/// A structure for indexing a [`Matrix`]. You might prefer using
+/// `(usize, usize)` instead. Refer to [`IndexLike`] for more information.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Index {
     pub row: usize,
@@ -21,6 +23,19 @@ impl std::fmt::Display for Index {
     }
 }
 
+/// Any type implementing this trait can be used to index a [Matrix].
+///
+/// # Examples
+///
+/// ```
+/// use matreex::{matrix, Index};
+///
+/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+///
+/// assert_eq!(matrix[Index::new(0, 0)], 0);
+/// assert_eq!(matrix[(0, 0)], 0);
+/// assert_eq!(matrix[[0, 0]], 0);
+/// ```
 pub trait IndexLike {
     fn row(&self) -> usize;
 
@@ -117,21 +132,47 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    /// Returns a reference to an element at given position,
+    /// or [`Error::IndexOutOfBounds`] if out of bounds.
     pub fn get<I: IndexLike>(&self, index: I) -> Result<&T> {
         let index = self.try_flatten_index(index)?;
         unsafe { Ok(self.data.get_unchecked(index)) }
     }
 
+    /// Returns a mutable reference to an element at given position,
+    /// or [`Error::IndexOutOfBounds`] if out of bounds.
     pub fn get_mut<I: IndexLike>(&mut self, index: I) -> Result<&mut T> {
         let index = self.try_flatten_index(index)?;
         unsafe { Ok(self.data.get_unchecked_mut(index)) }
     }
 
+    /// Returns a reference to an element without doing bounds checking.
+    ///
+    /// For a safe alternative see [`get`].
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with an out-of-bounds index is *[undefined behavior]*
+    /// even if the resulting reference is not used.
+    ///
+    /// [`get`]: Matrix::get
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     pub unsafe fn get_unchecked<I: IndexLike>(&self, index: I) -> &T {
         let index = self.flatten_index_unchecked(index);
         unsafe { self.data.get_unchecked(index) }
     }
 
+    /// Returns a mutable reference to an element without doing bounds checking.
+    ///
+    /// For a safe alternative see [`get_mut`].
+    ///
+    /// # Safety
+    ///
+    /// Calling this method with an out-of-bounds index is undefined behavior
+    /// even if the resulting reference is not used.
+    ///
+    /// [`get_mut`]: Matrix::get_mut
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     pub unsafe fn get_unchecked_mut<I: IndexLike>(&mut self, index: I) -> &mut T {
         let index = self.flatten_index_unchecked(index);
         unsafe { self.data.get_unchecked_mut(index) }

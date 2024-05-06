@@ -1,6 +1,11 @@
 use super::order::Order;
 use crate::error::{Error, Result};
 
+/// A structure describing the shape of a [`Matrix`]. You might prefer using
+/// `(usize, usize)` instead when constructing a [`Matrix`] instance. Refer
+/// to [`ShapeLike`] for more information.
+///
+/// [`Matrix`]: crate::matrix::Matrix
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Shape {
     pub nrows: usize,
@@ -19,6 +24,20 @@ impl std::fmt::Display for Shape {
     }
 }
 
+/// Any type implementing this trait can be used to describe the shape of
+/// a [`Matrix`].
+///
+/// # Examples
+///
+/// ```
+/// use matreex::{Matrix, Shape};
+///
+/// let foo = Matrix::<u8>::new(Shape::new(2, 3));
+/// let bar = Matrix::<u8>::new((2, 3));
+/// let baz = Matrix::<u8>::new([2, 3]);
+/// ```
+///
+/// [`Matrix`]: crate::matrix::Matrix
 pub trait ShapeLike {
     fn nrows(&self) -> usize;
 
