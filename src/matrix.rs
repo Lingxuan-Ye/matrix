@@ -1,4 +1,4 @@
-//! The main module, which defines [`Matrix`] and related components.
+//! This module defines [`Matrix`] and all its related components.
 
 pub mod arithmetic;
 pub mod index;
