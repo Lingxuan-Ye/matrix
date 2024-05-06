@@ -117,14 +117,14 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    pub fn get<I: IndexLike>(&self, index: I) -> Option<&T> {
-        let index = self.try_flatten_index(index).ok()?;
-        unsafe { Some(self.data.get_unchecked(index)) }
+    pub fn get<I: IndexLike>(&self, index: I) -> Result<&T> {
+        let index = self.try_flatten_index(index)?;
+        unsafe { Ok(self.data.get_unchecked(index)) }
     }
 
-    pub fn get_mut<I: IndexLike>(&mut self, index: I) -> Option<&mut T> {
-        let index = self.try_flatten_index(index).ok()?;
-        unsafe { Some(self.data.get_unchecked_mut(index)) }
+    pub fn get_mut<I: IndexLike>(&mut self, index: I) -> Result<&mut T> {
+        let index = self.try_flatten_index(index)?;
+        unsafe { Ok(self.data.get_unchecked_mut(index)) }
     }
 
     pub unsafe fn get_unchecked<I: IndexLike>(&self, index: I) -> &T {
@@ -219,25 +219,25 @@ mod test {
     #[test]
     fn test_matrix_get() {
         let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.get((0, 0)), Some(&0));
-        assert_eq!(matrix.get((0, 1)), Some(&1));
-        assert_eq!(matrix.get((0, 2)), Some(&2));
-        assert_eq!(matrix.get((1, 0)), Some(&3));
-        assert_eq!(matrix.get((1, 1)), Some(&4));
-        assert_eq!(matrix.get((1, 2)), Some(&5));
-        assert_eq!(matrix.get((2, 0)), None);
+        assert_eq!(matrix.get((0, 0)), Ok(&0));
+        assert_eq!(matrix.get((0, 1)), Ok(&1));
+        assert_eq!(matrix.get((0, 2)), Ok(&2));
+        assert_eq!(matrix.get((1, 0)), Ok(&3));
+        assert_eq!(matrix.get((1, 1)), Ok(&4));
+        assert_eq!(matrix.get((1, 2)), Ok(&5));
+        assert_eq!(matrix.get((2, 0)), Err(Error::IndexOutOfBounds));
     }
 
     #[test]
     fn test_matrix_get_mut() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.get_mut((0, 0)), Some(&mut 0));
-        assert_eq!(matrix.get_mut((0, 1)), Some(&mut 1));
-        assert_eq!(matrix.get_mut((0, 2)), Some(&mut 2));
-        assert_eq!(matrix.get_mut((1, 0)), Some(&mut 3));
-        assert_eq!(matrix.get_mut((1, 1)), Some(&mut 4));
-        assert_eq!(matrix.get_mut((1, 2)), Some(&mut 5));
-        assert_eq!(matrix.get_mut((2, 0)), None);
+        assert_eq!(matrix.get_mut((0, 0)), Ok(&mut 0));
+        assert_eq!(matrix.get_mut((0, 1)), Ok(&mut 1));
+        assert_eq!(matrix.get_mut((0, 2)), Ok(&mut 2));
+        assert_eq!(matrix.get_mut((1, 0)), Ok(&mut 3));
+        assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 4));
+        assert_eq!(matrix.get_mut((1, 2)), Ok(&mut 5));
+        assert_eq!(matrix.get_mut((2, 0)), Err(Error::IndexOutOfBounds));
     }
 
     #[test]
