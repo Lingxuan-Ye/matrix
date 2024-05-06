@@ -105,7 +105,7 @@ impl<T> Matrix<T> {
     }
 
     pub fn size(&self) -> usize {
-        self.shape.size()
+        self.data.len()
     }
 
     fn major(&self) -> usize {
