@@ -1,4 +1,4 @@
-//! The main module, which defines [`Matrix`] and related components.
+//! This module defines [`Matrix`] and all its related components.
 
 pub mod arithmetic;
 pub mod index;
@@ -8,7 +8,7 @@ pub mod shape;
 
 mod fmt;
 
-use self::index::AxisIndex;
+use self::index::translate_index_between_orders_unchecked;
 use self::order::Order;
 use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
@@ -105,7 +105,11 @@ impl<T> Matrix<T> {
     }
 
     pub fn size(&self) -> usize {
-        self.shape.size()
+        self.data.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
     }
 
     fn major(&self) -> usize {
@@ -153,9 +157,8 @@ impl<T> Matrix<T> {
 
     pub fn switch_order(&mut self) -> &mut Self {
         let size = self.size();
-        let old_shape = self.shape;
+        let src_shape = self.shape;
         self.shape.transpose();
-        let new_shape = self.shape;
 
         let mut visited = vec![false; size];
         for index in 0..size {
@@ -165,9 +168,7 @@ impl<T> Matrix<T> {
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
-                let next = AxisIndex::from_flattened_unchecked(current, old_shape)
-                    .transpose()
-                    .flatten_for_unchecked(new_shape);
+                let next = translate_index_between_orders_unchecked(current, src_shape);
                 self.data.swap(index, next);
                 current = next;
             }
@@ -188,8 +189,9 @@ impl<T> Matrix<T> {
 impl<T> Matrix<T> {
     fn check_size(size: usize) -> Result<usize> {
         // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
+        const MAX: usize = isize::MAX as usize;
         match std::mem::size_of::<T>().checked_mul(size) {
-            Some(bytes) if (bytes <= isize::MAX as usize) => Ok(size),
+            Some(0..=MAX) => Ok(size),
             _ => Err(Error::CapacityExceeded),
         }
     }
