@@ -1,9 +1,11 @@
 [package]
 name = "matreex"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Lingxuan Ye <love@lingxuan.io>"]
+categories = ["data-structures"]
 description = "A simple matrix implementation."
+repository = "https://github.com/Lingxuan-Ye/matreex"
 readme = "README.md"
 license = "MIT"
 
