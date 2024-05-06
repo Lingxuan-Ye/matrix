@@ -108,6 +108,10 @@ impl<T> Matrix<T> {
         self.data.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.data.is_empty()
+    }
+
     fn major(&self) -> usize {
         self.shape.major()
     }
