@@ -8,7 +8,7 @@ use std::slice::Iter;
 pub(super) struct MinorAxisVectorIter<'a, T>(StepBy<Skip<Iter<'a, T>>>);
 
 impl<'a, T> MinorAxisVectorIter<'a, T> {
-    pub fn new(matrix: &'a Matrix<T>, n: usize) -> Self {
+    pub(super) fn new(matrix: &'a Matrix<T>, n: usize) -> Self {
         let major_stride = matrix.major_stride();
         let iter = matrix.data.iter().skip(n).step_by(major_stride);
         Self(iter)
@@ -30,7 +30,7 @@ pub(super) struct MinorAxisMatrixIter<'a, T> {
 }
 
 impl<'a, T> MinorAxisMatrixIter<'a, T> {
-    pub fn new(matrix: &'a Matrix<T>) -> Self {
+    pub(super) fn new(matrix: &'a Matrix<T>) -> Self {
         let total = matrix.minor();
         let counter = Counter::new(total);
         Self { matrix, counter }
