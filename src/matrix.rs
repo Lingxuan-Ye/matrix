@@ -112,6 +112,10 @@ impl<T> Matrix<T> {
         self.data.is_empty()
     }
 
+    pub fn capacity(&self) -> usize {
+        self.data.capacity()
+    }
+
     fn major(&self) -> usize {
         self.shape.major()
     }
@@ -182,6 +186,16 @@ impl<T> Matrix<T> {
         if order != self.order {
             self.switch_order();
         }
+        self
+    }
+
+    pub fn shrink_capacity_to_fit(&mut self) -> &mut Self {
+        self.data.shrink_to_fit();
+        self
+    }
+
+    pub fn shrink_capacity_to(&mut self, min_capacity: usize) -> &mut Self {
+        self.data.shrink_to(min_capacity);
         self
     }
 }
