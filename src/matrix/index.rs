@@ -79,8 +79,8 @@ impl IndexLike for [usize; 2] {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 struct AxisIndex {
-    pub major: usize,
-    pub minor: usize,
+    major: usize,
+    minor: usize,
 }
 
 impl AxisIndex {

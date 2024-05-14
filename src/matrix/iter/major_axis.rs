@@ -7,7 +7,7 @@ use std::slice::Iter;
 pub(super) struct MajorAxisVectorIter<'a, T>(Iter<'a, T>);
 
 impl<'a, T> MajorAxisVectorIter<'a, T> {
-    pub fn new(matrix: &'a Matrix<T>, n: usize) -> Self {
+    pub(super) fn new(matrix: &'a Matrix<T>, n: usize) -> Self {
         let major_stride = matrix.major_stride();
         let start = n * major_stride;
         let end = start + major_stride;
@@ -30,7 +30,7 @@ pub(super) struct MajorAxisMatrixIter<'a, T> {
 }
 
 impl<'a, T> MajorAxisMatrixIter<'a, T> {
-    pub fn new(matrix: &'a Matrix<T>) -> Self {
+    pub(super) fn new(matrix: &'a Matrix<T>) -> Self {
         let total = matrix.major();
         let counter = Counter::new(total);
         Self { matrix, counter }
