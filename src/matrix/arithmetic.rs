@@ -9,6 +9,29 @@ use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
+/// Ensures that two matrices are conformable for element-wise operations.
+///
+/// # Errors
+///
+/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::Error;
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic;
+///
+/// let lhs = matrix![[0, 0, 0], [0, 0, 0]];
+///
+/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+/// let result = arithmetic::ensure_elementwise_operation_conformable(&lhs, &rhs);
+/// assert!(result.is_ok());
+///
+/// let rhs = matrix![[1, 1], [1, 1]];
+/// let result = arithmetic::ensure_elementwise_operation_conformable(&lhs, &rhs);
+/// assert_eq!(result, Err(Error::MatricesInconformable));
+/// ```
 pub fn ensure_elementwise_operation_conformable<L, R>(
     lhs: &Matrix<L>,
     rhs: &Matrix<R>,
@@ -20,6 +43,29 @@ pub fn ensure_elementwise_operation_conformable<L, R>(
     }
 }
 
+/// Ensures that two matrices are conformable for multiplication-like operation.
+///
+/// # Errors
+///
+/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::Error;
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic;
+///
+/// let lhs = matrix![[0, 0, 0], [0, 0, 0]];
+///
+/// let rhs = matrix![[1], [1], [1]];
+/// let result = arithmetic::ensure_multiplication_like_operation_conformable(&lhs, &rhs);
+/// assert!(result.is_ok());
+///
+/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+/// let result = arithmetic::ensure_multiplication_like_operation_conformable(&lhs, &rhs);
+/// assert_eq!(result, Err(Error::MatricesInconformable));
+/// ```
 pub fn ensure_multiplication_like_operation_conformable<L, R>(
     lhs: &Matrix<L>,
     rhs: &Matrix<R>,
@@ -31,6 +77,30 @@ pub fn ensure_multiplication_like_operation_conformable<L, R>(
     }
 }
 
+/// Computes the dot product of two vectors.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic;
+/// use matreex::Matrix;
+///
+/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+///
+/// let lhs = matrix.iter_nth_row(0);
+/// let rhs = matrix.iter_nth_row(1);
+/// assert_eq!(arithmetic::vector_dot_product(lhs, rhs), Some(14));
+///
+/// let lhs = matrix.iter_nth_row(0);
+/// let rhs = matrix.iter_nth_col(1);
+/// assert_eq!(arithmetic::vector_dot_product(lhs, rhs), Some(4));
+///
+/// let lhs = matrix.iter_nth_row(0);
+/// let zero_rows_matrix = Matrix::<u8>::new((0, 3));
+/// let rhs = zero_rows_matrix.iter_nth_col(1);
+/// assert!(arithmetic::vector_dot_product(lhs, rhs).is_none());
+/// ```
 pub fn vector_dot_product<L, R, T>(lhs: VectorIter<&L>, rhs: VectorIter<&R>) -> Option<T>
 where
     L: std::ops::Mul<R, Output = T> + Clone,
@@ -42,6 +112,32 @@ where
         .reduce(|acc, v| acc + v)
 }
 
+/// Performs element-wise operation `op` on two matrices.
+///
+/// # Errors
+///
+/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+///
+/// # Notes
+///
+/// The resulting matrix will always have the same order as `lhs`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic;
+///
+/// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+///
+/// let result = arithmetic::elementwise_operation(
+///     &lhs,
+///     &rhs,
+///     |(x, y)| x + y
+/// );
+/// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+/// ```
 pub fn elementwise_operation<L, R, T, F>(
     lhs: &Matrix<L>,
     rhs: &Matrix<R>,
@@ -71,6 +167,32 @@ where
     Ok(Matrix { data, order, shape })
 }
 
+/// Performs element-wise operation `op` on two matrices, consuming `rhs`.
+///
+/// # Errors
+///
+/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+///
+/// # Notes
+///
+/// The resulting matrix will always have the same order as `lhs`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic;
+///
+/// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+///
+/// let result = arithmetic::elementwise_operation_consume_rhs(
+///     &lhs,
+///     rhs,
+///     |(x, y)| x + y
+/// );
+/// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+/// ```
 pub fn elementwise_operation_consume_rhs<L, R, T, F>(
     lhs: &Matrix<L>,
     rhs: Matrix<R>,
@@ -101,6 +223,32 @@ where
     Ok(Matrix { data, order, shape })
 }
 
+/// Performs element-wise operation `op` on two matrices, consuming `lhs`.
+///
+/// # Errors
+///
+/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+///
+/// # Notes
+///
+/// The resulting matrix will always have the same order as `lhs`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic;
+///
+/// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+///
+/// let result = arithmetic::elementwise_operation_consume_lhs(
+///     lhs,
+///     &rhs,
+///     |(x, y)| x + y
+/// );
+/// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+/// ```
 pub fn elementwise_operation_consume_lhs<L, R, T, F>(
     lhs: Matrix<L>,
     rhs: &Matrix<R>,
@@ -130,6 +278,32 @@ where
     Ok(Matrix { data, order, shape })
 }
 
+/// Performs element-wise operation `op` on two matrices, consuming both.
+///
+/// # Errors
+///
+/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+///
+/// # Notes
+///
+/// The resulting matrix will always have the same order as `lhs`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic;
+///
+/// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+///
+/// let result = arithmetic::elementwise_operation_consume_both(
+///     lhs,
+///     rhs,
+///     |(x, y)| x + y
+/// );
+/// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+/// ```
 pub fn elementwise_operation_consume_both<L, R, T, F>(
     lhs: Matrix<L>,
     rhs: Matrix<R>,
@@ -160,6 +334,34 @@ where
     Ok(Matrix { data, order, shape })
 }
 
+/// Performs element-wise operation `op` on two matrices, assigning the result
+/// to `lhs`.
+///
+/// # Errors
+///
+/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+///
+/// # Notes
+///
+/// The resulting matrix will always have the same order as `lhs`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic;
+///
+/// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+///
+/// arithmetic::elementwise_operation_assign_to_lhs(
+///     &mut lhs,
+///     &rhs,
+///     |(x, y)| *x += y
+/// ).unwrap();
+///
+/// assert_eq!(lhs, matrix![[1, 2, 3], [4, 5, 6]]);
+/// ```
 pub fn elementwise_operation_assign_to_lhs<L, R, F>(
     lhs: &mut Matrix<L>,
     rhs: &Matrix<R>,
@@ -183,6 +385,34 @@ where
     Ok(())
 }
 
+/// Performs element-wise operation `op` on two matrices, assigning the result
+/// to `lhs` and consuming `rhs`.
+///
+/// # Errors
+///
+/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+///
+/// # Notes
+///
+/// The resulting matrix will always have the same order as `lhs`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic::elementwise_operation_assign_to_lhs_consume_rhs;
+///
+/// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+///
+/// elementwise_operation_assign_to_lhs_consume_rhs(
+///     &mut lhs,
+///     rhs,
+///     |(x, y)| *x += y
+/// ).unwrap();
+///
+/// assert_eq!(lhs, matrix![[1, 2, 3], [4, 5, 6]]);
+/// ```
 pub fn elementwise_operation_assign_to_lhs_consume_rhs<L, R, F>(
     lhs: &mut Matrix<L>,
     rhs: Matrix<R>,
@@ -207,6 +437,31 @@ where
     Ok(())
 }
 
+/// Performs multiplicatio-like operation `op` on two matrices.
+///
+/// # Errors
+///
+/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+///
+/// # Notes
+///
+/// The resulting matrix will always have the same order as `lhs`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::arithmetic::{
+///     multiplication_like_operation,
+///     vector_dot_product,
+/// };
+///
+/// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+/// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+///
+/// let result = multiplication_like_operation(&lhs, &rhs, vector_dot_product);
+/// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
+/// ```
 pub fn multiplication_like_operation<L, R, T, F>(
     lhs: &Matrix<L>,
     rhs: &Matrix<R>,
