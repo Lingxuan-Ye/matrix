@@ -25,7 +25,7 @@ use crate::error::{Error, Result};
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 /// ```
 ///
-/// [`matrix!`]: crate::matrix
+/// [`matrix!`]: crate::matrix!
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Matrix<T> {
     data: Vec<T>,
