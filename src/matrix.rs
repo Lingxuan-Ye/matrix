@@ -40,6 +40,26 @@ impl<T: Default> Matrix<T> {
     ///
     /// Panic if size exceeds [`usize::MAX`], or total bytes stored
     /// exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let matrix = Matrix::<u8>::new((2, 3));
+    /// ```
+    ///
+    /// ```should_panic
+    /// use matreex::Matrix;
+    ///
+    /// let matrix = Matrix::<u8>::new((2, usize::MAX));
+    /// ```
+    ///
+    /// ```should_panic
+    /// use matreex::Matrix;
+    ///
+    /// let matrix = Matrix::<u8>::new((1, isize::MAX as usize + 1));
+    /// ```
     pub fn new<S: ShapeLike>(shape: S) -> Self {
         match Self::build(shape) {
             Err(error) => panic!("{error}"),
@@ -49,9 +69,25 @@ impl<T: Default> Matrix<T> {
 
     /// Builds a new [`Matrix`] instance with default values.
     ///
-    /// Return [`Error::SizeOverflow`] if size exceeds [`usize::MAX`],
-    /// and [`Error::CapacityExceeded`] if total bytes stored exceeds
-    /// [`isize::MAX`].
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    /// - [`Error::CapacityExceeded`] if total bytes stored exceeds [`isize::MAX`].
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, Matrix};
+    ///
+    /// let result = Matrix::<u8>::build((2, 3));
+    /// assert!(result.is_ok());
+    ///
+    /// let result = Matrix::<u8>::build((2, usize::MAX));
+    /// assert_eq!(result, Err(Error::SizeOverflow));
+    ///
+    /// let result = Matrix::<u8>::build((1, isize::MAX as usize + 1));
+    /// assert_eq!(result, Err(Error::CapacityExceeded));
+    /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
         let shape = AxisShape::build(shape, order)?;
@@ -62,10 +98,23 @@ impl<T: Default> Matrix<T> {
 }
 
 impl<T: Clone> Matrix<T> {
-    /// Creates a new [`Matrix`] instance from the given slice with
-    /// shape `(1, src.len())`.
+    /// Creates a new [`Matrix`] instance from the given slice.
     ///
-    /// This will never fail.
+    /// # Notes
+    ///
+    /// The matrix returned will always have `1` row and `src.len()` columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let slice = [0, 1, 2, 3, 4, 5];
+    /// let matrix = Matrix::from_slice(&slice);
+    ///
+    /// assert_eq!(matrix.nrows(), 1);
+    /// assert_eq!(matrix.ncols(), 6);
+    /// ```
     pub fn from_slice(src: &[T]) -> Self {
         let data = src.to_vec();
         let order = Order::default();
@@ -77,7 +126,14 @@ impl<T: Clone> Matrix<T> {
 impl<T> Matrix<T> {
     /// Creates a new [`Matrix`] instance from the given 2D array.
     ///
-    /// This will never fail.
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let array = Box::new([[0, 1, 2], [3, 4, 5]]);
+    /// let matrix = Matrix::from_2darray(array);
+    /// ```
     pub fn from_2darray<const R: usize, const C: usize>(src: Box<[[T; C]; R]>) -> Self {
         let ptr = Box::leak(src).as_mut_ptr() as *mut T;
         let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
