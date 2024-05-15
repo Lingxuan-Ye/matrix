@@ -198,6 +198,28 @@ impl<T> Matrix<T> {
 }
 
 impl<T: Default> Matrix<T> {
+    /// Resizes the matrix to the specified shape.
+    ///
+    /// # Notes
+    ///
+    /// Reducing the size does not automatically shrink the capacity.
+    /// This choice is made to avoid potential reallocation.
+    /// Consider explicitly calling [`Matrix::shrink_capacity_to_fit`]
+    /// if needed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.resize((2, 2)).unwrap();
+    /// assert_eq!(matrix, matrix![[0, 1], [2, 3]]);
+    ///
+    /// matrix.resize((2, 3)).unwrap();
+    /// assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+    /// ```
     pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = AxisShape::build(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
@@ -208,6 +230,26 @@ impl<T: Default> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    /// Reshapes the matrix to the specified shape.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeMismatch`] if the size of the new shape does not
+    /// match the current size of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.reshape((3, 2)).unwrap();
+    /// assert_eq!(matrix, matrix![[0, 1], [2, 3], [4, 5]]);
+    ///
+    /// let result = matrix.reshape((2, 2));
+    /// assert_eq!(result, Err(Error::SizeMismatch));
+    /// ```
     pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = AxisShape::build(shape, self.order).map_err(|_| Error::SizeMismatch)?;
         if shape.size() != self.data.len() {
@@ -217,11 +259,51 @@ impl<T> Matrix<T> {
         Ok(self)
     }
 
+    /// Transposes the matrix.
+    ///
+    /// # Notes
+    ///
+    /// For performance reasons, this method transposes the matrix simply
+    /// by changing its order, rather than physically rearranging the data.
+    /// This may be considered as having a side effect.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// matrix.transpose();
+    /// // column 0
+    /// assert_eq!(matrix[(0, 0)], 0);
+    /// assert_eq!(matrix[(1, 0)], 1);
+    /// assert_eq!(matrix[(2, 0)], 2);
+    /// // column 1
+    /// assert_eq!(matrix[(0, 1)], 3);
+    /// assert_eq!(matrix[(1, 1)], 4);
+    /// assert_eq!(matrix[(2, 1)], 5);
+    /// ```
     pub fn transpose(&mut self) -> &mut Self {
         self.order = !self.order;
         self
     }
 
+    /// Switches the order of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.order(), Order::default());
+    ///
+    /// matrix.switch_order();
+    /// assert_eq!(matrix.order(), !Order::default());
+    ///
+    /// matrix.switch_order();
+    /// assert_eq!(matrix.order(), Order::default());
+    /// ```
     pub fn switch_order(&mut self) -> &mut Self {
         let size = self.size();
         let src_shape = self.shape;
@@ -245,6 +327,22 @@ impl<T> Matrix<T> {
         self
     }
 
+    /// Sets the order of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.order(), Order::default());
+    ///
+    /// matrix.set_order(Order::RowMajor);
+    /// assert_eq!(matrix.order(), Order::RowMajor);
+    ///
+    /// matrix.set_order(Order::ColMajor);
+    /// assert_eq!(matrix.order(), Order::ColMajor);
+    /// ```
     pub fn set_order(&mut self, order: Order) -> &mut Self {
         if order != self.order {
             self.switch_order();
@@ -252,11 +350,19 @@ impl<T> Matrix<T> {
         self
     }
 
+    /// Shrinks the capacity of the matrix as much as possible.
     pub fn shrink_capacity_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
         self
     }
 
+    /// Shrinks the capacity of the matrix with a lower bound.
+    ///
+    /// The capacity will remain at least as large as both the size
+    /// and the supplied value.
+    ///
+    /// If the current capacity is less than the lower limit,
+    /// this is a no-op.
     pub fn shrink_capacity_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
         self
