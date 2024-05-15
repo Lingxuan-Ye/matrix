@@ -13,6 +13,15 @@ pub struct Shape {
 }
 
 impl Shape {
+    /// Creates a new [`Shape`] instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// ```
     pub fn new(nrows: usize, ncols: usize) -> Self {
         Self { nrows, ncols }
     }
@@ -39,12 +48,21 @@ impl std::fmt::Display for Shape {
 ///
 /// [`Matrix`]: crate::matrix::Matrix
 pub trait ShapeLike {
+    /// Returns the number of rows of the shape.
     fn nrows(&self) -> usize;
 
+    /// Returns the number of columns of the shape.
     fn ncols(&self) -> usize;
 
-    fn size(&self) -> Option<usize> {
-        self.nrows().checked_mul(self.ncols())
+    /// Returns the size of the shape.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
+    fn size(&self) -> Result<usize> {
+        self.nrows()
+            .checked_mul(self.ncols())
+            .ok_or(Error::SizeOverflow)
     }
 }
 
@@ -85,10 +103,8 @@ pub(super) struct AxisShape {
 }
 
 impl AxisShape {
-    pub fn build<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
-        if shape.size().is_none() {
-            return Err(Error::SizeOverflow);
-        }
+    pub(super) fn build<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
+        shape.size()?;
         let (major, minor) = match order {
             Order::RowMajor => (shape.nrows(), shape.ncols()),
             Order::ColMajor => (shape.ncols(), shape.nrows()),
@@ -96,32 +112,32 @@ impl AxisShape {
         Ok(Self { major, minor })
     }
 
-    pub fn major(&self) -> usize {
+    pub(super) fn major(&self) -> usize {
         self.major
     }
 
-    pub fn minor(&self) -> usize {
+    pub(super) fn minor(&self) -> usize {
         self.minor
     }
 
-    pub fn major_stride(&self) -> usize {
+    pub(super) fn major_stride(&self) -> usize {
         self.minor
     }
 
-    pub const fn minor_stride(&self) -> usize {
+    pub(super) const fn minor_stride(&self) -> usize {
         1
     }
 
-    pub fn size(&self) -> usize {
+    pub(super) fn size(&self) -> usize {
         self.major * self.minor
     }
 
-    pub fn transpose(&mut self) -> &mut Self {
+    pub(super) fn transpose(&mut self) -> &mut Self {
         (self.major, self.minor) = (self.minor, self.major);
         self
     }
 
-    pub fn interpret_with(&self, order: Order) -> Shape {
+    pub(super) fn interpret_with(&self, order: Order) -> Shape {
         let (nrows, ncols) = match order {
             Order::RowMajor => (self.major, self.minor),
             Order::ColMajor => (self.minor, self.major),
@@ -129,14 +145,14 @@ impl AxisShape {
         Shape { nrows, ncols }
     }
 
-    pub fn interpret_nrows_with(&self, order: Order) -> usize {
+    pub(super) fn interpret_nrows_with(&self, order: Order) -> usize {
         match order {
             Order::RowMajor => self.major,
             Order::ColMajor => self.minor,
         }
     }
 
-    pub fn interpret_ncols_with(&self, order: Order) -> usize {
+    pub(super) fn interpret_ncols_with(&self, order: Order) -> usize {
         match order {
             Order::RowMajor => self.minor,
             Order::ColMajor => self.major,
@@ -166,18 +182,18 @@ mod test {
     fn test_shape_like() {
         assert_eq!(Shape::new(2, 3).nrows(), 2);
         assert_eq!(Shape::new(2, 3).ncols(), 3);
-        assert_eq!(Shape::new(2, 3).size(), Some(6));
-        assert_eq!(Shape::new(2, usize::MAX).size(), None);
+        assert_eq!(Shape::new(2, 3).size(), Ok(6));
+        assert_eq!(Shape::new(2, usize::MAX).size(), Err(Error::SizeOverflow));
 
         assert_eq!((2, 3).nrows(), 2);
         assert_eq!((2, 3).ncols(), 3);
-        assert_eq!((2, 3).size(), Some(6));
-        assert_eq!((2, usize::MAX).size(), None);
+        assert_eq!((2, 3).size(), Ok(6));
+        assert_eq!((2, usize::MAX).size(), Err(Error::SizeOverflow));
 
         assert_eq!([2, 3].nrows(), 2);
         assert_eq!([2, 3].ncols(), 3);
-        assert_eq!([2, 3].size(), Some(6));
-        assert_eq!([2, usize::MAX].size(), None);
+        assert_eq!([2, 3].size(), Ok(6));
+        assert_eq!([2, usize::MAX].size(), Err(Error::SizeOverflow));
     }
 
     #[test]

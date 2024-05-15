@@ -12,6 +12,15 @@ pub struct Index {
 }
 
 impl Index {
+    /// Creates a new [`Index`] instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Index;
+    ///
+    /// let shape = Index::new(2, 3);
+    /// ```
     pub fn new(row: usize, col: usize) -> Self {
         Self { row, col }
     }
@@ -23,24 +32,27 @@ impl std::fmt::Display for Index {
     }
 }
 
-/// Any type implementing this trait can be used to index a [Matrix].
+/// Any type implementing this trait can be used to index a [`Matrix`].
 ///
 /// # Examples
 ///
 /// ```
-/// use matreex::{matrix, Index};
+/// use matreex::{Index, matrix};
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///
-/// assert_eq!(matrix[Index::new(0, 0)], 0);
-/// assert_eq!(matrix[(0, 0)], 0);
-/// assert_eq!(matrix[[0, 0]], 0);
+/// assert_eq!(matrix[Index::new(1, 1)], 4);
+/// assert_eq!(matrix[(1, 1)], 4);
+/// assert_eq!(matrix[[1, 1]], 4);
 /// ```
 pub trait IndexLike {
+    /// Returns the row of the index.
     fn row(&self) -> usize;
 
+    /// Returns the column of the index.
     fn col(&self) -> usize;
 
+    /// Returns `true` if the index is out of bounds of given matrix.
     fn is_out_of_bounds_of<T>(&self, matrix: &Matrix<T>) -> bool {
         let shape = matrix.shape();
         self.row() >= shape.nrows || self.col() >= shape.ncols
@@ -79,8 +91,8 @@ impl IndexLike for [usize; 2] {
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 struct AxisIndex {
-    pub major: usize,
-    pub minor: usize,
+    major: usize,
+    minor: usize,
 }
 
 impl AxisIndex {
@@ -132,15 +144,41 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    /// Returns a reference to an element at given position,
-    /// or [`Error::IndexOutOfBounds`] if out of bounds.
+    /// Returns a reference to an element at given position.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.get((1, 1)), Ok(&4));
+    /// assert_eq!(matrix.get((2, 3)), Err(Error::IndexOutOfBounds));
+    /// ```
     pub fn get<I: IndexLike>(&self, index: I) -> Result<&T> {
         let index = self.try_flatten_index(index)?;
         unsafe { Ok(self.data.get_unchecked(index)) }
     }
 
-    /// Returns a mutable reference to an element at given position,
-    /// or [`Error::IndexOutOfBounds`] if out of bounds.
+    /// Returns a mutable reference to an element at given position.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 4));
+    /// assert_eq!(matrix.get_mut((2, 3)), Err(Error::IndexOutOfBounds));
+    /// ```
     pub fn get_mut<I: IndexLike>(&mut self, index: I) -> Result<&mut T> {
         let index = self.try_flatten_index(index)?;
         unsafe { Ok(self.data.get_unchecked_mut(index)) }
@@ -154,6 +192,15 @@ impl<T> Matrix<T> {
     ///
     /// Calling this method with an out-of-bounds index is *[undefined behavior]*
     /// even if the resulting reference is not used.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// unsafe { assert_eq!(matrix.get_unchecked((1, 1)), &4); }
+    /// ```
     ///
     /// [`get`]: Matrix::get
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
@@ -170,6 +217,15 @@ impl<T> Matrix<T> {
     ///
     /// Calling this method with an out-of-bounds index is undefined behavior
     /// even if the resulting reference is not used.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// unsafe { assert_eq!(matrix.get_unchecked_mut((1, 1)), &mut 4); }
+    /// ```
     ///
     /// [`get_mut`]: Matrix::get_mut
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
@@ -205,6 +261,36 @@ pub(super) fn translate_index_between_orders_unchecked(
     index: usize,
     src_shape: AxisShape,
 ) -> usize {
+    /*
+    This implementation is based on the idea that the element at the same
+    position remains the same across different orders. Assuming that the
+    original order is `src_order`, and given that the `Index` instance
+    representing the position is invariant, we have:
+
+    ```
+    let src_flattened_index = index;
+    let src_axis_index = AxisIndex::from_flattened_unchecked(src_flattened_index, src_shape);
+
+    let position = match src_order {
+        Order::RowMajor => Index::new(src_axis_index.major, src_axis_index.minor),
+        Order::ColMajor => Index::new(src_axis_index.minor, src_axis_index.major),
+    };
+
+    let dest_order = !src_order;
+    let dest_axis_index = match dest_order {
+        Order::RowMajor => AxisIndex{major: position.row, minor: position.col},
+        Order::ColMajor => AxisIndex{major: position.col, minor: position.row},
+    };
+    let mut dest_shape = src_shape;
+    dest_shape.transpose();
+    let dest_flattened_index = dest_axis_index.into_flattened_unchecked(dest_shape);
+    dest_flattened_index
+    ```
+
+    Note that `dest_axis_index` is always the transpose of `src_axis_index`,
+    which allows us to simplify it to the following implementation:
+    */
+
     let mut index = AxisIndex::from_flattened_unchecked(index, src_shape);
     index.transpose();
     let mut dest_shape = src_shape;

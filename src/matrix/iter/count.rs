@@ -6,7 +6,7 @@ pub(super) struct Counter {
 }
 
 impl Counter {
-    pub fn new(total: usize) -> Self {
+    pub(super) fn new(total: usize) -> Self {
         Self {
             total,
             forward: 0,
@@ -14,23 +14,23 @@ impl Counter {
         }
     }
 
-    pub fn is_reached(&self) -> bool {
+    pub(super) fn is_reached(&self) -> bool {
         self.forward + self.backward >= self.total
     }
 
-    pub fn forward_pointer(&self) -> usize {
+    pub(super) fn forward_pointer(&self) -> usize {
         self.forward
     }
 
-    pub fn backward_pointer(&self) -> usize {
+    pub(super) fn backward_pointer(&self) -> usize {
         self.total - self.backward - 1
     }
 
-    pub fn forward_once(&mut self) {
+    pub(super) fn forward_once(&mut self) {
         self.forward += 1;
     }
 
-    pub fn backward_once(&mut self) {
+    pub(super) fn backward_once(&mut self) {
         self.backward += 1;
     }
 }
@@ -41,7 +41,7 @@ pub(super) struct ForwardGuard<'a> {
 }
 
 impl<'a> ForwardGuard<'a> {
-    pub fn build(counter: &'a mut Counter) -> Option<Self> {
+    pub(super) fn build(counter: &'a mut Counter) -> Option<Self> {
         if counter.is_reached() {
             None
         } else {
@@ -49,7 +49,7 @@ impl<'a> ForwardGuard<'a> {
         }
     }
 
-    pub fn pointer(&self) -> usize {
+    pub(super) fn pointer(&self) -> usize {
         self.counter.forward_pointer()
     }
 }
@@ -66,7 +66,7 @@ pub(super) struct BackwardGuard<'a> {
 }
 
 impl<'a> BackwardGuard<'a> {
-    pub fn build(counter: &'a mut Counter) -> Option<Self> {
+    pub(super) fn build(counter: &'a mut Counter) -> Option<Self> {
         if counter.is_reached() {
             None
         } else {
@@ -74,7 +74,7 @@ impl<'a> BackwardGuard<'a> {
         }
     }
 
-    pub fn pointer(&self) -> usize {
+    pub(super) fn pointer(&self) -> usize {
         self.counter.backward_pointer()
     }
 }
