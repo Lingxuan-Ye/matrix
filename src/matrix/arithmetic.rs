@@ -20,7 +20,10 @@ pub fn ensure_elementwise_operation_conformable<L, R>(
     }
 }
 
-pub fn ensure_multiplication_conformable<L, R>(lhs: &Matrix<L>, rhs: &Matrix<R>) -> Result<()> {
+pub fn ensure_multiplication_like_operation_conformable<L, R>(
+    lhs: &Matrix<L>,
+    rhs: &Matrix<R>,
+) -> Result<()> {
     if lhs.ncols() != rhs.nrows() {
         Err(Error::MatricesInconformable)
     } else {
@@ -213,7 +216,7 @@ where
     T: Default,
     F: FnMut(VectorIter<&L>, VectorIter<&R>) -> Option<T>,
 {
-    ensure_multiplication_conformable(lhs, rhs)?;
+    ensure_multiplication_like_operation_conformable(lhs, rhs)?;
 
     let nrows = lhs.nrows();
     let ncols = rhs.ncols();
