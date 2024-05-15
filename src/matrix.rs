@@ -144,30 +144,37 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
+    /// Returns the order of the matrix.
     pub fn order(&self) -> Order {
         self.order
     }
 
+    /// Returns the shape of the matrix.
     pub fn shape(&self) -> Shape {
         self.shape.interpret_with(self.order)
     }
 
+    /// Returns the number of rows in the matrix.
     pub fn nrows(&self) -> usize {
         self.shape.interpret_nrows_with(self.order)
     }
 
+    /// Returns the number of columns in the matrix.
     pub fn ncols(&self) -> usize {
         self.shape.interpret_ncols_with(self.order)
     }
 
+    /// Returns the total number of elements in the matrix.
     pub fn size(&self) -> usize {
         self.data.len()
     }
 
+    /// Returns `true` if the matrix contains no elements.
     pub fn is_empty(&self) -> bool {
         self.data.is_empty()
     }
 
+    /// Returns the capacity of the matrix.
     pub fn capacity(&self) -> usize {
         self.data.capacity()
     }
