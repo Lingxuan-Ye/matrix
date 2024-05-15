@@ -12,6 +12,15 @@ pub struct Index {
 }
 
 impl Index {
+    /// Creates a new [`Index`] instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Index;
+    ///
+    /// let shape = Index::new(2, 3);
+    /// ```
     pub fn new(row: usize, col: usize) -> Self {
         Self { row, col }
     }
@@ -32,15 +41,18 @@ impl std::fmt::Display for Index {
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///
-/// assert_eq!(matrix[Index::new(0, 0)], 0);
-/// assert_eq!(matrix[(0, 0)], 0);
-/// assert_eq!(matrix[[0, 0]], 0);
+/// assert_eq!(matrix[Index::new(1, 1)], 4);
+/// assert_eq!(matrix[(1, 1)], 4);
+/// assert_eq!(matrix[[1, 1]], 4);
 /// ```
 pub trait IndexLike {
+    /// Returns the row of the index.
     fn row(&self) -> usize;
 
+    /// Returns the column of the index.
     fn col(&self) -> usize;
 
+    /// Returns `true` if the index is out of bounds of given matrix.
     fn is_out_of_bounds_of<T>(&self, matrix: &Matrix<T>) -> bool {
         let shape = matrix.shape();
         self.row() >= shape.nrows || self.col() >= shape.ncols
@@ -132,15 +144,41 @@ impl<T> Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    /// Returns a reference to an element at given position,
-    /// or [`Error::IndexOutOfBounds`] if out of bounds.
+    /// Returns a reference to an element at given position.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.get((1, 1)), Ok(&4));
+    /// assert_eq!(matrix.get((2, 3)), Err(Error::IndexOutOfBounds));
+    /// ```
     pub fn get<I: IndexLike>(&self, index: I) -> Result<&T> {
         let index = self.try_flatten_index(index)?;
         unsafe { Ok(self.data.get_unchecked(index)) }
     }
 
-    /// Returns a mutable reference to an element at given position,
-    /// or [`Error::IndexOutOfBounds`] if out of bounds.
+    /// Returns a mutable reference to an element at given position.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 4));
+    /// assert_eq!(matrix.get_mut((2, 3)), Err(Error::IndexOutOfBounds));
+    /// ```
     pub fn get_mut<I: IndexLike>(&mut self, index: I) -> Result<&mut T> {
         let index = self.try_flatten_index(index)?;
         unsafe { Ok(self.data.get_unchecked_mut(index)) }
@@ -154,6 +192,15 @@ impl<T> Matrix<T> {
     ///
     /// Calling this method with an out-of-bounds index is *[undefined behavior]*
     /// even if the resulting reference is not used.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// unsafe { assert_eq!(matrix.get_unchecked((1, 1)), &4); }
+    /// ```
     ///
     /// [`get`]: Matrix::get
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
@@ -170,6 +217,15 @@ impl<T> Matrix<T> {
     ///
     /// Calling this method with an out-of-bounds index is undefined behavior
     /// even if the resulting reference is not used.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, matrix};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// unsafe { assert_eq!(matrix.get_unchecked_mut((1, 1)), &mut 4); }
+    /// ```
     ///
     /// [`get_mut`]: Matrix::get_mut
     /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
