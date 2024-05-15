@@ -23,12 +23,12 @@ impl std::fmt::Display for Index {
     }
 }
 
-/// Any type implementing this trait can be used to index a [Matrix].
+/// Any type implementing this trait can be used to index a [`Matrix`].
 ///
 /// # Examples
 ///
 /// ```
-/// use matreex::{matrix, Index};
+/// use matreex::{Index, matrix};
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///
