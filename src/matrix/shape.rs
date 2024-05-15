@@ -43,8 +43,10 @@ pub trait ShapeLike {
 
     fn ncols(&self) -> usize;
 
-    fn size(&self) -> Option<usize> {
-        self.nrows().checked_mul(self.ncols())
+    fn size(&self) -> Result<usize> {
+        self.nrows()
+            .checked_mul(self.ncols())
+            .ok_or(Error::SizeOverflow)
     }
 }
 
@@ -86,9 +88,7 @@ pub(super) struct AxisShape {
 
 impl AxisShape {
     pub(super) fn build<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
-        if shape.size().is_none() {
-            return Err(Error::SizeOverflow);
-        }
+        shape.size()?;
         let (major, minor) = match order {
             Order::RowMajor => (shape.nrows(), shape.ncols()),
             Order::ColMajor => (shape.ncols(), shape.nrows()),
@@ -166,18 +166,18 @@ mod test {
     fn test_shape_like() {
         assert_eq!(Shape::new(2, 3).nrows(), 2);
         assert_eq!(Shape::new(2, 3).ncols(), 3);
-        assert_eq!(Shape::new(2, 3).size(), Some(6));
-        assert_eq!(Shape::new(2, usize::MAX).size(), None);
+        assert_eq!(Shape::new(2, 3).size(), Ok(6));
+        assert_eq!(Shape::new(2, usize::MAX).size(), Err(Error::SizeOverflow));
 
         assert_eq!((2, 3).nrows(), 2);
         assert_eq!((2, 3).ncols(), 3);
-        assert_eq!((2, 3).size(), Some(6));
-        assert_eq!((2, usize::MAX).size(), None);
+        assert_eq!((2, 3).size(), Ok(6));
+        assert_eq!((2, usize::MAX).size(), Err(Error::SizeOverflow));
 
         assert_eq!([2, 3].nrows(), 2);
         assert_eq!([2, 3].ncols(), 3);
-        assert_eq!([2, 3].size(), Some(6));
-        assert_eq!([2, usize::MAX].size(), None);
+        assert_eq!([2, 3].size(), Ok(6));
+        assert_eq!([2, usize::MAX].size(), Err(Error::SizeOverflow));
     }
 
     #[test]
