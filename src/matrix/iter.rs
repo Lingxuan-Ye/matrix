@@ -11,6 +11,24 @@ pub type VectorIter<'a, T> = Box<dyn Iterator<Item = T> + 'a>;
 pub type MatrixIter<'a, T> = Box<dyn DoubleEndedIterator<Item = VectorIter<'a, T>> + 'a>;
 
 impl<T> Matrix<T> {
+    /// Returns an iterator over the rows of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut iter = matrix.iter_rows();
+    ///
+    /// let row_0: Vec<&u8> = iter.next().unwrap().collect();
+    /// assert_eq!(row_0, vec![&0, &1, &2]);
+    ///
+    /// let row_1: Vec<&u8> = iter.next().unwrap().collect();
+    /// assert_eq!(row_1, vec![&3, &4, &5]);
+    ///
+    /// assert!(iter.next().is_none());
+    /// ```
     pub fn iter_rows(&self) -> MatrixIter<&T> {
         match self.order {
             Order::RowMajor => Box::new(MajorAxisMatrixIter::new(self)),
@@ -18,6 +36,27 @@ impl<T> Matrix<T> {
         }
     }
 
+    /// Returns an iterator over the columns of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let mut iter = matrix.iter_cols();
+    ///
+    /// let col_0: Vec<&u8> = iter.next().unwrap().collect();
+    /// assert_eq!(col_0, vec![&0, &3]);
+    ///
+    /// let col_1: Vec<&u8> = iter.next().unwrap().collect();
+    /// assert_eq!(col_1, vec![&1, &4]);
+    ///
+    /// let col_2: Vec<&u8> = iter.next().unwrap().collect();
+    /// assert_eq!(col_2, vec![&2, &5]);
+    ///
+    /// assert!(iter.next().is_none());
+    /// ```
     pub fn iter_cols(&self) -> MatrixIter<&T> {
         match self.order {
             Order::RowMajor => Box::new(MinorAxisMatrixIter::new(self)),
@@ -25,6 +64,19 @@ impl<T> Matrix<T> {
         }
     }
 
+    /// Returns an iterator over the elements of the nth row in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let mut iter = matrix.iter_nth_row(1);
+    /// let row_1: Vec<&u8> = iter.collect();
+    /// assert_eq!(row_1, vec![&3, &4, &5]);
+    /// ```
     pub fn iter_nth_row(&self, n: usize) -> VectorIter<&T> {
         match self.order {
             Order::RowMajor => Box::new(MajorAxisVectorIter::new(self, n)),
@@ -32,6 +84,19 @@ impl<T> Matrix<T> {
         }
     }
 
+    /// Returns an iterator over the elements of the nth column in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let mut iter = matrix.iter_nth_col(1);
+    /// let col_1: Vec<&u8> = iter.collect();
+    /// assert_eq!(col_1, vec![&1, &4]);
+    /// ```
     pub fn iter_nth_col(&self, n: usize) -> VectorIter<&T> {
         match self.order {
             Order::RowMajor => Box::new(MinorAxisVectorIter::new(self, n)),

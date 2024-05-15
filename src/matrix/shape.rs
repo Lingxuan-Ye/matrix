@@ -13,6 +13,15 @@ pub struct Shape {
 }
 
 impl Shape {
+    /// Creates a new [`Shape`] instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Shape;
+    ///
+    /// let shape = Shape::new(2, 3);
+    /// ```
     pub fn new(nrows: usize, ncols: usize) -> Self {
         Self { nrows, ncols }
     }
@@ -39,10 +48,17 @@ impl std::fmt::Display for Shape {
 ///
 /// [`Matrix`]: crate::matrix::Matrix
 pub trait ShapeLike {
+    /// Returns the number of rows of the shape.
     fn nrows(&self) -> usize;
 
+    /// Returns the number of columns of the shape.
     fn ncols(&self) -> usize;
 
+    /// Returns the size of the shape.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeOverflow`] if size exceeds [`usize::MAX`].
     fn size(&self) -> Result<usize> {
         self.nrows()
             .checked_mul(self.ncols())

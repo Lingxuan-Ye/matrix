@@ -1,3 +1,4 @@
+/// Represents the memory order of a matrix.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Order {
     RowMajor,
