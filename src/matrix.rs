@@ -1,14 +1,15 @@
 //! This module defines [`Matrix`] and all its related components.
 
-pub mod arithmetic;
 pub mod index;
 pub mod iter;
+pub mod operation;
 pub mod order;
 pub mod shape;
 
+mod arithmetic;
 mod fmt;
 
-use self::index::translate_index_between_orders_unchecked;
+use self::index::{translate_index_between_orders_unchecked, Index};
 use self::order::Order;
 use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
@@ -17,7 +18,6 @@ use crate::error::{Error, Result};
 ///
 /// Instead of using constructor methods, you may prefer to create a
 /// matrix using the [`matrix!`] macro:
-///
 ///
 /// ```
 /// use matreex::matrix;
@@ -179,18 +179,22 @@ impl<T> Matrix<T> {
         self.data.capacity()
     }
 
+    /// Returns the length of the major axis.
     fn major(&self) -> usize {
         self.shape.major()
     }
 
+    /// Returns the length of the minor axis.
     fn minor(&self) -> usize {
         self.shape.minor()
     }
 
+    /// Returns the stride of the major axis.
     fn major_stride(&self) -> usize {
         self.shape.major_stride()
     }
 
+    /// Returns the stride of the minor axis.
     #[allow(unused)]
     const fn minor_stride(&self) -> usize {
         self.shape.minor_stride()
@@ -369,6 +373,50 @@ impl<T> Matrix<T> {
     }
 }
 
+impl<T: Clone> Matrix<T> {
+    /// Overwrites the overlapping part of this matrix with another one,
+    /// leaving the non-overlapping part unchanged.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
+    /// let other = matrix![[1, 1], [1, 1], [1, 1]];
+    ///
+    /// matrix.overwrite_with(&other);
+    /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
+    /// ```
+    pub fn overwrite_with(&mut self, other: &Self) -> &mut Self {
+        if self.order == other.order {
+            let major = std::cmp::min(self.major(), other.major());
+            let minor = std::cmp::min(self.minor(), other.minor());
+            for i in 0..major {
+                let self_start = i * self.major_stride();
+                let self_end = self_start + minor;
+                let other_start = i * other.major_stride();
+                let other_end = other_start + minor;
+                self.data[self_start..self_end]
+                    .clone_from_slice(&other.data[other_start..other_end]);
+            }
+            return self;
+        }
+
+        let self_shape = self.shape();
+        let other_shape = other.shape();
+        let nrows = std::cmp::min(self_shape.nrows, other_shape.nrows);
+        let ncols = std::cmp::min(self_shape.ncols, other_shape.ncols);
+        for row in 0..nrows {
+            for col in 0..ncols {
+                let index = Index::new(row, col);
+                unsafe { *self.get_unchecked_mut(index) = other.get_unchecked(index).clone() }
+            }
+        }
+        self
+    }
+}
+
 impl<T> Matrix<T> {
     fn check_size(size: usize) -> Result<usize> {
         // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
@@ -433,16 +481,6 @@ mod test {
 
         let slice = [0; 6];
         assert_ne!(Matrix::from_slice(&slice), target);
-    }
-
-    #[test]
-    fn test_check_size() {
-        assert!(Matrix::<u8>::check_size(isize::MAX as usize).is_ok());
-        assert_eq!(
-            Matrix::<u8>::check_size(isize::MAX as usize + 1),
-            Err(Error::CapacityExceeded)
-        );
-        assert!(Matrix::<()>::check_size(isize::MAX as usize + 1).is_ok());
     }
 
     #[test]
@@ -565,5 +603,90 @@ mod test {
         matrix.set_order(Order::ColMajor);
         assert_eq!(matrix.order, Order::ColMajor);
         assert_eq!(matrix.shape, shape(3, 2));
+    }
+
+    #[test]
+    fn test_overwrite_with() {
+        let template = matrix![[0, 0, 0], [0, 0, 0]];
+
+        {
+            let mut other = matrix![[1, 2]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
+        }
+
+        {
+            let mut other = matrix![[1, 2], [3, 4]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+        }
+
+        {
+            let mut other = matrix![[1, 2], [3, 4], [5, 6]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+        }
+
+        {
+            let mut other = matrix![[1, 2, 3]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+        }
+
+        {
+            let mut other = matrix![[1, 2, 3, 4]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+        }
+    }
+
+    #[test]
+    fn test_check_size() {
+        assert!(Matrix::<u8>::check_size(isize::MAX as usize).is_ok());
+        assert_eq!(
+            Matrix::<u8>::check_size(isize::MAX as usize + 1),
+            Err(Error::CapacityExceeded)
+        );
+        assert!(Matrix::<()>::check_size(isize::MAX as usize + 1).is_ok());
     }
 }

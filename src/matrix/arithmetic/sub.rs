@@ -1,3 +1,4 @@
+use super::super::operation;
 use super::super::Matrix;
 
 impl<L, R, T> std::ops::Sub<&Matrix<R>> for &Matrix<L>
@@ -8,7 +9,7 @@ where
     type Output = Matrix<T>;
 
     fn sub(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = super::elementwise_operation(self, rhs, |(x, y)| x.clone() - y.clone());
+        let result = operation::elementwise_operation(self, rhs, |(x, y)| x.clone() - y.clone());
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -24,7 +25,8 @@ where
     type Output = Matrix<T>;
 
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        let result = super::elementwise_operation_consume_rhs(self, rhs, |(x, y)| x.clone() - y);
+        let result =
+            operation::elementwise_operation_consume_rhs(self, rhs, |(x, y)| x.clone() - y);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -40,7 +42,8 @@ where
     type Output = Matrix<T>;
 
     fn sub(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = super::elementwise_operation_consume_lhs(self, rhs, |(x, y)| x - y.clone());
+        let result =
+            operation::elementwise_operation_consume_lhs(self, rhs, |(x, y)| x - y.clone());
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -56,7 +59,7 @@ where
     type Output = Matrix<T>;
 
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        let result = super::elementwise_operation_consume_both(self, rhs, |(x, y)| x - y);
+        let result = operation::elementwise_operation_consume_both(self, rhs, |(x, y)| x - y);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -71,7 +74,7 @@ where
 {
     fn sub_assign(&mut self, rhs: &Matrix<R>) {
         let result =
-            super::elementwise_operation_assign_to_lhs(self, rhs, |(x, y)| *x -= y.clone());
+            operation::elementwise_operation_assign_to_lhs(self, rhs, |(x, y)| *x -= y.clone());
         if let Err(error) = result {
             panic!("{error}")
         }
@@ -85,7 +88,7 @@ where
 {
     fn sub_assign(&mut self, rhs: Matrix<R>) {
         let result =
-            super::elementwise_operation_assign_to_lhs_consume_rhs(self, rhs, |(x, y)| *x -= y);
+            operation::elementwise_operation_assign_to_lhs_consume_rhs(self, rhs, |(x, y)| *x -= y);
         if let Err(error) = result {
             panic!("{error}")
         }
