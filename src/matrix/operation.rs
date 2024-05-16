@@ -14,18 +14,17 @@ use crate::error::{Error, Result};
 /// # Examples
 ///
 /// ```
-/// use matreex::Error;
-/// use matreex::matrix;
-/// use matreex::matrix::arithmetic;
+/// use matreex::{Error, Matrix};
+/// use matreex::matrix::operation::ensure_elementwise_operation_conformable;
 ///
-/// let lhs = matrix![[0, 0, 0], [0, 0, 0]];
+/// let lhs = Matrix::<u8>::new((2, 3));
 ///
-/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
-/// let result = arithmetic::ensure_elementwise_operation_conformable(&lhs, &rhs);
+/// let rhs = Matrix::<u8>::new((2, 3));
+/// let result = ensure_elementwise_operation_conformable(&lhs, &rhs);
 /// assert!(result.is_ok());
 ///
-/// let rhs = matrix![[1, 1], [1, 1]];
-/// let result = arithmetic::ensure_elementwise_operation_conformable(&lhs, &rhs);
+/// let rhs = Matrix::<u8>::new((2, 2));
+/// let result = ensure_elementwise_operation_conformable(&lhs, &rhs);
 /// assert_eq!(result, Err(Error::MatricesInconformable));
 /// ```
 pub fn ensure_elementwise_operation_conformable<L, R>(
@@ -48,18 +47,17 @@ pub fn ensure_elementwise_operation_conformable<L, R>(
 /// # Examples
 ///
 /// ```
-/// use matreex::Error;
-/// use matreex::matrix;
-/// use matreex::matrix::arithmetic;
+/// use matreex::{Error, Matrix};
+/// use matreex::matrix::operation::ensure_multiplication_like_operation_conformable;
 ///
-/// let lhs = matrix![[0, 0, 0], [0, 0, 0]];
+/// let lhs = Matrix::<u8>::new((2, 3));
 ///
-/// let rhs = matrix![[1], [1], [1]];
-/// let result = arithmetic::ensure_multiplication_like_operation_conformable(&lhs, &rhs);
+/// let rhs = Matrix::<u8>::new((3, 1));
+/// let result = ensure_multiplication_like_operation_conformable(&lhs, &rhs);
 /// assert!(result.is_ok());
 ///
-/// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
-/// let result = arithmetic::ensure_multiplication_like_operation_conformable(&lhs, &rhs);
+/// let rhs = Matrix::<u8>::new((2, 3));
+/// let result = ensure_multiplication_like_operation_conformable(&lhs, &rhs);
 /// assert_eq!(result, Err(Error::MatricesInconformable));
 /// ```
 pub fn ensure_multiplication_like_operation_conformable<L, R>(
@@ -78,24 +76,23 @@ pub fn ensure_multiplication_like_operation_conformable<L, R>(
 /// # Examples
 ///
 /// ```
-/// use matreex::matrix;
-/// use matreex::matrix::arithmetic;
-/// use matreex::Matrix;
+/// use matreex::{matrix, Matrix};
+/// use matreex::matrix::operation::vector_dot_product;
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///
 /// let lhs = matrix.iter_nth_row(0);
 /// let rhs = matrix.iter_nth_row(1);
-/// assert_eq!(arithmetic::vector_dot_product(lhs, rhs), Some(14));
+/// assert_eq!(vector_dot_product(lhs, rhs), Some(14));
 ///
 /// let lhs = matrix.iter_nth_row(0);
 /// let rhs = matrix.iter_nth_col(1);
-/// assert_eq!(arithmetic::vector_dot_product(lhs, rhs), Some(4));
+/// assert_eq!(vector_dot_product(lhs, rhs), Some(4));
 ///
 /// let lhs = matrix.iter_nth_row(0);
 /// let zero_rows_matrix = Matrix::<u8>::new((0, 3));
 /// let rhs = zero_rows_matrix.iter_nth_col(1);
-/// assert!(arithmetic::vector_dot_product(lhs, rhs).is_none());
+/// assert!(vector_dot_product(lhs, rhs).is_none());
 /// ```
 pub fn vector_dot_product<L, R, T>(lhs: VectorIter<&L>, rhs: VectorIter<&R>) -> Option<T>
 where
@@ -122,16 +119,12 @@ where
 ///
 /// ```
 /// use matreex::matrix;
-/// use matreex::matrix::arithmetic;
+/// use matreex::matrix::operation::elementwise_operation;
 ///
 /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
 /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
 ///
-/// let result = arithmetic::elementwise_operation(
-///     &lhs,
-///     &rhs,
-///     |(x, y)| x + y
-/// );
+/// let result = elementwise_operation(&lhs, &rhs, |(x, y)| x + y);
 /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
 /// ```
 pub fn elementwise_operation<L, R, T, F>(
@@ -177,16 +170,12 @@ where
 ///
 /// ```
 /// use matreex::matrix;
-/// use matreex::matrix::arithmetic;
+/// use matreex::matrix::operation::elementwise_operation_consume_rhs;
 ///
 /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
 /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
 ///
-/// let result = arithmetic::elementwise_operation_consume_rhs(
-///     &lhs,
-///     rhs,
-///     |(x, y)| x + y
-/// );
+/// let result = elementwise_operation_consume_rhs(&lhs, rhs, |(x, y)| x + y);
 /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
 /// ```
 pub fn elementwise_operation_consume_rhs<L, R, T, F>(
@@ -233,16 +222,12 @@ where
 ///
 /// ```
 /// use matreex::matrix;
-/// use matreex::matrix::arithmetic;
+/// use matreex::matrix::operation::elementwise_operation_consume_lhs;
 ///
 /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
 /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
 ///
-/// let result = arithmetic::elementwise_operation_consume_lhs(
-///     lhs,
-///     &rhs,
-///     |(x, y)| x + y
-/// );
+/// let result = elementwise_operation_consume_lhs(lhs, &rhs, |(x, y)| x + y);
 /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
 /// ```
 pub fn elementwise_operation_consume_lhs<L, R, T, F>(
@@ -288,16 +273,12 @@ where
 ///
 /// ```
 /// use matreex::matrix;
-/// use matreex::matrix::arithmetic;
+/// use matreex::matrix::operation::elementwise_operation_consume_both;
 ///
 /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
 /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
 ///
-/// let result = arithmetic::elementwise_operation_consume_both(
-///     lhs,
-///     rhs,
-///     |(x, y)| x + y
-/// );
+/// let result = elementwise_operation_consume_both(lhs, rhs, |(x, y)| x + y);
 /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
 /// ```
 pub fn elementwise_operation_consume_both<L, R, T, F>(
@@ -345,17 +326,12 @@ where
 ///
 /// ```
 /// use matreex::matrix;
-/// use matreex::matrix::arithmetic;
+/// use matreex::matrix::operation::elementwise_operation_assign_to_lhs;
 ///
 /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
 /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
 ///
-/// arithmetic::elementwise_operation_assign_to_lhs(
-///     &mut lhs,
-///     &rhs,
-///     |(x, y)| *x += y
-/// ).unwrap();
-///
+/// elementwise_operation_assign_to_lhs(&mut lhs, &rhs, |(x, y)| *x += y).unwrap();
 /// assert_eq!(lhs, matrix![[1, 2, 3], [4, 5, 6]]);
 /// ```
 pub fn elementwise_operation_assign_to_lhs<L, R, F>(
@@ -396,17 +372,12 @@ where
 ///
 /// ```
 /// use matreex::matrix;
-/// use matreex::matrix::arithmetic::elementwise_operation_assign_to_lhs_consume_rhs;
+/// use matreex::matrix::operation::elementwise_operation_assign_to_lhs_consume_rhs;
 ///
 /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
 /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
 ///
-/// elementwise_operation_assign_to_lhs_consume_rhs(
-///     &mut lhs,
-///     rhs,
-///     |(x, y)| *x += y
-/// ).unwrap();
-///
+/// elementwise_operation_assign_to_lhs_consume_rhs(&mut lhs, rhs, |(x, y)| *x += y).unwrap();
 /// assert_eq!(lhs, matrix![[1, 2, 3], [4, 5, 6]]);
 /// ```
 pub fn elementwise_operation_assign_to_lhs_consume_rhs<L, R, F>(
@@ -447,7 +418,7 @@ where
 ///
 /// ```
 /// use matreex::matrix;
-/// use matreex::matrix::arithmetic::{
+/// use matreex::matrix::operation::{
 ///     multiplication_like_operation,
 ///     vector_dot_product,
 /// };
