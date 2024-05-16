@@ -371,6 +371,20 @@ impl<T> Matrix<T> {
 }
 
 impl<T: Clone> Matrix<T> {
+    /// Overwrites the overlapping part of this matrix with another one,
+    /// leaving the non-overlapping part unchanged.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
+    /// let other = matrix![[1, 1], [1, 1], [1, 1]];
+    ///
+    /// matrix.overwrite_with(&other);
+    /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
+    /// ```
     pub fn overwrite_with(&mut self, other: &Self) -> &mut Self {
         if self.order == other.order {
             let major = std::cmp::min(self.major(), other.major());
