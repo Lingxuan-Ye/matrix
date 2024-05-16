@@ -1,14 +1,20 @@
 use super::order::Order;
 use crate::error::{Error, Result};
 
-/// A structure describing the shape of a [`Matrix`]. You might prefer using
-/// `(usize, usize)` instead when constructing a [`Matrix`] instance. Refer
-/// to [`ShapeLike`] for more information.
+/// A structure representing the shape of a [`Matrix`].
+///
+/// # Notes
+///
+/// You might prefer using `(usize, usize)` instead when constructing
+/// a [`Matrix`] instance. Refer to [`ShapeLike`] for more information.
 ///
 /// [`Matrix`]: crate::matrix::Matrix
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Shape {
+    // Number of rows.
     pub nrows: usize,
+
+    // Number of columns.
     pub ncols: usize,
 }
 
@@ -48,10 +54,10 @@ impl std::fmt::Display for Shape {
 ///
 /// [`Matrix`]: crate::matrix::Matrix
 pub trait ShapeLike {
-    /// Returns the number of rows of the shape.
+    /// Returns the number of rows.
     fn nrows(&self) -> usize;
 
-    /// Returns the number of columns of the shape.
+    /// Returns the number of columns.
     fn ncols(&self) -> usize;
 
     /// Returns the size of the shape.
