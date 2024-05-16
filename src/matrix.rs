@@ -256,7 +256,7 @@ impl<T> Matrix<T> {
     /// ```
     pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         let shape = AxisShape::build(shape, self.order).map_err(|_| Error::SizeMismatch)?;
-        if shape.size() != self.data.len() {
+        if self.size() != shape.size() {
             return Err(Error::SizeMismatch);
         }
         self.shape = shape;
