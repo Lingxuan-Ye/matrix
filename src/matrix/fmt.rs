@@ -4,9 +4,9 @@ const LEFT_DELIMITER: &str = "[";
 const RIGHT_DELIMITER: &str = "]";
 const COMMA: &str = ",";
 const SPACE: &str = " ";
-const TAB: &str = "    ";
 const SET_DIM: &str = "\u{001b}[2m";
 const UNSET_DIM: &str = "\u{001b}[22m";
+const TAB_LEN: usize = 4;
 const SEP_LEN: usize = 2;
 
 impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
@@ -25,33 +25,35 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
         }
 
         writeln!(f, "Matrix{SPACE}{{")?;
-        writeln!(f, "{TAB}data:")?;
+        writeln!(f, "{SPACE:TAB_LEN$}data:")?;
 
-        write!(f, "{TAB}{TAB}")?;
-        write!(f, "{LEFT_DELIMITER}")?;
-        write!(f, "{SPACE:<index_max_width$}")?;
-        write!(f, "{TAB}")?;
+        let shape = self.shape();
+        write!(f, "{SPACE:TAB_LEN$}{SPACE:TAB_LEN$}")?;
+        write!(f, "{LEFT_DELIMITER:<TAB_LEN$}")?;
+        write!(f, "{SPACE:>index_max_width$}")?;
+        write!(f, "{SPACE:SEP_LEN$}")?;
         write!(f, "{SPACE}")?;
-        for col in 0..self.ncols() {
+        for col in 0..shape.ncols {
             if col != 0 {
-                write! {f, "{SPACE:<SEP_LEN$}"}?;
+                write!(f, "{SPACE:<SEP_LEN$}")?;
             }
             write!(f, "{SET_DIM}{col:>index_max_width$}{UNSET_DIM}")?;
-            write!(f, "{SPACE}")?;
-            write!(f, "{SPACE:>element_max_width$}")?;
+            if col != shape.ncols - 1 {
+                write!(f, "{SPACE}")?;
+                write!(f, "{SPACE:>element_max_width$}")?;
+            }
         }
         writeln!(f)?;
 
-        let shape = self.shape();
         for row in 0..shape.nrows {
-            write!(f, "{TAB}{TAB}")?;
-            write!(f, "{SPACE}")?;
+            write!(f, "{SPACE:TAB_LEN$}{SPACE:TAB_LEN$}")?;
+            write!(f, "{SPACE:TAB_LEN$}")?;
             write!(f, "{SET_DIM}{row:>index_max_width$}{UNSET_DIM}")?;
-            write!(f, "{TAB}")?;
+            write!(f, "{SPACE:SEP_LEN$}")?;
             write!(f, "{LEFT_DELIMITER}")?;
             for col in 0..shape.ncols {
                 if col != 0 {
-                    write! {f, "{COMMA:<SEP_LEN$}"}?;
+                    write!(f, "{COMMA:<SEP_LEN$}")?;
                 }
                 let index = self.flatten_index_unchecked((row, col));
                 let element = &cache[index];
@@ -62,10 +64,10 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
             writeln!(f, "{RIGHT_DELIMITER}{COMMA}")?;
         }
 
-        writeln!(f, "{TAB}{TAB}{RIGHT_DELIMITER}")?;
+        writeln!(f, "{SPACE:TAB_LEN$}{SPACE:TAB_LEN$}{RIGHT_DELIMITER}")?;
 
-        writeln!(f, "{TAB}order:{SPACE}{:?}", self.order)?;
-        writeln!(f, "{TAB}shape:{SPACE}{:?}", self.shape)?;
+        writeln!(f, "{SPACE:TAB_LEN$}order:{SPACE}{:?}", self.order)?;
+        writeln!(f, "{SPACE:TAB_LEN$}shape:{SPACE}{:?}", self.shape)?;
         writeln!(f, "}}")
     }
 }
@@ -88,7 +90,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
 
         let shape = self.shape();
         for row in 0..shape.nrows {
-            write!(f, "{TAB}{LEFT_DELIMITER}")?;
+            write!(f, "{SPACE:TAB_LEN$}{LEFT_DELIMITER}")?;
             for col in 0..shape.ncols {
                 if col != 0 {
                     write! {f, "{COMMA:<SEP_LEN$}"}?;
