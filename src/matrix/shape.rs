@@ -212,7 +212,6 @@ mod test {
             AxisShape::build((2, 3), Order::ColMajor),
             Ok(AxisShape { major: 3, minor: 2 })
         );
-
         assert_eq!(
             AxisShape::build((3, 2), Order::RowMajor),
             Ok(AxisShape { major: 3, minor: 2 })
