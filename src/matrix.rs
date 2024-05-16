@@ -467,16 +467,6 @@ mod test {
     }
 
     #[test]
-    fn test_check_size() {
-        assert!(Matrix::<u8>::check_size(isize::MAX as usize).is_ok());
-        assert_eq!(
-            Matrix::<u8>::check_size(isize::MAX as usize + 1),
-            Err(Error::CapacityExceeded)
-        );
-        assert!(Matrix::<()>::check_size(isize::MAX as usize + 1).is_ok());
-    }
-
-    #[test]
     fn test_resize() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
@@ -596,5 +586,90 @@ mod test {
         matrix.set_order(Order::ColMajor);
         assert_eq!(matrix.order, Order::ColMajor);
         assert_eq!(matrix.shape, shape(3, 2));
+    }
+
+    #[test]
+    fn test_overwrite_with() {
+        let template = matrix![[0, 0, 0], [0, 0, 0]];
+
+        {
+            let mut other = matrix![[1, 2]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
+        }
+
+        {
+            let mut other = matrix![[1, 2], [3, 4]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+        }
+
+        {
+            let mut other = matrix![[1, 2], [3, 4], [5, 6]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
+        }
+
+        {
+            let mut other = matrix![[1, 2, 3]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+        }
+
+        {
+            let mut other = matrix![[1, 2, 3, 4]];
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+
+            other.switch_order();
+
+            let mut matrix = template.clone();
+            matrix.overwrite_with(&other);
+            assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
+        }
+    }
+
+    #[test]
+    fn test_check_size() {
+        assert!(Matrix::<u8>::check_size(isize::MAX as usize).is_ok());
+        assert_eq!(
+            Matrix::<u8>::check_size(isize::MAX as usize + 1),
+            Err(Error::CapacityExceeded)
+        );
+        assert!(Matrix::<()>::check_size(isize::MAX as usize + 1).is_ok());
     }
 }
