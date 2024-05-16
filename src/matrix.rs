@@ -179,18 +179,22 @@ impl<T> Matrix<T> {
         self.data.capacity()
     }
 
+    /// Returns the length of the major axis.
     fn major(&self) -> usize {
         self.shape.major()
     }
 
+    /// Returns the length of the minor axis.
     fn minor(&self) -> usize {
         self.shape.minor()
     }
 
+    /// Returns the stride of the major axis.
     fn major_stride(&self) -> usize {
         self.shape.major_stride()
     }
 
+    /// Returns the stride of the minor axis.
     #[allow(unused)]
     const fn minor_stride(&self) -> usize {
         self.shape.minor_stride()
