@@ -106,7 +106,7 @@ impl<T> Matrix<T> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use crate::matrix;
 
     #[test]
