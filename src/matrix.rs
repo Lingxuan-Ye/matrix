@@ -19,7 +19,6 @@ use crate::error::{Error, Result};
 /// Instead of using constructor methods, you may prefer to create a
 /// matrix using the [`matrix!`] macro:
 ///
-///
 /// ```
 /// use matreex::matrix;
 ///
