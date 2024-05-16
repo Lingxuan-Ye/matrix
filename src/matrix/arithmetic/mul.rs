@@ -1,5 +1,5 @@
+use super::super::operation;
 use super::super::Matrix;
-use super::vector_dot_product;
 
 impl<L, R, T> std::ops::Mul<&Matrix<R>> for &Matrix<L>
 where
@@ -10,7 +10,8 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = super::multiplication_like_operation(self, rhs, vector_dot_product);
+        let result =
+            operation::multiplication_like_operation(self, rhs, operation::vector_dot_product);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -27,7 +28,8 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result = super::multiplication_like_operation(self, &rhs, vector_dot_product);
+        let result =
+            operation::multiplication_like_operation(self, &rhs, operation::vector_dot_product);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -44,7 +46,8 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = super::multiplication_like_operation(&self, rhs, vector_dot_product);
+        let result =
+            operation::multiplication_like_operation(&self, rhs, operation::vector_dot_product);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -61,7 +64,8 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result = super::multiplication_like_operation(&self, &rhs, vector_dot_product);
+        let result =
+            operation::multiplication_like_operation(&self, &rhs, operation::vector_dot_product);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,

@@ -42,13 +42,14 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
         }
         writeln!(f)?;
 
-        for row in 0..self.nrows() {
+        let shape = self.shape();
+        for row in 0..shape.nrows {
             write!(f, "{TAB}{TAB}")?;
             write!(f, "{SPACE}")?;
             write!(f, "{SET_DIM}{row:>index_max_width$}{UNSET_DIM}")?;
             write!(f, "{TAB}")?;
             write!(f, "{LEFT_DELIMITER}")?;
-            for col in 0..self.ncols() {
+            for col in 0..shape.ncols {
                 if col != 0 {
                     write! {f, "{COMMA:<SEP_LEN$}"}?;
                 }
@@ -85,9 +86,10 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
 
         writeln!(f, "{LEFT_DELIMITER}")?;
 
-        for row in 0..self.nrows() {
+        let shape = self.shape();
+        for row in 0..shape.nrows {
             write!(f, "{TAB}{LEFT_DELIMITER}")?;
-            for col in 0..self.ncols() {
+            for col in 0..shape.ncols {
                 if col != 0 {
                     write! {f, "{COMMA:<SEP_LEN$}"}?;
                 }
