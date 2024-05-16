@@ -9,7 +9,7 @@ pub mod shape;
 mod arithmetic;
 mod fmt;
 
-use self::index::translate_index_between_orders_unchecked;
+use self::index::{translate_index_between_orders_unchecked, Index};
 use self::order::Order;
 use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
@@ -366,6 +366,36 @@ impl<T> Matrix<T> {
     /// this is a no-op.
     pub fn shrink_capacity_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
+        self
+    }
+}
+
+impl<T: Clone> Matrix<T> {
+    pub fn overwrite_with(&mut self, other: &Self) -> &mut Self {
+        if self.order == other.order {
+            let major = std::cmp::min(self.major(), other.major());
+            let minor = std::cmp::min(self.minor(), other.minor());
+            for i in 0..major {
+                let self_start = i * self.major_stride();
+                let self_end = self_start + minor;
+                let other_start = i * other.major_stride();
+                let other_end = other_start + minor;
+                self.data[self_start..self_end]
+                    .clone_from_slice(&other.data[other_start..other_end]);
+            }
+            return self;
+        }
+
+        let self_shape = self.shape();
+        let other_shape = other.shape();
+        let nrows = std::cmp::min(self_shape.nrows, other_shape.nrows);
+        let ncols = std::cmp::min(self_shape.ncols, other_shape.ncols);
+        for row in 0..nrows {
+            for col in 0..ncols {
+                let index = Index::new(row, col);
+                unsafe { *self.get_unchecked_mut(index) = other.get_unchecked(index).clone() }
+            }
+        }
         self
     }
 }
