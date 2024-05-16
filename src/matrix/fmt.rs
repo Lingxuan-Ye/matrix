@@ -105,3 +105,39 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
         writeln!(f, "{RIGHT_DELIMITER}")
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::matrix;
+
+    #[test]
+    fn test_debug() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let result = format!("{:?}", matrix);
+        let expected = "\
+Matrix {
+    data:
+        [       \u{1b}[2m0\u{1b}[22m    \u{1b}[2m1\u{1b}[22m    \u{1b}[2m2\u{1b}[22m
+            \u{1b}[2m0\u{1b}[22m  [\u{1b}[2m0\u{1b}[22m 1, \u{1b}[2m1\u{1b}[22m 2, \u{1b}[2m2\u{1b}[22m 3],
+            \u{1b}[2m1\u{1b}[22m  [\u{1b}[2m3\u{1b}[22m 4, \u{1b}[2m4\u{1b}[22m 5, \u{1b}[2m5\u{1b}[22m 6],
+        ]
+    order: RowMajor
+    shape: AxisShape { major: 2, minor: 3 }
+}
+";
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_display() {
+        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let result = format!("{}", matrix);
+        let expected = "\
+[
+    [1, 2, 3],
+    [4, 5, 6],
+]
+";
+        assert_eq!(result, expected);
+    }
+}

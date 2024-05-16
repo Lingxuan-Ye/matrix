@@ -429,7 +429,7 @@ impl<T> Matrix<T> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::matrix;
 
@@ -442,29 +442,29 @@ mod test {
         let data = vec![0, 1, 2, 3, 4, 5];
         let order = Order::default();
         let shape = AxisShape::build((2, 3), order).unwrap();
-        let target = Matrix { data, order, shape };
+        let expected = Matrix { data, order, shape };
 
         let array = Box::new([[0, 1, 2], [3, 4, 5]]);
-        assert_eq!(Matrix::from_2darray(array), target);
+        assert_eq!(Matrix::from_2darray(array), expected);
 
         let array = Box::new([[0, 1], [2, 3], [4, 5]]);
-        assert_ne!(Matrix::from_2darray(array), target);
+        assert_ne!(Matrix::from_2darray(array), expected);
     }
 
     #[test]
     fn test_new() {
-        let target = matrix![[0, 0, 0], [0, 0, 0]];
+        let expected = matrix![[0, 0, 0], [0, 0, 0]];
 
-        assert_eq!(Matrix::new((2, 3)), target);
-        assert_ne!(Matrix::new((3, 2)), target);
+        assert_eq!(Matrix::new((2, 3)), expected);
+        assert_ne!(Matrix::new((3, 2)), expected);
     }
 
     #[test]
     fn test_build() {
-        let target = matrix![[0, 0, 0], [0, 0, 0]];
+        let expected = matrix![[0, 0, 0], [0, 0, 0]];
 
-        assert_eq!(Matrix::build((2, 3)).unwrap(), target);
-        assert_ne!(Matrix::build((3, 2)).unwrap(), target);
+        assert_eq!(Matrix::build((2, 3)).unwrap(), expected);
+        assert_ne!(Matrix::build((3, 2)).unwrap(), expected);
 
         assert_eq!(
             Matrix::<u8>::build((usize::MAX, 2)),
@@ -474,13 +474,13 @@ mod test {
 
     #[test]
     fn test_from_slice() {
-        let target = matrix![[0, 1, 2, 3, 4, 5]];
+        let expected = matrix![[0, 1, 2, 3, 4, 5]];
 
         let slice = [0, 1, 2, 3, 4, 5];
-        assert_eq!(Matrix::from_slice(&slice), target);
+        assert_eq!(Matrix::from_slice(&slice), expected);
 
         let slice = [0; 6];
-        assert_ne!(Matrix::from_slice(&slice), target);
+        assert_ne!(Matrix::from_slice(&slice), expected);
     }
 
     #[test]
