@@ -19,7 +19,6 @@ use crate::error::{Error, Result};
 /// Instead of using constructor methods, you may prefer to create a
 /// matrix using the [`matrix!`] macro:
 ///
-///
 /// ```
 /// use matreex::matrix;
 ///
@@ -180,18 +179,22 @@ impl<T> Matrix<T> {
         self.data.capacity()
     }
 
+    /// Returns the length of the major axis.
     fn major(&self) -> usize {
         self.shape.major()
     }
 
+    /// Returns the length of the minor axis.
     fn minor(&self) -> usize {
         self.shape.minor()
     }
 
+    /// Returns the stride of the major axis.
     fn major_stride(&self) -> usize {
         self.shape.major_stride()
     }
 
+    /// Returns the stride of the minor axis.
     #[allow(unused)]
     const fn minor_stride(&self) -> usize {
         self.shape.minor_stride()

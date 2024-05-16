@@ -3,11 +3,18 @@ use super::shape::AxisShape;
 use super::Matrix;
 use crate::error::{Error, Result};
 
-/// A structure for indexing a [`Matrix`]. You might prefer using
-/// `(usize, usize)` instead. Refer to [`IndexLike`] for more information.
+///A structure representing the index of an element in a [`Matrix`].
+///
+/// # Notes
+///
+/// You might prefer using `(usize, usize)` for matrix indexing instead.
+/// Refer to [`IndexLike`] for more information.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Index {
+    /// The row index of the element.
     pub row: usize,
+
+    /// The column index of the element.
     pub col: usize,
 }
 
