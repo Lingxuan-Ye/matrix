@@ -81,25 +81,25 @@ mod tests {
     fn test_mul() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[5, 4], [3, 2], [1, 0]];
-        let target = matrix![[5, 2], [32, 20]];
+        let expected = matrix![[5, 2], [32, 20]];
 
         let result = &lhs * &rhs;
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
 
         rhs.switch_order();
         let result = &lhs * &rhs;
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
         assert_eq!(result.order, lhs.order);
         assert_ne!(result.order, rhs.order);
         rhs.switch_order();
 
         lhs.switch_order();
         let mut result = &lhs * &rhs;
-        assert_ne!(result, target);
+        assert_ne!(result, expected);
         assert_eq!(result.order, lhs.order);
         assert_ne!(result.order, rhs.order);
         result.switch_order();
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
     }
 
     #[test]
@@ -115,25 +115,25 @@ mod tests {
     fn test_mul_consume_rhs() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[5, 4], [3, 2], [1, 0]];
-        let target = matrix![[5, 2], [32, 20]];
+        let expected = matrix![[5, 2], [32, 20]];
 
         let result = &lhs * rhs.clone();
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
 
         rhs.switch_order();
         let result = &lhs * rhs.clone();
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
         assert_eq!(result.order, lhs.order);
         assert_ne!(result.order, rhs.order);
         rhs.switch_order();
 
         lhs.switch_order();
         let mut result = &lhs * rhs.clone();
-        assert_ne!(result, target);
+        assert_ne!(result, expected);
         assert_eq!(result.order, lhs.order);
         assert_ne!(result.order, rhs.order);
         result.switch_order();
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
     }
 
     #[test]
@@ -149,25 +149,25 @@ mod tests {
     fn test_mul_consume_lhs() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[5, 4], [3, 2], [1, 0]];
-        let target = matrix![[5, 2], [32, 20]];
+        let expected = matrix![[5, 2], [32, 20]];
 
         let result = lhs.clone() * &rhs;
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
 
         rhs.switch_order();
         let result = lhs.clone() * &rhs;
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
         assert_eq!(result.order, lhs.order);
         assert_ne!(result.order, rhs.order);
         rhs.switch_order();
 
         lhs.switch_order();
         let mut result = lhs.clone() * &rhs;
-        assert_ne!(result, target);
+        assert_ne!(result, expected);
         assert_eq!(result.order, lhs.order);
         assert_ne!(result.order, rhs.order);
         result.switch_order();
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
     }
 
     #[test]
@@ -183,25 +183,25 @@ mod tests {
     fn test_mul_consume_both() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[5, 4], [3, 2], [1, 0]];
-        let target = matrix![[5, 2], [32, 20]];
+        let expected = matrix![[5, 2], [32, 20]];
 
         let result = lhs.clone() * rhs.clone();
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
 
         rhs.switch_order();
         let result = lhs.clone() * rhs.clone();
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
         assert_eq!(result.order, lhs.order);
         assert_ne!(result.order, rhs.order);
         rhs.switch_order();
 
         lhs.switch_order();
         let mut result = lhs.clone() * rhs.clone();
-        assert_ne!(result, target);
+        assert_ne!(result, expected);
         assert_eq!(result.order, lhs.order);
         assert_ne!(result.order, rhs.order);
         result.switch_order();
-        assert_eq!(result, target);
+        assert_eq!(result, expected);
     }
 
     #[test]

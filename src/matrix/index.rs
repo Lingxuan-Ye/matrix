@@ -312,10 +312,10 @@ mod tests {
 
     #[test]
     fn test_index_new() {
-        let target = Index { row: 2, col: 3 };
+        let expected = Index { row: 2, col: 3 };
 
-        assert_eq!(Index::new(2, 3), target);
-        assert_ne!(Index::new(3, 2), target);
+        assert_eq!(Index::new(2, 3), expected);
+        assert_ne!(Index::new(3, 2), expected);
     }
 
     #[test]

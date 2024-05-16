@@ -172,10 +172,10 @@ mod tests {
 
     #[test]
     fn test_shape_new() {
-        let target = Shape { nrows: 2, ncols: 3 };
+        let expected = Shape { nrows: 2, ncols: 3 };
 
-        assert_eq!(Shape::new(2, 3), target);
-        assert_ne!(Shape::new(3, 2), target);
+        assert_eq!(Shape::new(2, 3), expected);
+        assert_ne!(Shape::new(3, 2), expected);
     }
 
     #[test]
