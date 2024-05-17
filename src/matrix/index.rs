@@ -272,6 +272,31 @@ impl Index {
     pub fn new(row: usize, col: usize) -> Self {
         Self { row, col }
     }
+
+    pub fn from_flattened_unchecked_for<T>(index: usize, matrix: &Matrix<T>) -> Self {
+        AxisIndex::from_flattened_unchecked_for(index, matrix.shape).interpret_with(matrix.order)
+    }
+
+    pub fn try_from_flattened_for<T>(index: usize, matrix: &Matrix<T>) -> Result<Self> {
+        AxisIndex::try_from_flattened_for(index, matrix.shape)
+            .map(|index| index.interpret_with(matrix.order))
+    }
+
+    pub fn from_flattened_for<T>(index: usize, matrix: &Matrix<T>) -> Self {
+        AxisIndex::from_flattened_for(index, matrix.shape).interpret_with(matrix.order)
+    }
+
+    pub fn into_flattened_unchecked_for<T>(self, matrix: &Matrix<T>) -> usize {
+        AxisIndex::new(self, matrix.order).into_flattened_unchecked_for(matrix.shape)
+    }
+
+    pub fn try_into_flattened_for<T>(self, matrix: &Matrix<T>) -> Result<usize> {
+        AxisIndex::new(self, matrix.order).try_into_flattened_for(matrix.shape)
+    }
+
+    pub fn into_flattened_for<T>(self, matrix: &Matrix<T>) -> usize {
+        AxisIndex::new(self, matrix.order).into_flattened_for(matrix.shape)
+    }
 }
 
 impl std::fmt::Display for Index {
