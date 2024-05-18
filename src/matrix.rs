@@ -38,7 +38,7 @@ impl<T: Default> Matrix<T> {
     ///
     /// # Panics
     ///
-    /// Panic if size exceeds [`usize::MAX`], or total bytes stored
+    /// Panics if size exceeds [`usize::MAX`], or total bytes stored
     /// exceeds [`isize::MAX`].
     ///
     /// # Examples
