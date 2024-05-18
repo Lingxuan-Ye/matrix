@@ -15,3 +15,29 @@ macro_rules! matrix {
         $crate::matrix::Matrix::from_2darray(std::boxed::Box::new([$($col,)+]))
     };
 }
+
+/// Creates a new [`Vector`] instance from literal.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::vector;
+///
+/// let vector = vector![0, 1, 2];
+/// ```
+///
+/// [`Vector`]: crate::vector::Vector
+#[macro_export]
+macro_rules! vector {
+    [] => {
+        $crate::vector::Vector::from(vec![])
+    };
+
+    [$elem:expr; $n:expr] => {
+        $crate::vector::Vector::from(vec![$elem; $n])
+    };
+
+    [$($x:expr),+ $(,)?] => {
+        $crate::vector::Vector::from(vec![$($x),+])
+    };
+}
