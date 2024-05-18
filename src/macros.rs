@@ -21,9 +21,11 @@ macro_rules! matrix {
 /// # Examples
 ///
 /// ```
-/// use matreex::vector;
+/// use matreex::{vector, Vector};
 ///
-/// let vector = vector![0, 1, 2];
+/// let foo: Vector<u8> = vector![];
+/// let bar = vector![0; 3];
+/// let baz = vector![0, 1, 2];
 /// ```
 ///
 /// [`Vector`]: crate::vector::Vector
