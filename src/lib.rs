@@ -25,6 +25,7 @@ pub mod error;
 pub mod matrix;
 pub mod vector;
 
+mod fmt;
 mod macros;
 
 pub use self::error::{Error, Result};
