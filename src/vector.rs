@@ -11,6 +11,12 @@ pub struct Vector<T> {
 }
 
 impl<T> Vector<T> {
+    pub fn kind(&self) -> Kind {
+        self.kind
+    }
+}
+
+impl<T> Vector<T> {
     pub fn transpose(&mut self) -> &mut Self {
         self.kind = !self.kind;
         self
