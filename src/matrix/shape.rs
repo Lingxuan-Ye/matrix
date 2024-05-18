@@ -188,7 +188,6 @@ mod tests {
         assert_eq!([2, usize::MAX].size(), Err(Error::SizeOverflow));
     }
 
-
     #[test]
     fn test_struct_shape_new() {
         let expected = Shape { nrows: 2, ncols: 3 };
@@ -202,7 +201,6 @@ mod tests {
         assert_eq!(Shape::new(2, 3).to_string(), "(2, 3)");
         assert_eq!(Shape::new(3, 2).to_string(), "(3, 2)");
     }
-
 
     #[test]
     fn test_struct_axis_shape_build() {
