@@ -267,7 +267,7 @@ impl Index {
     /// ```
     /// use matreex::Index;
     ///
-    /// let shape = Index::new(2, 3);
+    /// let index = Index::new(2, 3);
     /// ```
     pub fn new(row: usize, col: usize) -> Self {
         Self { row, col }
