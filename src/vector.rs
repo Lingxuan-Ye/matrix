@@ -1,5 +1,7 @@
 pub mod kind;
 
+mod fmt;
+
 use self::kind::Kind;
 
 #[derive(Clone, Default, PartialEq, Eq)]
