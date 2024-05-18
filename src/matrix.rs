@@ -14,7 +14,7 @@ use self::order::Order;
 use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
 
-/// Matrix means matrix.
+/// [`Matrix`] means matrix.
 ///
 /// Instead of using constructor methods, you may prefer to create a
 /// matrix using the [`matrix!`] macro:
