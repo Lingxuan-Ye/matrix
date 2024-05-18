@@ -23,7 +23,9 @@
 
 pub mod error;
 pub mod matrix;
+pub mod vector;
 
+mod fmt;
 mod macros;
 
 pub use self::error::{Error, Result};
@@ -32,3 +34,4 @@ pub use self::matrix::iter::{MatrixIter, VectorIter};
 pub use self::matrix::order::Order;
 pub use self::matrix::shape::Shape;
 pub use self::matrix::Matrix;
+pub use self::vector::Vector;
