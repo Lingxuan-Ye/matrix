@@ -273,27 +273,151 @@ impl Index {
         Self { row, col }
     }
 
+    /// Creates an `Index` instance from a flattened index unchecked.
+    ///
+    /// # Notes
+    ///
+    /// Value returned may be out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Index, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let index = Index::from_flattened_unchecked_for(4, &matrix);
+    /// assert_eq!(index, Index::new(1, 1));
+    ///
+    /// let index = Index::from_flattened_unchecked_for(6, &matrix);
+    /// assert_eq!(index, Index::new(2, 0));
+    /// ```
     pub fn from_flattened_unchecked_for<T>(index: usize, matrix: &Matrix<T>) -> Self {
         AxisIndex::from_flattened_unchecked_for(index, matrix.shape).interpret_with(matrix.order)
     }
 
+    /// Creates an `Index` instance from a flattened index.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, Index, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let result = Index::try_from_flattened_for(4, &matrix);
+    /// assert_eq!(result, Ok(Index::new(1, 1)));
+    ///
+    /// let result = Index::try_from_flattened_for(6, &matrix);
+    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
+    /// ```
     pub fn try_from_flattened_for<T>(index: usize, matrix: &Matrix<T>) -> Result<Self> {
         AxisIndex::try_from_flattened_for(index, matrix.shape)
             .map(|index| index.interpret_with(matrix.order))
     }
 
+    /// Creates an `Index` instance from a flattened index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Index, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let index = Index::from_flattened_for(4, &matrix);
+    /// assert_eq!(index, Index::new(1, 1));
+    /// ```
+    ///
+    /// ```should_panic
+    /// use matreex::{Index, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let index = Index::from_flattened_for(6, &matrix);
+    /// ```
     pub fn from_flattened_for<T>(index: usize, matrix: &Matrix<T>) -> Self {
         AxisIndex::from_flattened_for(index, matrix.shape).interpret_with(matrix.order)
     }
 
+    /// Flattens an `Index` instance unchecked.
+    ///
+    /// # Notes
+    ///
+    /// Value returned may be out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Index, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let index = Index::new(1, 1).into_flattened_unchecked_for(&matrix);
+    /// assert_eq!(index, 4);
+    ///
+    /// let index = Index::new(2, 0).into_flattened_unchecked_for(&matrix);
+    /// assert_eq!(index, 6);
+    /// ```
     pub fn into_flattened_unchecked_for<T>(self, matrix: &Matrix<T>) -> usize {
         AxisIndex::new(self, matrix.order).into_flattened_unchecked_for(matrix.shape)
     }
 
+    /// Flattens an `Index` instance.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Error, Index, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let result = Index::new(1, 1).try_into_flattened_for(&matrix);
+    /// assert_eq!(result, Ok(4));
+    ///
+    /// let result = Index::new(2, 0).try_into_flattened_for(&matrix);
+    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
+    /// ```
     pub fn try_into_flattened_for<T>(self, matrix: &Matrix<T>) -> Result<usize> {
         AxisIndex::new(self, matrix.order).try_into_flattened_for(matrix.shape)
     }
 
+    /// Flattens an `Index` instance.
+    ///
+    /// # Panics
+    ///
+    /// Panics if out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{Index, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let index = Index::new(1, 1).into_flattened_for(&matrix);
+    /// assert_eq!(index, 4);
+    /// ```
+    ///
+    /// ```should_panic
+    /// use matreex::{Index, matrix};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let index = Index::new(2, 0).into_flattened_for(&matrix);
+    /// ```
     pub fn into_flattened_for<T>(self, matrix: &Matrix<T>) -> usize {
         AxisIndex::new(self, matrix.order).into_flattened_for(matrix.shape)
     }
