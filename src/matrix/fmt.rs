@@ -87,23 +87,29 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
             cache.push(string);
         }
 
-        writeln!(f, "{LEFT_DELIMITER}")?;
-
         let shape = self.shape();
         for row in 0..shape.nrows {
-            write!(f, "{SPACE:TAB_LEN$}{LEFT_DELIMITER}")?;
+            if row == 0 {
+                write!(f, "{LEFT_DELIMITER}{LEFT_DELIMITER}")?;
+            } else {
+                write!(f, "{SPACE}{LEFT_DELIMITER}")?;
+            }
             for col in 0..shape.ncols {
                 if col != 0 {
-                    write! {f, "{COMMA:<SEP_LEN$}"}?;
+                    write! {f, "{SPACE:<SEP_LEN$}"}?;
                 }
                 let index = Index::new(row, col).into_flattened_unchecked_for(self);
                 let element = &cache[index];
                 write!(f, "{element:>element_max_width$}")?;
             }
-            writeln!(f, "{RIGHT_DELIMITER}{COMMA}")?;
+            if row != (shape.nrows - 1) {
+                writeln!(f, "{RIGHT_DELIMITER}")?;
+            } else {
+                writeln!(f, "{RIGHT_DELIMITER}{RIGHT_DELIMITER}")?;
+            }
         }
 
-        writeln!(f, "{RIGHT_DELIMITER}")
+        Ok(())
     }
 }
 
@@ -134,10 +140,8 @@ Matrix {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let result = format!("{}", matrix);
         let expected = "\
-[
-    [1, 2, 3],
-    [4, 5, 6],
-]
+[[1  2  3]
+ [4  5  6]]
 ";
         assert_eq!(result, expected);
     }
