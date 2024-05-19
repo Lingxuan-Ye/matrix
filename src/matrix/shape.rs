@@ -109,6 +109,11 @@ pub(super) struct AxisShape {
 }
 
 impl AxisShape {
+    pub(super) fn build(major: usize, minor: usize) -> Result<Self> {
+        major.checked_mul(minor).ok_or(Error::SizeOverflow)?;
+        Ok(Self { major, minor })
+    }
+
     pub(super) fn major(&self) -> usize {
         self.major
     }

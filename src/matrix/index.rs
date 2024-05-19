@@ -466,6 +466,10 @@ pub(super) struct AxisIndex {
 }
 
 impl AxisIndex {
+    pub(super) fn new(major: usize, minor: usize) -> Self {
+        Self { major, minor }
+    }
+
     pub(super) fn is_out_of_bounds_of(&self, shape: AxisShape) -> bool {
         self.major >= shape.major() || self.minor >= shape.minor()
     }
