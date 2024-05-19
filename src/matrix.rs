@@ -118,7 +118,7 @@ impl<T: Clone> Matrix<T> {
     pub fn from_slice(src: &[T]) -> Self {
         let data = src.to_vec();
         let order = Order::default();
-        let shape = AxisShape::try_from_shape_with((1, src.len()), order).expect("this will never fail");
+        let shape = AxisShape::from_shape_with_unchecked((1, src.len()), order);
         Self { data, order, shape }
     }
 }
@@ -138,7 +138,7 @@ impl<T> Matrix<T> {
         let ptr = Box::leak(src).as_mut_ptr() as *mut T;
         let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
         let order = Order::default();
-        let shape = AxisShape::try_from_shape_with((R, C), order).expect("this will never fail");
+        let shape = AxisShape::from_shape_with_unchecked((R, C), order);
         Self { data, order, shape }
     }
 }
@@ -255,11 +255,11 @@ impl<T> Matrix<T> {
     /// assert_eq!(result, Err(Error::SizeMismatch));
     /// ```
     pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
-        let shape = AxisShape::try_from_shape_with(shape, self.order).map_err(|_| Error::SizeMismatch)?;
-        if self.size() != shape.size() {
-            return Err(Error::SizeMismatch);
+        match shape.size() {
+            Ok(size) if (self.size() == size) => (),
+            _ => return Err(Error::SizeMismatch),
         }
-        self.shape = shape;
+        self.shape = AxisShape::from_shape_with_unchecked(shape, self.order);
         Ok(self)
     }
 
@@ -434,7 +434,7 @@ mod tests {
     use crate::matrix;
 
     fn shape(major: usize, minor: usize) -> AxisShape {
-        AxisShape::try_from_shape_with((major, minor), Order::default()).unwrap()
+        AxisShape::build(major, minor).unwrap()
     }
 
     #[test]

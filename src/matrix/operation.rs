@@ -442,10 +442,9 @@ where
 
     let nrows = lhs.nrows();
     let ncols = rhs.ncols();
-    let size = nrows.checked_mul(ncols).ok_or(Error::SizeOverflow)?;
-
     let order = lhs.order;
     let shape = AxisShape::try_from_shape_with((nrows, ncols), order)?;
+    let size = shape.size();
     let mut data = Vec::with_capacity(size);
     match order {
         Order::RowMajor => {
