@@ -137,8 +137,6 @@ where
 {
     ensure_elementwise_operation_conformable(lhs, rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.iter().zip(rhs.data.iter()).map(op).collect()
     } else {
@@ -153,7 +151,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, consuming `rhs`.
@@ -189,8 +191,6 @@ where
 {
     ensure_elementwise_operation_conformable(lhs, &rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.iter().zip(rhs.data).map(op).collect()
     } else {
@@ -205,7 +205,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, consuming `lhs`.
@@ -240,8 +244,6 @@ where
 {
     ensure_elementwise_operation_conformable(&lhs, rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.into_iter().zip(rhs.data.iter()).map(op).collect()
     } else {
@@ -256,7 +258,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, consuming both.
@@ -292,8 +298,6 @@ where
 {
     ensure_elementwise_operation_conformable(&lhs, &rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.into_iter().zip(rhs.data).map(op).collect()
     } else {
@@ -308,7 +312,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, assigning the result
