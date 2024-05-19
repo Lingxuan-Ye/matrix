@@ -1,6 +1,6 @@
 //! This module serves for error handling.
 
-/// Enumerates errors for matrix operation failures.
+/// An enum for error types.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub enum Error {
     /// Error when matrix size exceeds [`usize::MAX`], which is, in fact
@@ -19,6 +19,9 @@ pub enum Error {
 
     /// Error for shape mismatch in arithmetic operations between matrices.
     MatricesInconformable,
+
+    /// Error for invalid step in iteration.
+    ZeroStep,
 }
 
 impl std::fmt::Display for Error {
@@ -29,6 +32,7 @@ impl std::fmt::Display for Error {
             Self::CapacityExceeded => "capacity exceeds",
             Self::IndexOutOfBounds => "index out of bounds",
             Self::MatricesInconformable => "matrices not conformable",
+            Self::ZeroStep => "step invalid",
         };
         write!(f, "{content}")
     }

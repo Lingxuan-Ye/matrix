@@ -22,6 +22,7 @@
 //! Coming soon (maybe not that soon).
 
 pub mod error;
+pub mod iter;
 pub mod matrix;
 pub mod vector;
 
