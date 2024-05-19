@@ -134,13 +134,17 @@ impl AxisShape {
         self
     }
 
-    pub(super) fn try_from_shape_with<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
-        shape.size()?;
+    pub(super) fn from_shape_with_unchecked<S: ShapeLike>(shape: S, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (shape.nrows(), shape.ncols()),
             Order::ColMajor => (shape.ncols(), shape.nrows()),
         };
-        Ok(Self { major, minor })
+        Self { major, minor }
+    }
+
+    pub(super) fn try_from_shape_with<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
+        shape.size()?;
+        Ok(Self::from_shape_with_unchecked(shape, order))
     }
 
     pub(super) fn interpret_with(&self, order: Order) -> Shape {
