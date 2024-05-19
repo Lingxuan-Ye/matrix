@@ -1,7 +1,7 @@
 use super::index::translate_index_between_orders_unchecked;
 use super::iter::VectorIter;
 use super::order::Order;
-use super::shape::AxisShape;
+use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -137,8 +137,6 @@ where
 {
     ensure_elementwise_operation_conformable(lhs, rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.iter().zip(rhs.data.iter()).map(op).collect()
     } else {
@@ -153,7 +151,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, consuming `rhs`.
@@ -189,8 +191,6 @@ where
 {
     ensure_elementwise_operation_conformable(lhs, &rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.iter().zip(rhs.data).map(op).collect()
     } else {
@@ -205,7 +205,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, consuming `lhs`.
@@ -240,8 +244,6 @@ where
 {
     ensure_elementwise_operation_conformable(&lhs, rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.into_iter().zip(rhs.data.iter()).map(op).collect()
     } else {
@@ -256,7 +258,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, consuming both.
@@ -292,8 +298,6 @@ where
 {
     ensure_elementwise_operation_conformable(&lhs, &rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.into_iter().zip(rhs.data).map(op).collect()
     } else {
@@ -308,7 +312,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, assigning the result
@@ -442,10 +450,9 @@ where
 
     let nrows = lhs.nrows();
     let ncols = rhs.ncols();
-    let size = nrows.checked_mul(ncols).ok_or(Error::SizeOverflow)?;
-
     let order = lhs.order;
-    let shape = AxisShape::build((nrows, ncols), order)?;
+    let shape = AxisShape::try_from_shape_with(Shape::new(nrows, ncols), order)?;
+    let size = shape.size();
     let mut data = Vec::with_capacity(size);
     match order {
         Order::RowMajor => {
