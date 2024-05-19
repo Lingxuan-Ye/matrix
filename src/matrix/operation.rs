@@ -1,7 +1,7 @@
 use super::index::translate_index_between_orders_unchecked;
 use super::iter::VectorIter;
 use super::order::Order;
-use super::shape::AxisShape;
+use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -443,7 +443,7 @@ where
     let nrows = lhs.nrows();
     let ncols = rhs.ncols();
     let order = lhs.order;
-    let shape = AxisShape::try_from_shape_with((nrows, ncols), order)?;
+    let shape = AxisShape::try_from_shape_with(Shape::new(nrows, ncols), order)?;
     let size = shape.size();
     let mut data = Vec::with_capacity(size);
     match order {

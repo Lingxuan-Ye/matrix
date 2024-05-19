@@ -118,7 +118,7 @@ impl<T: Clone> Matrix<T> {
     pub fn from_slice(src: &[T]) -> Self {
         let data = src.to_vec();
         let order = Order::default();
-        let shape = AxisShape::from_shape_with_unchecked((1, src.len()), order);
+        let shape = AxisShape::from_shape_with_unchecked(Shape::new(1, src.len()), order);
         Self { data, order, shape }
     }
 }
@@ -138,7 +138,7 @@ impl<T> Matrix<T> {
         let ptr = Box::leak(src).as_mut_ptr() as *mut T;
         let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
         let order = Order::default();
-        let shape = AxisShape::from_shape_with_unchecked((R, C), order);
+        let shape = AxisShape::from_shape_with_unchecked(Shape::new(R, C), order);
         Self { data, order, shape }
     }
 }
