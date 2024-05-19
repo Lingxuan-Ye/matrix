@@ -445,7 +445,7 @@ where
     let size = nrows.checked_mul(ncols).ok_or(Error::SizeOverflow)?;
 
     let order = lhs.order;
-    let shape = AxisShape::build((nrows, ncols), order)?;
+    let shape = AxisShape::try_from_shape_with((nrows, ncols), order)?;
     let mut data = Vec::with_capacity(size);
     match order {
         Order::RowMajor => {
