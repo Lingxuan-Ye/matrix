@@ -1,7 +1,7 @@
 use super::index::translate_index_between_orders_unchecked;
 use super::iter::VectorIter;
 use super::order::Order;
-use super::shape::AxisShape;
+use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -81,17 +81,17 @@ pub fn ensure_multiplication_like_operation_conformable<L, R>(
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///
-/// let lhs = matrix.iter_nth_row(0);
-/// let rhs = matrix.iter_nth_row(1);
+/// let lhs = matrix.iter_nth_row(0).unwrap();
+/// let rhs = matrix.iter_nth_row(1).unwrap();
 /// assert_eq!(vector_dot_product(lhs, rhs), Some(14));
 ///
-/// let lhs = matrix.iter_nth_row(0);
-/// let rhs = matrix.iter_nth_col(1);
+/// let lhs = matrix.iter_nth_row(0).unwrap();
+/// let rhs = matrix.iter_nth_col(1).unwrap();
 /// assert_eq!(vector_dot_product(lhs, rhs), Some(4));
 ///
-/// let lhs = matrix.iter_nth_row(0);
+/// let lhs = matrix.iter_nth_row(0).unwrap();
 /// let zero_rows_matrix = Matrix::<u8>::new((0, 3));
-/// let rhs = zero_rows_matrix.iter_nth_col(1);
+/// let rhs = zero_rows_matrix.iter_nth_col(1).unwrap();
 /// assert!(vector_dot_product(lhs, rhs).is_none());
 /// ```
 pub fn vector_dot_product<L, R, T>(lhs: VectorIter<&L>, rhs: VectorIter<&R>) -> Option<T>
@@ -137,8 +137,6 @@ where
 {
     ensure_elementwise_operation_conformable(lhs, rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.iter().zip(rhs.data.iter()).map(op).collect()
     } else {
@@ -153,7 +151,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, consuming `rhs`.
@@ -189,8 +191,6 @@ where
 {
     ensure_elementwise_operation_conformable(lhs, &rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.iter().zip(rhs.data).map(op).collect()
     } else {
@@ -205,7 +205,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, consuming `lhs`.
@@ -240,8 +244,6 @@ where
 {
     ensure_elementwise_operation_conformable(&lhs, rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.into_iter().zip(rhs.data.iter()).map(op).collect()
     } else {
@@ -256,7 +258,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, consuming both.
@@ -292,8 +298,6 @@ where
 {
     ensure_elementwise_operation_conformable(&lhs, &rhs)?;
 
-    let order = lhs.order;
-    let shape = lhs.shape;
     let data = if lhs.order == rhs.order {
         lhs.data.into_iter().zip(rhs.data).map(op).collect()
     } else {
@@ -308,7 +312,11 @@ where
             .collect()
     };
 
-    Ok(Matrix { data, order, shape })
+    Ok(Matrix {
+        data,
+        order: lhs.order,
+        shape: lhs.shape,
+    })
 }
 
 /// Performs element-wise operation `op` on two matrices, assigning the result
@@ -442,16 +450,17 @@ where
 
     let nrows = lhs.nrows();
     let ncols = rhs.ncols();
-    let size = nrows.checked_mul(ncols).ok_or(Error::SizeOverflow)?;
-
     let order = lhs.order;
-    let shape = AxisShape::build((nrows, ncols), order)?;
+    let shape = AxisShape::try_from_shape_with(Shape::new(nrows, ncols), order)?;
+    let size = shape.size();
     let mut data = Vec::with_capacity(size);
     match order {
         Order::RowMajor => {
             'outer: for row in 0..nrows {
                 for col in 0..ncols {
-                    match op(lhs.iter_nth_row(row), rhs.iter_nth_col(col)) {
+                    let row_vector = unsafe { lhs.iter_nth_row_unchecked(row) };
+                    let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
+                    match op(row_vector, col_vector) {
                         None => {
                             data.resize_with(size, T::default);
                             break 'outer;
@@ -464,7 +473,9 @@ where
         Order::ColMajor => {
             'outer: for col in 0..ncols {
                 for row in 0..nrows {
-                    match op(lhs.iter_nth_row(row), rhs.iter_nth_col(col)) {
+                    let row_vector = unsafe { lhs.iter_nth_row_unchecked(row) };
+                    let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
+                    match op(row_vector, col_vector) {
                         None => {
                             data.resize_with(size, T::default);
                             break 'outer;

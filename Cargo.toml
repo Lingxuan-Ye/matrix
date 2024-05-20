@@ -1,6 +1,6 @@
 [package]
 name = "matreex"
-version = "0.4.1"
+version = "0.5.0"
 edition = "2021"
 authors = ["Lingxuan Ye <love@lingxuan.io>"]
 categories = ["data-structures"]
@@ -12,3 +12,8 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rayon = {version = "1.10.0", optional = true}
+
+[features]
+default = []
+rayon = ["dep:rayon"]

@@ -14,7 +14,7 @@ use self::order::Order;
 use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
 
-/// Matrix means matrix.
+/// [`Matrix`] means matrix.
 ///
 /// Instead of using constructor methods, you may prefer to create a
 /// matrix using the [`matrix!`] macro:
@@ -38,7 +38,7 @@ impl<T: Default> Matrix<T> {
     ///
     /// # Panics
     ///
-    /// Panic if size exceeds [`usize::MAX`], or total bytes stored
+    /// Panics if size exceeds [`usize::MAX`], or total bytes stored
     /// exceeds [`isize::MAX`].
     ///
     /// # Examples
@@ -90,7 +90,7 @@ impl<T: Default> Matrix<T> {
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
-        let shape = AxisShape::build(shape, order)?;
+        let shape = AxisShape::try_from_shape_with(shape, order)?;
         let size = Self::check_size(shape.size())?;
         let data = std::iter::repeat_with(T::default).take(size).collect();
         Ok(Self { data, order, shape })
@@ -118,7 +118,7 @@ impl<T: Clone> Matrix<T> {
     pub fn from_slice(src: &[T]) -> Self {
         let data = src.to_vec();
         let order = Order::default();
-        let shape = AxisShape::build((1, src.len()), order).expect("this will never fail");
+        let shape = AxisShape::from_shape_with_unchecked(Shape::new(1, src.len()), order);
         Self { data, order, shape }
     }
 }
@@ -138,7 +138,7 @@ impl<T> Matrix<T> {
         let ptr = Box::leak(src).as_mut_ptr() as *mut T;
         let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
         let order = Order::default();
-        let shape = AxisShape::build((R, C), order).expect("this will never fail");
+        let shape = AxisShape::from_shape_with_unchecked(Shape::new(R, C), order);
         Self { data, order, shape }
     }
 }
@@ -225,7 +225,7 @@ impl<T: Default> Matrix<T> {
     /// assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
     /// ```
     pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
-        let shape = AxisShape::build(shape, self.order)?;
+        let shape = AxisShape::try_from_shape_with(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
         self.data.resize_with(size, T::default);
         self.shape = shape;
@@ -244,7 +244,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, matrix};
+    /// use matreex::{matrix, Error};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -255,11 +255,11 @@ impl<T> Matrix<T> {
     /// assert_eq!(result, Err(Error::SizeMismatch));
     /// ```
     pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
-        let shape = AxisShape::build(shape, self.order).map_err(|_| Error::SizeMismatch)?;
-        if self.size() != shape.size() {
-            return Err(Error::SizeMismatch);
+        match shape.size() {
+            Ok(size) if (self.size() == size) => (),
+            _ => return Err(Error::SizeMismatch),
         }
-        self.shape = shape;
+        self.shape = AxisShape::from_shape_with_unchecked(shape, self.order);
         Ok(self)
     }
 
@@ -434,14 +434,14 @@ mod tests {
     use crate::matrix;
 
     fn shape(major: usize, minor: usize) -> AxisShape {
-        AxisShape::build((major, minor), Order::default()).unwrap()
+        AxisShape::build(major, minor).unwrap()
     }
 
     #[test]
     fn test_from_2darray() {
         let data = vec![0, 1, 2, 3, 4, 5];
         let order = Order::default();
-        let shape = AxisShape::build((2, 3), order).unwrap();
+        let shape = AxisShape::try_from_shape_with((2, 3), order).unwrap();
         let expected = Matrix { data, order, shape };
 
         let array = Box::new([[0, 1, 2], [3, 4, 5]]);

@@ -1,13 +1,14 @@
-mod count;
-mod major_axis;
-mod minor_axis;
-
-use self::major_axis::{MajorAxisMatrixIter, MajorAxisVectorIter};
-use self::minor_axis::{MinorAxisMatrixIter, MinorAxisVectorIter};
 use super::order::Order;
 use super::Matrix;
+use crate::error::{Error, Result};
 
-pub type VectorIter<'a, T> = Box<dyn Iterator<Item = T> + 'a>;
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
+
+/// A trait object that represents a double-ended iterator over a vector.
+pub type VectorIter<'a, T> = Box<dyn DoubleEndedIterator<Item = T> + 'a>;
+
+/// A trait object that represents a double-ended iterator over a matrix.
 pub type MatrixIter<'a, T> = Box<dyn DoubleEndedIterator<Item = VectorIter<'a, T>> + 'a>;
 
 impl<T> Matrix<T> {
@@ -19,20 +20,26 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let mut iter = matrix.iter_rows();
+    /// let mut rows = matrix.iter_rows();
     ///
-    /// let row_0: Vec<&u8> = iter.next().unwrap().collect();
-    /// assert_eq!(row_0, vec![&0, &1, &2]);
+    /// let mut row_0 = rows.next().unwrap();
+    /// assert_eq!(row_0.next(), Some(&0));
+    /// assert_eq!(row_0.next(), Some(&1));
+    /// assert_eq!(row_0.next(), Some(&2));
+    /// assert_eq!(row_0.next(), None);
     ///
-    /// let row_1: Vec<&u8> = iter.next().unwrap().collect();
-    /// assert_eq!(row_1, vec![&3, &4, &5]);
+    /// let mut row_1 = rows.next().unwrap();
+    /// assert_eq!(row_1.next(), Some(&3));
+    /// assert_eq!(row_1.next(), Some(&4));
+    /// assert_eq!(row_1.next(), Some(&5));
+    /// assert_eq!(row_1.next(), None);
     ///
-    /// assert!(iter.next().is_none());
+    /// assert!(rows.next().is_none());
     /// ```
     pub fn iter_rows(&self) -> MatrixIter<&T> {
         match self.order {
-            Order::RowMajor => Box::new(MajorAxisMatrixIter::new(self)),
-            Order::ColMajor => Box::new(MinorAxisMatrixIter::new(self)),
+            Order::RowMajor => self.iter_by_major_axis(),
+            Order::ColMajor => self.iter_by_minor_axis(),
         }
     }
 
@@ -44,28 +51,39 @@ impl<T> Matrix<T> {
     /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let mut iter = matrix.iter_cols();
+    /// let mut cols = matrix.iter_cols();
     ///
-    /// let col_0: Vec<&u8> = iter.next().unwrap().collect();
-    /// assert_eq!(col_0, vec![&0, &3]);
+    /// let mut col_0 = cols.next().unwrap();
+    /// assert_eq!(col_0.next(), Some(&0));
+    /// assert_eq!(col_0.next(), Some(&3));
+    /// assert_eq!(col_0.next(), None);
     ///
-    /// let col_1: Vec<&u8> = iter.next().unwrap().collect();
-    /// assert_eq!(col_1, vec![&1, &4]);
+    /// let mut col_1 = cols.next().unwrap();
+    /// assert_eq!(col_1.next(), Some(&1));
+    /// assert_eq!(col_1.next(), Some(&4));
+    /// assert_eq!(col_1.next(), None);
     ///
-    /// let col_2: Vec<&u8> = iter.next().unwrap().collect();
-    /// assert_eq!(col_2, vec![&2, &5]);
+    /// let mut col_2 = cols.next().unwrap();
+    /// assert_eq!(col_2.next(), Some(&2));
+    /// assert_eq!(col_2.next(), Some(&5));
+    /// assert_eq!(col_2.next(), None);
     ///
-    /// assert!(iter.next().is_none());
+    /// assert!(cols.next().is_none());
     /// ```
     pub fn iter_cols(&self) -> MatrixIter<&T> {
         match self.order {
-            Order::RowMajor => Box::new(MinorAxisMatrixIter::new(self)),
-            Order::ColMajor => Box::new(MajorAxisMatrixIter::new(self)),
+            Order::RowMajor => self.iter_by_minor_axis(),
+            Order::ColMajor => self.iter_by_major_axis(),
         }
     }
 
     /// Returns an iterator over the elements of the nth row in the matrix.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
+    /// the number of rows in the matrix.
+    ///
     /// # Examples
     ///
     /// ```
@@ -73,19 +91,26 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let mut iter = matrix.iter_nth_row(1);
-    /// let row_1: Vec<&u8> = iter.collect();
-    /// assert_eq!(row_1, vec![&3, &4, &5]);
+    /// let mut row_1 = matrix.iter_nth_row(1).unwrap();
+    /// assert_eq!(row_1.next(), Some(&3));
+    /// assert_eq!(row_1.next(), Some(&4));
+    /// assert_eq!(row_1.next(), Some(&5));
+    /// assert_eq!(row_1.next(), None);
     /// ```
-    pub fn iter_nth_row(&self, n: usize) -> VectorIter<&T> {
+    pub fn iter_nth_row(&self, n: usize) -> Result<VectorIter<&T>> {
         match self.order {
-            Order::RowMajor => Box::new(MajorAxisVectorIter::new(self, n)),
-            Order::ColMajor => Box::new(MinorAxisVectorIter::new(self, n)),
+            Order::RowMajor => self.iter_nth_major_axis_vector(n),
+            Order::ColMajor => self.iter_nth_minor_axis_vector(n),
         }
     }
 
     /// Returns an iterator over the elements of the nth column in the matrix.
     ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
+    /// the number of columns in the matrix.
+    ///
     /// # Examples
     ///
     /// ```
@@ -93,20 +118,193 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let mut iter = matrix.iter_nth_col(1);
-    /// let col_1: Vec<&u8> = iter.collect();
-    /// assert_eq!(col_1, vec![&1, &4]);
+    /// let mut col_1 = matrix.iter_nth_col(1).unwrap();
+    /// assert_eq!(col_1.next(), Some(&1));
+    /// assert_eq!(col_1.next(), Some(&4));
+    /// assert_eq!(col_1.next(), None);
     /// ```
-    pub fn iter_nth_col(&self, n: usize) -> VectorIter<&T> {
+    pub fn iter_nth_col(&self, n: usize) -> Result<VectorIter<&T>> {
         match self.order {
-            Order::RowMajor => Box::new(MinorAxisVectorIter::new(self, n)),
-            Order::ColMajor => Box::new(MajorAxisVectorIter::new(self, n)),
+            Order::RowMajor => self.iter_nth_minor_axis_vector(n),
+            Order::ColMajor => self.iter_nth_major_axis_vector(n),
         }
+    }
+
+    /// Returns an iterator over the elements of the matrix.
+    ///
+    /// # Notes
+    ///
+    /// Elements will be iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for (index, element) in matrix.iter_elements().enumerate() {
+    ///     let index = Index::from_flattened_for(index, &matrix);
+    ///     assert_eq!(element, &matrix[index]);
+    /// }
+    /// ```
+    pub fn iter_elements(&self) -> impl Iterator<Item = &T> {
+        self.data.iter()
+    }
+
+    /// Returns an iterator that allows modifying each element
+    /// of the matrix.
+    ///
+    /// # Notes
+    ///
+    /// Elements will be iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for element in matrix.iter_elements_mut() {
+    ///     *element += 1;
+    /// }
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    pub fn iter_elements_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.data.iter_mut()
+    }
+
+    /// Creates a consuming iterator, that is, one that moves each
+    /// element out of the matrix.
+    ///
+    /// # Notes
+    ///
+    /// Elements will be iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let data: Vec<u8> = matrix.into_iter_elements().collect();
+    /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
+    /// ```
+    pub fn into_iter_elements(self) -> impl Iterator<Item = T> {
+        self.data.into_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<T> Matrix<T>
+where
+    T: Send + Sync,
+{
+    /// Returns a parallel iterator over the elements of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::iter::ParallelIterator;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// assert_eq!(matrix.par_iter_elements().sum::<u8>(), 15);
+    /// ```
+    pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T> {
+        self.data.par_iter()
+    }
+
+    /// Returns an parallel iterator that allows modifying each element
+    /// of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::iter::ParallelIterator;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.par_iter_elements_mut().for_each(|element| *element += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T> {
+        self.data.par_iter_mut()
+    }
+
+    /// Creates a parallel consuming iterator, that is, one that moves each
+    /// element out of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    /// use rayon::iter::ParallelIterator;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// assert_eq!(matrix.into_par_iter_elements().sum::<u8>(), 15);
+    /// ```
+    pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T> {
+        self.data.into_par_iter()
+    }
+}
+
+impl<T> Matrix<T> {
+    pub(super) unsafe fn iter_nth_row_unchecked(&self, n: usize) -> VectorIter<&T> {
+        match self.order {
+            Order::RowMajor => unsafe { self.iter_nth_major_axis_vector_unchecked(n) },
+            Order::ColMajor => self.iter_nth_minor_axis_vector_unchecked(n),
+        }
+    }
+
+    pub(super) unsafe fn iter_nth_col_unchecked(&self, n: usize) -> VectorIter<&T> {
+        match self.order {
+            Order::RowMajor => self.iter_nth_minor_axis_vector_unchecked(n),
+            Order::ColMajor => unsafe { self.iter_nth_major_axis_vector_unchecked(n) },
+        }
+    }
+
+    unsafe fn iter_nth_major_axis_vector_unchecked(&self, n: usize) -> VectorIter<&T> {
+        let lower = n * self.major_stride();
+        let upper = lower + self.major_stride();
+        unsafe { Box::new(self.data.get_unchecked(lower..upper).iter()) }
+    }
+
+    fn iter_nth_major_axis_vector(&self, n: usize) -> Result<VectorIter<&T>> {
+        if n >= self.major() {
+            return Err(Error::IndexOutOfBounds);
+        }
+        unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
+    }
+
+    fn iter_nth_minor_axis_vector_unchecked(&self, n: usize) -> VectorIter<&T> {
+        Box::new(self.data.iter().skip(n).step_by(self.major_stride()))
+    }
+
+    fn iter_nth_minor_axis_vector(&self, n: usize) -> Result<VectorIter<&T>> {
+        if n >= self.minor() {
+            return Err(Error::IndexOutOfBounds);
+        }
+        Ok(self.iter_nth_minor_axis_vector_unchecked(n))
+    }
+
+    fn iter_by_major_axis(&self) -> MatrixIter<&T> {
+        Box::new((0..self.major()).map(|n| unsafe { self.iter_nth_major_axis_vector_unchecked(n) }))
+    }
+
+    fn iter_by_minor_axis(&self) -> MatrixIter<&T> {
+        Box::new((0..self.minor()).map(|n| self.iter_nth_minor_axis_vector_unchecked(n)))
     }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::matrix;
 
     #[test]
@@ -114,37 +312,63 @@ mod tests {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         {
-            let mut iter = matrix.iter_rows();
-            let row_0: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(row_0, vec![&0, &1, &2]);
-            let row_1: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(row_1, vec![&3, &4, &5]);
+            let mut rows = matrix.iter_rows();
+            let mut row_0 = rows.next().unwrap();
+            assert_eq!(row_0.next(), Some(&0));
+            assert_eq!(row_0.next(), Some(&1));
+            assert_eq!(row_0.next(), Some(&2));
+            assert_eq!(row_0.next(), None);
+            let mut row_1 = rows.next().unwrap();
+            assert_eq!(row_1.next(), Some(&3));
+            assert_eq!(row_1.next(), Some(&4));
+            assert_eq!(row_1.next(), Some(&5));
+            assert_eq!(row_1.next(), None);
+            assert!(rows.next().is_none());
 
-            let mut iter = matrix.iter_rows();
-            let row_1: Vec<&u8> = iter.next_back().unwrap().collect();
-            assert_eq!(row_1, vec![&3, &4, &5]);
-            let row_0: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(row_0, vec![&0, &1, &2]);
-            assert!(iter.next_back().is_none());
-            assert!(iter.next().is_none());
+            let mut rows = matrix.iter_rows();
+            let mut row_1 = rows.next_back().unwrap();
+            assert_eq!(row_1.next(), Some(&3));
+            assert_eq!(row_1.next(), Some(&4));
+            assert_eq!(row_1.next(), Some(&5));
+            assert_eq!(row_1.next(), None);
+            let mut row_0 = rows.next().unwrap();
+            assert_eq!(row_0.next(), Some(&0));
+            assert_eq!(row_0.next(), Some(&1));
+            assert_eq!(row_0.next(), Some(&2));
+            assert_eq!(row_0.next(), None);
+            assert!(rows.next_back().is_none());
+            assert!(rows.next().is_none());
         }
 
         matrix.switch_order();
 
         {
-            let mut iter = matrix.iter_rows();
-            let row_0: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(row_0, vec![&0, &1, &2]);
-            let row_1: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(row_1, vec![&3, &4, &5]);
+            let mut rows = matrix.iter_rows();
+            let mut row_0 = rows.next().unwrap();
+            assert_eq!(row_0.next(), Some(&0));
+            assert_eq!(row_0.next(), Some(&1));
+            assert_eq!(row_0.next(), Some(&2));
+            assert_eq!(row_0.next(), None);
+            let mut row_1 = rows.next().unwrap();
+            assert_eq!(row_1.next(), Some(&3));
+            assert_eq!(row_1.next(), Some(&4));
+            assert_eq!(row_1.next(), Some(&5));
+            assert_eq!(row_1.next(), None);
+            assert!(rows.next().is_none());
 
-            let mut iter = matrix.iter_rows();
-            let row_1: Vec<&u8> = iter.next_back().unwrap().collect();
-            assert_eq!(row_1, vec![&3, &4, &5]);
-            let row_0: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(row_0, vec![&0, &1, &2]);
-            assert!(iter.next_back().is_none());
-            assert!(iter.next().is_none());
+            let mut rows = matrix.iter_rows();
+            let mut row_1 = rows.next_back().unwrap();
+            assert_eq!(row_1.next(), Some(&3));
+            assert_eq!(row_1.next(), Some(&4));
+            assert_eq!(row_1.next(), Some(&5));
+            assert_eq!(row_1.next(), None);
+            let mut row_0 = rows.next().unwrap();
+            assert_eq!(row_0.next(), Some(&0));
+            assert_eq!(row_0.next(), Some(&1));
+            assert_eq!(row_0.next(), Some(&2));
+            assert_eq!(row_0.next(), None);
+            assert!(rows.next_back().is_none());
+            assert!(rows.next().is_none());
         }
     }
 
@@ -153,45 +377,71 @@ mod tests {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         {
-            let mut iter = matrix.iter_cols();
-            let col_0: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(col_0, vec![&0, &3]);
-            let col_1: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(col_1, vec![&1, &4]);
-            let col_2: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(col_2, vec![&2, &5]);
+            let mut cols = matrix.iter_cols();
+            let mut col_0 = cols.next().unwrap();
+            assert_eq!(col_0.next(), Some(&0));
+            assert_eq!(col_0.next(), Some(&3));
+            assert_eq!(col_0.next(), None);
+            let mut col_1 = cols.next().unwrap();
+            assert_eq!(col_1.next(), Some(&1));
+            assert_eq!(col_1.next(), Some(&4));
+            assert_eq!(col_1.next(), None);
+            let mut col_2 = cols.next().unwrap();
+            assert_eq!(col_2.next(), Some(&2));
+            assert_eq!(col_2.next(), Some(&5));
+            assert_eq!(col_2.next(), None);
+            assert!(cols.next().is_none());
 
-            let mut iter = matrix.iter_cols();
-            let col_2: Vec<&u8> = iter.next_back().unwrap().collect();
-            assert_eq!(col_2, vec![&2, &5]);
-            let col_0: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(col_0, vec![&0, &3]);
-            let col_1: Vec<&u8> = iter.next_back().unwrap().collect();
-            assert_eq!(col_1, vec![&1, &4]);
-            assert!(iter.next_back().is_none());
-            assert!(iter.next().is_none());
+            let mut cols = matrix.iter_cols();
+            let mut col_2 = cols.next_back().unwrap();
+            assert_eq!(col_2.next(), Some(&2));
+            assert_eq!(col_2.next(), Some(&5));
+            assert_eq!(col_2.next(), None);
+            let mut col_0 = cols.next().unwrap();
+            assert_eq!(col_0.next(), Some(&0));
+            assert_eq!(col_0.next(), Some(&3));
+            assert_eq!(col_0.next(), None);
+            let mut col_1 = cols.next_back().unwrap();
+            assert_eq!(col_1.next(), Some(&1));
+            assert_eq!(col_1.next(), Some(&4));
+            assert_eq!(col_1.next(), None);
+            assert!(cols.next_back().is_none());
+            assert!(cols.next().is_none());
         }
 
         matrix.switch_order();
 
         {
-            let mut iter = matrix.iter_cols();
-            let col_0: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(col_0, vec![&0, &3]);
-            let col_1: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(col_1, vec![&1, &4]);
-            let col_2: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(col_2, vec![&2, &5]);
+            let mut cols = matrix.iter_cols();
+            let mut col_0 = cols.next().unwrap();
+            assert_eq!(col_0.next(), Some(&0));
+            assert_eq!(col_0.next(), Some(&3));
+            assert_eq!(col_0.next(), None);
+            let mut col_1 = cols.next().unwrap();
+            assert_eq!(col_1.next(), Some(&1));
+            assert_eq!(col_1.next(), Some(&4));
+            assert_eq!(col_1.next(), None);
+            let mut col_2 = cols.next().unwrap();
+            assert_eq!(col_2.next(), Some(&2));
+            assert_eq!(col_2.next(), Some(&5));
+            assert_eq!(col_2.next(), None);
+            assert!(cols.next().is_none());
 
-            let mut iter = matrix.iter_cols();
-            let col_2: Vec<&u8> = iter.next_back().unwrap().collect();
-            assert_eq!(col_2, vec![&2, &5]);
-            let col_0: Vec<&u8> = iter.next().unwrap().collect();
-            assert_eq!(col_0, vec![&0, &3]);
-            let col_1: Vec<&u8> = iter.next_back().unwrap().collect();
-            assert_eq!(col_1, vec![&1, &4]);
-            assert!(iter.next_back().is_none());
-            assert!(iter.next().is_none());
+            let mut cols = matrix.iter_cols();
+            let mut col_2 = cols.next_back().unwrap();
+            assert_eq!(col_2.next(), Some(&2));
+            assert_eq!(col_2.next(), Some(&5));
+            assert_eq!(col_2.next(), None);
+            let mut col_0 = cols.next().unwrap();
+            assert_eq!(col_0.next(), Some(&0));
+            assert_eq!(col_0.next(), Some(&3));
+            assert_eq!(col_0.next(), None);
+            let mut col_1 = cols.next_back().unwrap();
+            assert_eq!(col_1.next(), Some(&1));
+            assert_eq!(col_1.next(), Some(&4));
+            assert_eq!(col_1.next(), None);
+            assert!(cols.next_back().is_none());
+            assert!(cols.next().is_none());
         }
     }
 
@@ -199,37 +449,85 @@ mod tests {
     fn test_iter_nth_row() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        let row_0: Vec<&u8> = matrix.iter_nth_row(0).collect();
-        assert_eq!(row_0, vec![&0, &1, &2]);
-        let row_1: Vec<&u8> = matrix.iter_nth_row(1).collect();
-        assert_eq!(row_1, vec![&3, &4, &5]);
+        {
+            let mut row_0 = matrix.iter_nth_row(0).unwrap();
+            assert_eq!(row_0.next(), Some(&0));
+            assert_eq!(row_0.next(), Some(&1));
+            assert_eq!(row_0.next(), Some(&2));
+            assert_eq!(row_0.next(), None);
+            let mut row_1 = matrix.iter_nth_row(1).unwrap();
+            assert_eq!(row_1.next(), Some(&3));
+            assert_eq!(row_1.next(), Some(&4));
+            assert_eq!(row_1.next(), Some(&5));
+            assert_eq!(row_1.next(), None);
+            assert!(matches!(
+                matrix.iter_nth_row(2),
+                Err(Error::IndexOutOfBounds)
+            ));
+        }
 
         matrix.switch_order();
 
-        let row_0: Vec<&u8> = matrix.iter_nth_row(0).collect();
-        assert_eq!(row_0, vec![&0, &1, &2]);
-        let row_1: Vec<&u8> = matrix.iter_nth_row(1).collect();
-        assert_eq!(row_1, vec![&3, &4, &5]);
+        {
+            let mut row_0 = matrix.iter_nth_row(0).unwrap();
+            assert_eq!(row_0.next(), Some(&0));
+            assert_eq!(row_0.next(), Some(&1));
+            assert_eq!(row_0.next(), Some(&2));
+            assert_eq!(row_0.next(), None);
+            let mut row_1 = matrix.iter_nth_row(1).unwrap();
+            assert_eq!(row_1.next(), Some(&3));
+            assert_eq!(row_1.next(), Some(&4));
+            assert_eq!(row_1.next(), Some(&5));
+            assert_eq!(row_1.next(), None);
+            assert!(matches!(
+                matrix.iter_nth_row(2),
+                Err(Error::IndexOutOfBounds)
+            ));
+        }
     }
 
     #[test]
     fn test_iter_nth_col() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        let col_0: Vec<&u8> = matrix.iter_nth_col(0).collect();
-        assert_eq!(col_0, vec![&0, &3]);
-        let col_1: Vec<&u8> = matrix.iter_nth_col(1).collect();
-        assert_eq!(col_1, vec![&1, &4]);
-        let col_2: Vec<&u8> = matrix.iter_nth_col(2).collect();
-        assert_eq!(col_2, vec![&2, &5]);
+        {
+            let mut col_0 = matrix.iter_nth_col(0).unwrap();
+            assert_eq!(col_0.next(), Some(&0));
+            assert_eq!(col_0.next(), Some(&3));
+            assert_eq!(col_0.next(), None);
+            let mut col_1 = matrix.iter_nth_col(1).unwrap();
+            assert_eq!(col_1.next(), Some(&1));
+            assert_eq!(col_1.next(), Some(&4));
+            assert_eq!(col_1.next(), None);
+            let mut col_2 = matrix.iter_nth_col(2).unwrap();
+            assert_eq!(col_2.next(), Some(&2));
+            assert_eq!(col_2.next(), Some(&5));
+            assert_eq!(col_2.next(), None);
+            assert!(matches!(
+                matrix.iter_nth_col(3),
+                Err(Error::IndexOutOfBounds)
+            ));
+        }
 
         matrix.switch_order();
 
-        let col_0: Vec<&u8> = matrix.iter_nth_col(0).collect();
-        assert_eq!(col_0, vec![&0, &3]);
-        let col_1: Vec<&u8> = matrix.iter_nth_col(1).collect();
-        assert_eq!(col_1, vec![&1, &4]);
-        let col_2: Vec<&u8> = matrix.iter_nth_col(2).collect();
-        assert_eq!(col_2, vec![&2, &5]);
+        {
+            let mut col_0 = matrix.iter_nth_col(0).unwrap();
+            assert_eq!(col_0.next(), Some(&0));
+            assert_eq!(col_0.next(), Some(&3));
+            assert_eq!(col_0.next(), None);
+            let mut col_1 = matrix.iter_nth_col(1).unwrap();
+            assert_eq!(col_1.next(), Some(&1));
+            assert_eq!(col_1.next(), Some(&4));
+            assert_eq!(col_1.next(), None);
+            let mut col_2 = matrix.iter_nth_col(2).unwrap();
+            assert_eq!(col_2.next(), Some(&2));
+            assert_eq!(col_2.next(), Some(&5));
+            assert_eq!(col_2.next(), None);
+            assert!(matches!(
+                matrix.iter_nth_col(3),
+                Err(Error::IndexOutOfBounds)
+            ));
+        }
     }
 }

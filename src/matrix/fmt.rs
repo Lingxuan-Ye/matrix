@@ -1,13 +1,8 @@
+use super::index::Index;
 use super::Matrix;
-
-const LEFT_DELIMITER: &str = "[";
-const RIGHT_DELIMITER: &str = "]";
-const COMMA: &str = ",";
-const SPACE: &str = " ";
-const SET_DIM: &str = "\u{001b}[2m";
-const UNSET_DIM: &str = "\u{001b}[22m";
-const TAB_LEN: usize = 4;
-const SEP_LEN: usize = 2;
+use crate::fmt::{
+    COMMA, LEFT_DELIMITER, RIGHT_DELIMITER, SEP_LEN, SET_DIM, SPACE, TAB_LEN, UNSET_DIM,
+};
 
 impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -38,7 +33,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                 write!(f, "{SPACE:<SEP_LEN$}")?;
             }
             write!(f, "{SET_DIM}{col:>index_max_width$}{UNSET_DIM}")?;
-            if col != shape.ncols - 1 {
+            if col != (shape.ncols - 1) {
                 write!(f, "{SPACE}")?;
                 write!(f, "{SPACE:>element_max_width$}")?;
             }
@@ -55,7 +50,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                 if col != 0 {
                     write!(f, "{COMMA:<SEP_LEN$}")?;
                 }
-                let index = self.flatten_index_unchecked((row, col));
+                let index = Index::new(row, col).into_flattened_unchecked_for(self);
                 let element = &cache[index];
                 write!(f, "{SET_DIM}{index:>index_max_width$}{UNSET_DIM}")?;
                 write!(f, "{SPACE}")?;
@@ -86,23 +81,29 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
             cache.push(string);
         }
 
-        writeln!(f, "{LEFT_DELIMITER}")?;
-
         let shape = self.shape();
         for row in 0..shape.nrows {
-            write!(f, "{SPACE:TAB_LEN$}{LEFT_DELIMITER}")?;
+            if row == 0 {
+                write!(f, "{LEFT_DELIMITER}{LEFT_DELIMITER}")?;
+            } else {
+                write!(f, "{SPACE}{LEFT_DELIMITER}")?;
+            }
             for col in 0..shape.ncols {
                 if col != 0 {
-                    write! {f, "{COMMA:<SEP_LEN$}"}?;
+                    write! {f, "{SPACE:<SEP_LEN$}"}?;
                 }
-                let index = self.flatten_index_unchecked((row, col));
+                let index = Index::new(row, col).into_flattened_unchecked_for(self);
                 let element = &cache[index];
                 write!(f, "{element:>element_max_width$}")?;
             }
-            writeln!(f, "{RIGHT_DELIMITER}{COMMA}")?;
+            if row != (shape.nrows - 1) {
+                writeln!(f, "{RIGHT_DELIMITER}")?;
+            } else {
+                writeln!(f, "{RIGHT_DELIMITER}{RIGHT_DELIMITER}")?;
+            }
         }
 
-        writeln!(f, "{RIGHT_DELIMITER}")
+        Ok(())
     }
 }
 
@@ -133,10 +134,8 @@ Matrix {
         let matrix = matrix![[1, 2, 3], [4, 5, 6]];
         let result = format!("{}", matrix);
         let expected = "\
-[
-    [1, 2, 3],
-    [4, 5, 6],
-]
+[[1  2  3]
+ [4  5  6]]
 ";
         assert_eq!(result, expected);
     }
