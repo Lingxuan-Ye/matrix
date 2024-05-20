@@ -12,3 +12,8 @@ license = "MIT"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+rayon = {version = "1.10.0", optional = true}
+
+[features]
+default = []
+rayon = ["dep:rayon"]

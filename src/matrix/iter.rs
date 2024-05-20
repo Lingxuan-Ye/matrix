@@ -2,6 +2,9 @@ use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
 
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
+
 /// A trait object that represents a double-ended iterator over a vector.
 pub type VectorIter<'a, T> = Box<dyn DoubleEndedIterator<Item = T> + 'a>;
 
@@ -191,6 +194,63 @@ impl<T> Matrix<T> {
     /// ```
     pub fn into_iter_elements(self) -> impl Iterator<Item = T> {
         self.data.into_iter()
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<T> Matrix<T>
+where
+    T: Send + Sync,
+{
+    /// Returns a parallel iterator over the elements of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::iter::ParallelIterator;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// assert_eq!(matrix.par_iter_elements().sum::<u8>(), 15);
+    /// ```
+    pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T> {
+        self.data.par_iter()
+    }
+
+    /// Returns an parallel iterator that allows modifying each element
+    /// of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    /// use rayon::iter::ParallelIterator;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.par_iter_elements_mut().for_each(|element| *element += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    pub fn par_iter_elements_mut(&mut self) -> impl ParallelIterator<Item = &mut T> {
+        self.data.par_iter_mut()
+    }
+
+    /// Creates a parallel consuming iterator, that is, one that moves each
+    /// element out of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    /// use rayon::iter::ParallelIterator;
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// assert_eq!(matrix.into_par_iter_elements().sum::<u8>(), 15);
+    /// ```
+    pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T> {
+        self.data.into_par_iter()
     }
 }
 
