@@ -22,7 +22,6 @@
 //! Coming soon (maybe not that soon).
 
 pub mod error;
-pub mod iter;
 pub mod matrix;
 pub mod vector;
 
@@ -31,6 +30,7 @@ mod macros;
 
 pub use self::error::{Error, Result};
 pub use self::matrix::index::Index;
+pub use self::matrix::iter::{MatrixIter, VectorIter};
 pub use self::matrix::order::Order;
 pub use self::matrix::shape::Shape;
 pub use self::matrix::Matrix;

@@ -1,7 +1,12 @@
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
-use crate::iter::{MatrixIter, VectorIter};
+
+/// A trait object that represents a double-ended iterator over a vector.
+pub type VectorIter<'a, T> = Box<dyn DoubleEndedIterator<Item = T> + 'a>;
+
+/// A trait object that represents a double-ended iterator over a matrix.
+pub type MatrixIter<'a, T> = Box<dyn DoubleEndedIterator<Item = VectorIter<'a, T>> + 'a>;
 
 impl<T> Matrix<T> {
     /// Returns an iterator over the rows of the matrix.

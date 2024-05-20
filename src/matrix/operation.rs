@@ -1,9 +1,9 @@
 use super::index::translate_index_between_orders_unchecked;
+use super::iter::VectorIter;
 use super::order::Order;
 use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
-use crate::iter::VectorIter;
 
 /// Ensures that two matrices are conformable for element-wise operations.
 ///
