@@ -81,17 +81,17 @@ pub fn ensure_multiplication_like_operation_conformable<L, R>(
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///
-/// let lhs = matrix.iter_nth_row(0);
-/// let rhs = matrix.iter_nth_row(1);
+/// let lhs = matrix.iter_nth_row(0).unwrap();
+/// let rhs = matrix.iter_nth_row(1).unwrap();
 /// assert_eq!(vector_dot_product(lhs, rhs), Some(14));
 ///
-/// let lhs = matrix.iter_nth_row(0);
-/// let rhs = matrix.iter_nth_col(1);
+/// let lhs = matrix.iter_nth_row(0).unwrap();
+/// let rhs = matrix.iter_nth_col(1).unwrap();
 /// assert_eq!(vector_dot_product(lhs, rhs), Some(4));
 ///
-/// let lhs = matrix.iter_nth_row(0);
+/// let lhs = matrix.iter_nth_row(0).unwrap();
 /// let zero_rows_matrix = Matrix::<u8>::new((0, 3));
-/// let rhs = zero_rows_matrix.iter_nth_col(1);
+/// let rhs = zero_rows_matrix.iter_nth_col(1).unwrap();
 /// assert!(vector_dot_product(lhs, rhs).is_none());
 /// ```
 pub fn vector_dot_product<L, R, T>(lhs: VectorIter<&L>, rhs: VectorIter<&R>) -> Option<T>
@@ -458,7 +458,9 @@ where
         Order::RowMajor => {
             'outer: for row in 0..nrows {
                 for col in 0..ncols {
-                    match op(lhs.iter_nth_row(row), rhs.iter_nth_col(col)) {
+                    let row_vector = unsafe { lhs.iter_nth_row_unchecked(row) };
+                    let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
+                    match op(row_vector, col_vector) {
                         None => {
                             data.resize_with(size, T::default);
                             break 'outer;
@@ -471,7 +473,9 @@ where
         Order::ColMajor => {
             'outer: for col in 0..ncols {
                 for row in 0..nrows {
-                    match op(lhs.iter_nth_row(row), rhs.iter_nth_col(col)) {
+                    let row_vector = unsafe { lhs.iter_nth_row_unchecked(row) };
+                    let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
+                    match op(row_vector, col_vector) {
                         None => {
                             data.resize_with(size, T::default);
                             break 'outer;
