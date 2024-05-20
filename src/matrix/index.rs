@@ -75,7 +75,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, matrix};
+    /// use matreex::{matrix, Error};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.get((1, 1)), Ok(&4));
@@ -98,7 +98,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, matrix};
+    /// use matreex::{matrix, Error};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// assert_eq!(matrix.get_mut((1, 1)), Ok(&mut 4));
@@ -123,7 +123,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, matrix};
+    /// use matreex::{matrix, Error};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// unsafe { assert_eq!(matrix.get_unchecked((1, 1)), &4); }
@@ -150,7 +150,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, matrix};
+    /// use matreex::{matrix, Error};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     /// unsafe { assert_eq!(matrix.get_unchecked_mut((1, 1)), &mut 4); }
@@ -191,7 +191,7 @@ where
 /// # Examples
 ///
 /// ```
-/// use matreex::{Index, matrix};
+/// use matreex::{matrix, Index};
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///
@@ -282,7 +282,7 @@ impl Index {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Index, matrix};
+    /// use matreex::{matrix, Index};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -295,7 +295,6 @@ impl Index {
     pub fn from_flattened_unchecked_for<T>(index: usize, matrix: &Matrix<T>) -> Self {
         AxisIndex::from_flattened_unchecked_for(index, matrix.shape).interpret_with(matrix.order)
     }
-
     /// Creates an `Index` instance from a flattened index.
     ///
     /// # Errors
@@ -305,7 +304,7 @@ impl Index {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, Index, matrix};
+    /// use matreex::{matrix, Error, Index};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -329,7 +328,7 @@ impl Index {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Index, matrix};
+    /// use matreex::{matrix, Index};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -338,7 +337,7 @@ impl Index {
     /// ```
     ///
     /// ```should_panic
-    /// use matreex::{Index, matrix};
+    /// use matreex::{matrix, Index};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -357,7 +356,7 @@ impl Index {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Index, matrix};
+    /// use matreex::{matrix, Index};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -380,7 +379,7 @@ impl Index {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, Index, matrix};
+    /// use matreex::{matrix, Error, Index};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -403,7 +402,7 @@ impl Index {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Index, matrix};
+    /// use matreex::{matrix, Index};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -412,7 +411,7 @@ impl Index {
     /// ```
     ///
     /// ```should_panic
-    /// use matreex::{Index, matrix};
+    /// use matreex::{matrix, Index};
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///

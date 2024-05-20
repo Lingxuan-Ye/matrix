@@ -244,7 +244,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, matrix};
+    /// use matreex::{matrix, Error};
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
