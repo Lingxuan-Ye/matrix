@@ -126,6 +126,72 @@ impl<T> Matrix<T> {
             Order::ColMajor => self.iter_nth_major_axis_vector(n),
         }
     }
+
+    /// Returns an iterator over the elements of the matrix.
+    ///
+    /// # Notes
+    ///
+    /// Elements will be iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for (index, element) in matrix.iter_elements().enumerate() {
+    ///     let index = Index::from_flattened_for(index, &matrix);
+    ///     assert_eq!(element, &matrix[index]);
+    /// }
+    /// ```
+    pub fn iter_elements(&self) -> impl Iterator<Item = &T> {
+        self.data.iter()
+    }
+
+    /// Returns an iterator that allows modifying each element
+    /// of the matrix.
+    ///
+    /// # Notes
+    ///
+    /// Elements will be iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for element in matrix.iter_elements_mut() {
+    ///     *element += 1;
+    /// }
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// ```
+    pub fn iter_elements_mut(&mut self) -> impl Iterator<Item = &mut T> {
+        self.data.iter_mut()
+    }
+
+    /// Creates a consuming iterator, that is, one that moves each
+    /// element out of the matrix.
+    ///
+    /// # Notes
+    ///
+    /// Elements will be iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let data: Vec<u8> = matrix.into_iter_elements().collect();
+    /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
+    /// ```
+    pub fn into_iter_elements(self) -> impl Iterator<Item = T> {
+        self.data.into_iter()
+    }
 }
 
 impl<T> Matrix<T> {
