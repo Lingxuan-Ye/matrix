@@ -2,6 +2,7 @@
 
 pub mod kind;
 
+mod conversion;
 mod fmt;
 
 use self::kind::Kind;
@@ -63,45 +64,5 @@ impl<T> std::ops::Deref for Vector<T> {
 impl<T> std::ops::DerefMut for Vector<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.data
-    }
-}
-
-impl<T, S> From<S> for Vector<T>
-where
-    T: Clone,
-    S: AsRef<[T]>,
-{
-    fn from(value: S) -> Self {
-        Self {
-            data: value.as_ref().to_vec(),
-            kind: Kind::default(),
-        }
-    }
-}
-
-impl<T> From<Vector<T>> for Vec<T> {
-    fn from(value: Vector<T>) -> Self {
-        value.data
-    }
-}
-
-impl<T: Default> std::iter::IntoIterator for Vector<T> {
-    type Item = T;
-    type IntoIter = std::vec::IntoIter<T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.data.into_iter()
-    }
-}
-
-impl<T: Default> std::iter::FromIterator<T> for Vector<T> {
-    fn from_iter<I>(iter: I) -> Self
-    where
-        I: IntoIterator<Item = T>,
-    {
-        Self {
-            data: iter.into_iter().collect(),
-            kind: Kind::default(),
-        }
     }
 }
