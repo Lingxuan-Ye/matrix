@@ -79,6 +79,12 @@ where
     }
 }
 
+impl<T> From<Vector<T>> for Vec<T> {
+    fn from(value: Vector<T>) -> Self {
+        value.data
+    }
+}
+
 impl<T: Default> std::iter::IntoIterator for Vector<T> {
     type Item = T;
     type IntoIter = std::vec::IntoIter<T>;
