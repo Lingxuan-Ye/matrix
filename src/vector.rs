@@ -93,3 +93,15 @@ impl<T: Default> std::iter::IntoIterator for Vector<T> {
         self.data.into_iter()
     }
 }
+
+impl<T: Default> std::iter::FromIterator<T> for Vector<T> {
+    fn from_iter<I>(iter: I) -> Self
+    where
+        I: IntoIterator<Item = T>,
+    {
+        Self {
+            data: iter.into_iter().collect(),
+            kind: Kind::default(),
+        }
+    }
+}
