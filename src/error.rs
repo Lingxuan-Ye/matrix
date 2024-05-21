@@ -17,8 +17,8 @@ pub enum Error {
     /// Error for accessing an index out of bounds.
     IndexOutOfBounds,
 
-    /// Error for shape mismatch in arithmetic operations between matrices.
-    MatricesInconformable,
+    /// Error when shape is not conformable.
+    ShapeInconformable,
 
     /// Error for invalid step in iteration.
     ZeroStep,
@@ -31,7 +31,7 @@ impl std::fmt::Display for Error {
             Self::SizeMismatch => "size does not match",
             Self::CapacityExceeded => "capacity exceeds",
             Self::IndexOutOfBounds => "index out of bounds",
-            Self::MatricesInconformable => "matrices not conformable",
+            Self::ShapeInconformable => "shape not conformable",
             Self::ZeroStep => "step invalid",
         };
         write!(f, "{content}")
