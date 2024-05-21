@@ -140,19 +140,6 @@ impl AxisShape {
         self
     }
 
-    pub(super) fn from_shape_with_unchecked<S: ShapeLike>(shape: S, order: Order) -> Self {
-        let (major, minor) = match order {
-            Order::RowMajor => (shape.nrows(), shape.ncols()),
-            Order::ColMajor => (shape.ncols(), shape.nrows()),
-        };
-        Self { major, minor }
-    }
-
-    pub(super) fn try_from_shape_with<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
-        shape.size()?;
-        Ok(Self::from_shape_with_unchecked(shape, order))
-    }
-
     pub(super) fn interpret_with(&self, order: Order) -> Shape {
         let (nrows, ncols) = match order {
             Order::RowMajor => (self.major, self.minor),
@@ -173,6 +160,48 @@ impl AxisShape {
             Order::RowMajor => self.minor,
             Order::ColMajor => self.major,
         }
+    }
+
+    pub(super) fn from_shape_with_unchecked<S: ShapeLike>(shape: S, order: Order) -> Self {
+        let (major, minor) = match order {
+            Order::RowMajor => (shape.nrows(), shape.ncols()),
+            Order::ColMajor => (shape.ncols(), shape.nrows()),
+        };
+        Self { major, minor }
+    }
+
+    pub(super) fn try_from_shape_with<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
+        shape.size()?;
+        Ok(Self::from_shape_with_unchecked(shape, order))
+    }
+
+    pub(super) fn from_shape_with<S: ShapeLike>(shape: S, order: Order) -> Self {
+        match Self::try_from_shape_with(shape, order) {
+            Err(error) => panic!("{error}"),
+            Ok(shape) => shape,
+        }
+    }
+}
+
+pub(super) trait IntoAxisShape {
+    fn into_axis_shape_unchecked(self, order: Order) -> AxisShape;
+
+    fn try_into_axis_shape(self, order: Order) -> Result<AxisShape>;
+
+    fn into_axis_shape(self, order: Order) -> AxisShape;
+}
+
+impl<S: ShapeLike> IntoAxisShape for S {
+    fn into_axis_shape_unchecked(self, order: Order) -> AxisShape {
+        AxisShape::from_shape_with_unchecked(self, order)
+    }
+
+    fn try_into_axis_shape(self, order: Order) -> Result<AxisShape> {
+        AxisShape::try_from_shape_with(self, order)
+    }
+
+    fn into_axis_shape(self, order: Order) -> AxisShape {
+        AxisShape::from_shape_with(self, order)
     }
 }
 

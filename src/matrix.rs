@@ -11,7 +11,7 @@ mod fmt;
 
 use self::index::{translate_index_between_orders_unchecked, Index};
 use self::order::Order;
-use self::shape::{AxisShape, Shape, ShapeLike};
+use self::shape::{AxisShape, IntoAxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
 
 /// [`Matrix`] means matrix.
@@ -90,7 +90,7 @@ impl<T: Default> Matrix<T> {
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
-        let shape = AxisShape::try_from_shape_with(shape, order)?;
+        let shape = shape.try_into_axis_shape(order)?;
         let size = Self::check_size(shape.size())?;
         let data = std::iter::repeat_with(T::default).take(size).collect();
         Ok(Self { data, order, shape })
@@ -118,7 +118,7 @@ impl<T: Clone> Matrix<T> {
     pub fn from_slice(src: &[T]) -> Self {
         let data = src.to_vec();
         let order = Order::default();
-        let shape = AxisShape::from_shape_with_unchecked(Shape::new(1, src.len()), order);
+        let shape = Shape::new(1, src.len()).into_axis_shape_unchecked(order);
         Self { data, order, shape }
     }
 }
@@ -138,7 +138,7 @@ impl<T> Matrix<T> {
         let ptr = Box::leak(src).as_mut_ptr() as *mut T;
         let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
         let order = Order::default();
-        let shape = AxisShape::from_shape_with_unchecked(Shape::new(R, C), order);
+        let shape = Shape::new(R, C).into_axis_shape_unchecked(order);
         Self { data, order, shape }
     }
 }
@@ -225,7 +225,7 @@ impl<T: Default> Matrix<T> {
     /// assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
     /// ```
     pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
-        let shape = AxisShape::try_from_shape_with(shape, self.order)?;
+        let shape = shape.try_into_axis_shape(self.order)?;
         let size = Self::check_size(shape.size())?;
         self.data.resize_with(size, T::default);
         self.shape = shape;
@@ -259,7 +259,7 @@ impl<T> Matrix<T> {
             Ok(size) if (self.size() == size) => (),
             _ => return Err(Error::SizeMismatch),
         }
-        self.shape = AxisShape::from_shape_with_unchecked(shape, self.order);
+        self.shape = shape.into_axis_shape_unchecked(self.order);
         Ok(self)
     }
 
@@ -441,7 +441,7 @@ mod tests {
     fn test_from_2darray() {
         let data = vec![0, 1, 2, 3, 4, 5];
         let order = Order::default();
-        let shape = AxisShape::try_from_shape_with((2, 3), order).unwrap();
+        let shape = Shape::new(2, 3).into_axis_shape_unchecked(order);
         let expected = Matrix { data, order, shape };
 
         let array = Box::new([[0, 1, 2], [3, 4, 5]]);
