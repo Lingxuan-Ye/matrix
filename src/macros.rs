@@ -32,14 +32,14 @@ macro_rules! matrix {
 #[macro_export]
 macro_rules! vector {
     [] => {
-        $crate::vector::Vector::from(vec![])
+        $crate::vector::Vector::from_vec(vec![])
     };
 
     [$elem:expr; $n:expr] => {
-        $crate::vector::Vector::from(vec![$elem; $n])
+        $crate::vector::Vector::from_vec(vec![$elem; $n])
     };
 
     [$($x:expr),+ $(,)?] => {
-        $crate::vector::Vector::from(vec![$($x),+])
+        $crate::vector::Vector::from_vec(vec![$($x),+])
     };
 }
