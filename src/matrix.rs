@@ -7,6 +7,7 @@ pub mod order;
 pub mod shape;
 
 mod arithmetic;
+mod conversion;
 mod fmt;
 
 use self::index::{translate_index_between_orders_unchecked, Index};
@@ -94,52 +95,6 @@ impl<T: Default> Matrix<T> {
         let size = Self::check_size(shape.size())?;
         let data = std::iter::repeat_with(T::default).take(size).collect();
         Ok(Self { data, order, shape })
-    }
-}
-
-impl<T: Clone> Matrix<T> {
-    /// Creates a new [`Matrix`] instance from the given slice.
-    ///
-    /// # Notes
-    ///
-    /// The matrix returned will always have `1` row and `src.len()` columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let slice = [0, 1, 2, 3, 4, 5];
-    /// let matrix = Matrix::from_slice(&slice);
-    ///
-    /// assert_eq!(matrix.nrows(), 1);
-    /// assert_eq!(matrix.ncols(), 6);
-    /// ```
-    pub fn from_slice(src: &[T]) -> Self {
-        let data = src.to_vec();
-        let order = Order::default();
-        let shape = Shape::new(1, src.len()).into_axis_shape_unchecked(order);
-        Self { data, order, shape }
-    }
-}
-
-impl<T> Matrix<T> {
-    /// Creates a new [`Matrix`] instance from the given 2D array.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let array = Box::new([[0, 1, 2], [3, 4, 5]]);
-    /// let matrix = Matrix::from_2darray(array);
-    /// ```
-    pub fn from_2darray<const R: usize, const C: usize>(src: Box<[[T; C]; R]>) -> Self {
-        let ptr = Box::leak(src).as_mut_ptr() as *mut T;
-        let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
-        let order = Order::default();
-        let shape = Shape::new(R, C).into_axis_shape_unchecked(order);
-        Self { data, order, shape }
     }
 }
 
@@ -438,20 +393,6 @@ mod tests {
     }
 
     #[test]
-    fn test_from_2darray() {
-        let data = vec![0, 1, 2, 3, 4, 5];
-        let order = Order::default();
-        let shape = Shape::new(2, 3).into_axis_shape_unchecked(order);
-        let expected = Matrix { data, order, shape };
-
-        let array = Box::new([[0, 1, 2], [3, 4, 5]]);
-        assert_eq!(Matrix::from_2darray(array), expected);
-
-        let array = Box::new([[0, 1], [2, 3], [4, 5]]);
-        assert_ne!(Matrix::from_2darray(array), expected);
-    }
-
-    #[test]
     fn test_new() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
 
@@ -470,17 +411,6 @@ mod tests {
             Matrix::<u8>::build((usize::MAX, 2)),
             Err(Error::SizeOverflow)
         );
-    }
-
-    #[test]
-    fn test_from_slice() {
-        let expected = matrix![[0, 1, 2, 3, 4, 5]];
-
-        let slice = [0, 1, 2, 3, 4, 5];
-        assert_eq!(Matrix::from_slice(&slice), expected);
-
-        let slice = [0; 6];
-        assert_ne!(Matrix::from_slice(&slice), expected);
     }
 
     #[test]

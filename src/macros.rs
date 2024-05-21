@@ -12,7 +12,7 @@
 #[macro_export]
 macro_rules! matrix {
     [$($col:expr),+ $(,)?] => {
-        $crate::matrix::Matrix::from_2darray(std::boxed::Box::new([$($col,)+]))
+        $crate::matrix::Matrix::from(std::boxed::Box::new([$($col,)+]))
     };
 }
 
@@ -23,7 +23,7 @@ macro_rules! matrix {
 /// ```
 /// use matreex::{vector, Vector};
 ///
-/// let foo: Vector<u8> = vector![];
+/// let foo: Vector<i32> = vector![];
 /// let bar = vector![0; 3];
 /// let baz = vector![0, 1, 2];
 /// ```
