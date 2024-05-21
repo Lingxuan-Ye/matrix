@@ -1,9 +1,11 @@
 use super::super::operation;
 use super::super::Matrix;
+use crate::marker::Scalar;
+use std::ops::{Sub, SubAssign};
 
-impl<L, R, T> std::ops::Sub<&Matrix<R>> for &Matrix<L>
+impl<L, R, T> Sub<&Matrix<R>> for &Matrix<L>
 where
-    L: std::ops::Sub<R, Output = T> + Clone,
+    L: Sub<R, Output = T> + Clone,
     R: Clone,
 {
     type Output = Matrix<T>;
@@ -17,9 +19,9 @@ where
     }
 }
 
-impl<L, R, T> std::ops::Sub<Matrix<R>> for &Matrix<L>
+impl<L, R, T> Sub<Matrix<R>> for &Matrix<L>
 where
-    L: std::ops::Sub<R, Output = T> + Clone,
+    L: Sub<R, Output = T> + Clone,
     R: Clone,
 {
     type Output = Matrix<T>;
@@ -34,9 +36,9 @@ where
     }
 }
 
-impl<L, R, T> std::ops::Sub<&Matrix<R>> for Matrix<L>
+impl<L, R, T> Sub<&Matrix<R>> for Matrix<L>
 where
-    L: std::ops::Sub<R, Output = T>,
+    L: Sub<R, Output = T>,
     R: Clone,
 {
     type Output = Matrix<T>;
@@ -51,9 +53,9 @@ where
     }
 }
 
-impl<L, R, T> std::ops::Sub<Matrix<R>> for Matrix<L>
+impl<L, R, T> Sub<Matrix<R>> for Matrix<L>
 where
-    L: std::ops::Sub<R, Output = T>,
+    L: Sub<R, Output = T>,
     R: Clone,
 {
     type Output = Matrix<T>;
@@ -67,9 +69,9 @@ where
     }
 }
 
-impl<L, R> std::ops::SubAssign<&Matrix<R>> for Matrix<L>
+impl<L, R> SubAssign<&Matrix<R>> for Matrix<L>
 where
-    L: std::ops::SubAssign<R>,
+    L: SubAssign<R>,
     R: Clone,
 {
     fn sub_assign(&mut self, rhs: &Matrix<R>) {
@@ -81,9 +83,9 @@ where
     }
 }
 
-impl<L, R> std::ops::SubAssign<Matrix<R>> for Matrix<L>
+impl<L, R> SubAssign<Matrix<R>> for Matrix<L>
 where
-    L: std::ops::SubAssign<R>,
+    L: SubAssign<R>,
     R: Clone,
 {
     fn sub_assign(&mut self, rhs: Matrix<R>) {
@@ -92,6 +94,40 @@ where
         if let Err(error) = result {
             panic!("{error}");
         }
+    }
+}
+
+impl<L, R, T> Sub<R> for &Matrix<L>
+where
+    L: Sub<R, Output = T> + Clone,
+    R: Scalar + Clone,
+{
+    type Output = Matrix<T>;
+
+    fn sub(self, rhs: R) -> Self::Output {
+        operation::scalar_operation_consume_scalar(self, rhs, |x, y| x.clone() - y)
+    }
+}
+
+impl<L, R, T> Sub<R> for Matrix<L>
+where
+    L: Sub<R, Output = T>,
+    R: Scalar + Clone,
+{
+    type Output = Matrix<T>;
+
+    fn sub(self, rhs: R) -> Self::Output {
+        operation::scalar_operation_consume_both(self, rhs, |x, y| x - y)
+    }
+}
+
+impl<L, R> SubAssign<R> for Matrix<L>
+where
+    L: SubAssign<R>,
+    R: Scalar + Clone,
+{
+    fn sub_assign(&mut self, rhs: R) {
+        operation::scalar_operation_assign_consume_scalar(self, rhs, |x, y| *x -= y)
     }
 }
 
@@ -307,5 +343,55 @@ mod tests {
         let rhs = matrix![[1, 1], [2, 2], [3, 3]];
 
         lhs -= rhs;
+    }
+
+    #[test]
+    fn test_scalar_sub() {
+        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let rhs = 2;
+        let expected = matrix![[-2, -1, 0], [1, 2, 3]];
+
+        let result = &lhs - rhs;
+        assert_eq!(result, expected);
+
+        lhs.switch_order();
+        let mut result = &lhs - rhs;
+        assert_ne!(result, expected);
+        result.switch_order();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_scalar_sub_consume_matrix() {
+        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let rhs = 2;
+        let expected = matrix![[-2, -1, 0], [1, 2, 3]];
+
+        let result = lhs.clone() - rhs;
+        assert_eq!(result, expected);
+
+        lhs.switch_order();
+        let mut result = lhs.clone() - rhs;
+        assert_ne!(result, expected);
+        result.switch_order();
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_scalar_sub_assign() {
+        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let rhs = 2;
+        let expected = matrix![[-2, -1, 0], [1, 2, 3]];
+
+        let mut result = lhs.clone();
+        result -= rhs;
+        assert_eq!(result, expected);
+
+        lhs.switch_order();
+        let mut result = lhs.clone();
+        result -= rhs;
+        assert_ne!(result, expected);
+        result.switch_order();
+        assert_eq!(result, expected);
     }
 }
