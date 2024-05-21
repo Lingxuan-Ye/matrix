@@ -612,11 +612,82 @@ mod tests {
 
     #[test]
     fn test_check_size() {
-        assert!(Matrix::<u8>::check_size(isize::MAX as usize).is_ok());
+        const MAX: usize = isize::MAX as usize;
+
+        assert!(Matrix::<u8>::check_size(MAX).is_ok());
         assert_eq!(
-            Matrix::<u8>::check_size(isize::MAX as usize + 1),
+            Matrix::<u8>::check_size(MAX + 1),
             Err(Error::CapacityExceeded)
         );
-        assert!(Matrix::<()>::check_size(isize::MAX as usize + 1).is_ok());
+
+        assert!(Matrix::<u16>::check_size(MAX / 2).is_ok());
+        assert_eq!(
+            Matrix::<u16>::check_size(MAX / 2 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<u32>::check_size(MAX / 4).is_ok());
+        assert_eq!(
+            Matrix::<u32>::check_size(MAX / 4 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<u64>::check_size(MAX / 8).is_ok());
+        assert_eq!(
+            Matrix::<u64>::check_size(MAX / 8 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<u128>::check_size(MAX / 16).is_ok());
+        assert_eq!(
+            Matrix::<u128>::check_size(MAX / 16 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i8>::check_size(MAX).is_ok());
+        assert_eq!(
+            Matrix::<i8>::check_size(MAX + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i16>::check_size(MAX / 2).is_ok());
+        assert_eq!(
+            Matrix::<i16>::check_size(MAX / 2 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i32>::check_size(MAX / 4).is_ok());
+        assert_eq!(
+            Matrix::<i32>::check_size(MAX / 4 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i64>::check_size(MAX / 8).is_ok());
+        assert_eq!(
+            Matrix::<i64>::check_size(MAX / 8 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i128>::check_size(MAX / 16).is_ok());
+        assert_eq!(
+            Matrix::<i128>::check_size(MAX / 16 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<bool>::check_size(MAX).is_ok());
+        assert_eq!(
+            Matrix::<bool>::check_size(MAX + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<char>::check_size(MAX / 4).is_ok());
+        assert_eq!(
+            Matrix::<char>::check_size(MAX / 4 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<()>::check_size(MAX).is_ok());
+        assert!(Matrix::<()>::check_size(MAX + 1).is_ok());
+        assert!(Matrix::<()>::check_size(usize::MAX).is_ok());
     }
 }
