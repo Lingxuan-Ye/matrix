@@ -14,11 +14,14 @@ pub enum Error {
     /// [`Vec::with_capacity`] for more information.
     CapacityExceeded,
 
+    /// Error for inconsistent row or column length.
+    LengthInconsistent,
+
     /// Error for accessing an index out of bounds.
     IndexOutOfBounds,
 
-    /// Error for shape mismatch in arithmetic operations between matrices.
-    MatricesInconformable,
+    /// Error when shape is not conformable.
+    ShapeInconformable,
 
     /// Error for invalid step in iteration.
     ZeroStep,
@@ -30,8 +33,9 @@ impl std::fmt::Display for Error {
             Self::SizeOverflow => "size overflows",
             Self::SizeMismatch => "size does not match",
             Self::CapacityExceeded => "capacity exceeds",
+            Self::LengthInconsistent => "length inconsistent",
             Self::IndexOutOfBounds => "index out of bounds",
-            Self::MatricesInconformable => "matrices not conformable",
+            Self::ShapeInconformable => "shape not conformable",
             Self::ZeroStep => "step invalid",
         };
         write!(f, "{content}")

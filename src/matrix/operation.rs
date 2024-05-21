@@ -1,7 +1,7 @@
 use super::index::translate_index_between_orders_unchecked;
 use super::iter::VectorIter;
 use super::order::Order;
-use super::shape::{AxisShape, Shape};
+use super::shape::{IntoAxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 use crate::marker::Scalar;
@@ -10,7 +10,7 @@ use crate::marker::Scalar;
 ///
 /// # Errors
 ///
-/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
 ///
 /// # Examples
 ///
@@ -18,22 +18,22 @@ use crate::marker::Scalar;
 /// use matreex::{Error, Matrix};
 /// use matreex::matrix::operation::ensure_elementwise_operation_conformable;
 ///
-/// let lhs = Matrix::<u8>::new((2, 3));
+/// let lhs = Matrix::<i32>::new((2, 3));
 ///
-/// let rhs = Matrix::<u8>::new((2, 3));
+/// let rhs = Matrix::<i32>::new((2, 3));
 /// let result = ensure_elementwise_operation_conformable(&lhs, &rhs);
 /// assert!(result.is_ok());
 ///
-/// let rhs = Matrix::<u8>::new((2, 2));
+/// let rhs = Matrix::<i32>::new((2, 2));
 /// let result = ensure_elementwise_operation_conformable(&lhs, &rhs);
-/// assert_eq!(result, Err(Error::MatricesInconformable));
+/// assert_eq!(result, Err(Error::ShapeInconformable));
 /// ```
 pub fn ensure_elementwise_operation_conformable<L, R>(
     lhs: &Matrix<L>,
     rhs: &Matrix<R>,
 ) -> Result<()> {
     if lhs.shape() != rhs.shape() {
-        Err(Error::MatricesInconformable)
+        Err(Error::ShapeInconformable)
     } else {
         Ok(())
     }
@@ -43,7 +43,7 @@ pub fn ensure_elementwise_operation_conformable<L, R>(
 ///
 /// # Errors
 ///
-/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
 ///
 /// # Examples
 ///
@@ -51,22 +51,22 @@ pub fn ensure_elementwise_operation_conformable<L, R>(
 /// use matreex::{Error, Matrix};
 /// use matreex::matrix::operation::ensure_multiplication_like_operation_conformable;
 ///
-/// let lhs = Matrix::<u8>::new((2, 3));
+/// let lhs = Matrix::<i32>::new((2, 3));
 ///
-/// let rhs = Matrix::<u8>::new((3, 1));
+/// let rhs = Matrix::<i32>::new((3, 1));
 /// let result = ensure_multiplication_like_operation_conformable(&lhs, &rhs);
 /// assert!(result.is_ok());
 ///
-/// let rhs = Matrix::<u8>::new((2, 3));
+/// let rhs = Matrix::<i32>::new((2, 3));
 /// let result = ensure_multiplication_like_operation_conformable(&lhs, &rhs);
-/// assert_eq!(result, Err(Error::MatricesInconformable));
+/// assert_eq!(result, Err(Error::ShapeInconformable));
 /// ```
 pub fn ensure_multiplication_like_operation_conformable<L, R>(
     lhs: &Matrix<L>,
     rhs: &Matrix<R>,
 ) -> Result<()> {
     if lhs.ncols() != rhs.nrows() {
-        Err(Error::MatricesInconformable)
+        Err(Error::ShapeInconformable)
     } else {
         Ok(())
     }
@@ -91,7 +91,7 @@ pub fn ensure_multiplication_like_operation_conformable<L, R>(
 /// assert_eq!(vector_dot_product(lhs, rhs), Some(4));
 ///
 /// let lhs = matrix.iter_nth_row(0).unwrap();
-/// let zero_rows_matrix = Matrix::<u8>::new((0, 3));
+/// let zero_rows_matrix = Matrix::<i32>::new((0, 3));
 /// let rhs = zero_rows_matrix.iter_nth_col(1).unwrap();
 /// assert!(vector_dot_product(lhs, rhs).is_none());
 /// ```
@@ -110,7 +110,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -163,7 +163,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -217,7 +217,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -270,7 +270,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -325,7 +325,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -371,7 +371,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -419,7 +419,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::MatricesInconformable`] if the matrices are not conformable.
+/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -454,7 +454,7 @@ where
     let nrows = lhs.nrows();
     let ncols = rhs.ncols();
     let order = lhs.order;
-    let shape = AxisShape::try_from_shape_with(Shape::new(nrows, ncols), order)?;
+    let shape = Shape::new(nrows, ncols).try_into_axis_shape(order)?;
     let size = shape.size();
     let mut data = Vec::with_capacity(size);
     match order {
