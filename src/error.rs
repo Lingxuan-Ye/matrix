@@ -14,6 +14,9 @@ pub enum Error {
     /// [`Vec::with_capacity`] for more information.
     CapacityExceeded,
 
+    /// Error for inconsistent row or column length.
+    LengthInconsistent,
+
     /// Error for accessing an index out of bounds.
     IndexOutOfBounds,
 
@@ -30,6 +33,7 @@ impl std::fmt::Display for Error {
             Self::SizeOverflow => "size overflows",
             Self::SizeMismatch => "size does not match",
             Self::CapacityExceeded => "capacity exceeds",
+            Self::LengthInconsistent => "length inconsistent",
             Self::IndexOutOfBounds => "index out of bounds",
             Self::ShapeInconformable => "shape not conformable",
             Self::ZeroStep => "step invalid",
