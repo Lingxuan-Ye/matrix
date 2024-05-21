@@ -106,7 +106,7 @@ where
         .reduce(|acc, v| acc + v)
 }
 
-/// Performs element-wise operation `op` on two matrices.
+/// Performs element-wise operation on two matrices.
 ///
 /// # Errors
 ///
@@ -159,7 +159,7 @@ where
     })
 }
 
-/// Performs element-wise operation `op` on two matrices, consuming `rhs`.
+/// Performs element-wise operation on two matrices, consuming `rhs`.
 ///
 /// # Errors
 ///
@@ -213,7 +213,7 @@ where
     })
 }
 
-/// Performs element-wise operation `op` on two matrices, consuming `lhs`.
+/// Performs element-wise operation on two matrices, consuming `lhs`.
 ///
 /// # Errors
 ///
@@ -266,7 +266,7 @@ where
     })
 }
 
-/// Performs element-wise operation `op` on two matrices, consuming both.
+/// Performs element-wise operation on two matrices, consuming both.
 ///
 /// # Errors
 ///
@@ -320,7 +320,7 @@ where
     })
 }
 
-/// Performs element-wise operation `op` on two matrices, assigning the result
+/// Performs element-wise operation on two matrices, assigning the result
 /// to `lhs`.
 ///
 /// # Errors
@@ -366,7 +366,7 @@ where
     Ok(())
 }
 
-/// Performs element-wise operation `op` on two matrices, assigning the result
+/// Performs element-wise operation on two matrices, assigning the result
 /// to `lhs` and consuming `rhs`.
 ///
 /// # Errors
@@ -413,7 +413,9 @@ where
     Ok(())
 }
 
-/// Performs multiplication-like operation `op` on two matrices.
+/// Performs multiplication-like operation on two matrices. The operation
+/// can abort and fill the result with default values if `op` returns `None`
+/// at any point.
 ///
 /// # Errors
 ///
