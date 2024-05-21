@@ -8,14 +8,14 @@ use crate::vector::Vector;
 ///
 /// A [`Scalar`] does not have to be a scalar in the mathematical sense;
 /// it can be implemented for any type that represents a finite nesting
-/// of other types, including any concrete [`Matrix<T>`] (though you cannot
-/// actually do this because of the orphan rule). However, because the generic
-/// version of [`Matrix<T>`] can nest itself infinitely, marking it would
-/// result in a compile-time overflow evaluation error due to the arithmetic
-/// operations implementation. For simplicity, no `Matrix<T>` has been marked
-/// with this trait.
+/// of other types, including any concrete [`Matrix`] (though you cannot
+/// actually do this because of the orphan rule). However, because the
+/// generic version of [`Matrix`] can nest itself infinitely, marking it
+/// would result in a compile-time overflow evaluation error due to the
+/// arithmetic operations implementation. For simplicity, no [`Matrix`]
+/// has been marked with this trait.
 ///
-/// [`Matrix<T>`]: crate::matrix::Matrix
+/// [`Matrix`]: crate::matrix::Matrix
 pub trait Scalar {}
 
 impl Scalar for u8 {}

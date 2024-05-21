@@ -273,7 +273,7 @@ impl Index {
         Self { row, col }
     }
 
-    /// Creates an `Index` instance from a flattened index unchecked.
+    /// Creates an [`Index`] instance from a flattened index unchecked.
     ///
     /// # Notes
     ///
@@ -296,7 +296,7 @@ impl Index {
         AxisIndex::from_flattened_unchecked_for(index, matrix.shape).interpret_with(matrix.order)
     }
 
-    /// Creates an `Index` instance from a flattened index.
+    /// Creates an [`Index`] instance from a flattened index.
     ///
     /// # Errors
     ///
@@ -320,7 +320,7 @@ impl Index {
             .map(|index| index.interpret_with(matrix.order))
     }
 
-    /// Creates an `Index` instance from a flattened index.
+    /// Creates an [`Index`] instance from a flattened index.
     ///
     /// # Panics
     ///
@@ -348,7 +348,7 @@ impl Index {
         AxisIndex::from_flattened_for(index, matrix.shape).interpret_with(matrix.order)
     }
 
-    /// Flattens an `Index` instance unchecked.
+    /// Flattens an [`Index`] instance unchecked.
     ///
     /// # Notes
     ///
@@ -371,7 +371,7 @@ impl Index {
         AxisIndex::from_index_with(self, matrix.order).into_flattened_unchecked_for(matrix.shape)
     }
 
-    /// Flattens an `Index` instance.
+    /// Flattens an [`Index`] instance.
     ///
     /// # Errors
     ///
