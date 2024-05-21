@@ -42,6 +42,7 @@
 //! Hmm ... Who knows? Could be a name conflict.
 
 pub mod error;
+pub mod marker;
 pub mod matrix;
 pub mod vector;
 
@@ -49,6 +50,7 @@ mod fmt;
 mod macros;
 
 pub use self::error::{Error, Result};
+pub use self::marker::{Number, Scalar};
 pub use self::matrix::index::Index;
 pub use self::matrix::iter::{MatrixIter, VectorIter};
 pub use self::matrix::order::Order;

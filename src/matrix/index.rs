@@ -295,6 +295,7 @@ impl Index {
     pub fn from_flattened_unchecked_for<T>(index: usize, matrix: &Matrix<T>) -> Self {
         AxisIndex::from_flattened_unchecked_for(index, matrix.shape).interpret_with(matrix.order)
     }
+
     /// Creates an `Index` instance from a flattened index.
     ///
     /// # Errors

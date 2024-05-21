@@ -4,6 +4,7 @@ use super::order::Order;
 use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
+use crate::marker::Scalar;
 
 /// Ensures that two matrices are conformable for element-wise operations.
 ///
@@ -462,6 +463,7 @@ where
                     let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
                     match op(row_vector, col_vector) {
                         None => {
+                            data.clear();
                             data.resize_with(size, T::default);
                             break 'outer;
                         }
@@ -477,6 +479,7 @@ where
                     let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
                     match op(row_vector, col_vector) {
                         None => {
+                            data.clear();
                             data.resize_with(size, T::default);
                             break 'outer;
                         }
@@ -488,4 +491,92 @@ where
     }
 
     Ok(Matrix { data, order, shape })
+}
+
+pub fn scalar_operation<T, S, U, F>(matrix: &Matrix<T>, scalar: &S, mut op: F) -> Matrix<U>
+where
+    S: Scalar,
+    F: FnMut(&T, &S) -> U,
+{
+    let data = matrix.data.iter().map(|x| op(x, scalar)).collect();
+
+    Matrix {
+        data,
+        order: matrix.order,
+        shape: matrix.shape,
+    }
+}
+
+pub fn scalar_operation_consume_scalar<T, S, U, F>(
+    matrix: &Matrix<T>,
+    scalar: S,
+    mut op: F,
+) -> Matrix<U>
+where
+    S: Scalar + Clone,
+    F: FnMut(&T, S) -> U,
+{
+    let data = matrix.data.iter().map(|x| op(x, scalar.clone())).collect();
+
+    Matrix {
+        data,
+        order: matrix.order,
+        shape: matrix.shape,
+    }
+}
+
+pub fn scalar_operation_consume_matrix<T, S, U, F>(
+    matrix: Matrix<T>,
+    scalar: &S,
+    mut op: F,
+) -> Matrix<U>
+where
+    S: Scalar,
+    F: FnMut(T, &S) -> U,
+{
+    let data = matrix.data.into_iter().map(|x| op(x, scalar)).collect();
+
+    Matrix {
+        data,
+        order: matrix.order,
+        shape: matrix.shape,
+    }
+}
+
+pub fn scalar_operation_consume_both<T, S, U, F>(
+    matrix: Matrix<T>,
+    scalar: S,
+    mut op: F,
+) -> Matrix<U>
+where
+    S: Scalar + Clone,
+    F: FnMut(T, S) -> U,
+{
+    let data = matrix
+        .data
+        .into_iter()
+        .map(|x| op(x, scalar.clone()))
+        .collect();
+
+    Matrix {
+        data,
+        order: matrix.order,
+        shape: matrix.shape,
+    }
+}
+
+pub fn scalar_operation_assign<T, S, F>(matrix: &mut Matrix<T>, scalar: &S, mut op: F)
+where
+    S: Scalar,
+    F: FnMut(&mut T, &S),
+{
+    matrix.data.iter_mut().for_each(|x| op(x, scalar));
+}
+
+pub fn scalar_operation_assign_consume_scalar<T, S, F>(matrix: &mut Matrix<T>, scalar: S, mut op: F)
+where
+    S: Scalar + Clone,
+    F: FnMut(&mut T, S),
+{
+    matrix.data.iter_mut().for_each(|x| op(x, scalar.clone()));
 }
