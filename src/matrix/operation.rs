@@ -463,6 +463,7 @@ where
                     let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
                     match op(row_vector, col_vector) {
                         None => {
+                            data.clear();
                             data.resize_with(size, T::default);
                             break 'outer;
                         }
@@ -478,6 +479,7 @@ where
                     let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
                     match op(row_vector, col_vector) {
                         None => {
+                            data.clear();
                             data.resize_with(size, T::default);
                             break 'outer;
                         }
