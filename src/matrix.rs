@@ -7,11 +7,12 @@ pub mod order;
 pub mod shape;
 
 mod arithmetic;
+mod conversion;
 mod fmt;
 
 use self::index::{translate_index_between_orders_unchecked, Index};
 use self::order::Order;
-use self::shape::{AxisShape, Shape, ShapeLike};
+use self::shape::{AxisShape, IntoAxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
 
 /// [`Matrix`] means matrix.
@@ -46,19 +47,19 @@ impl<T: Default> Matrix<T> {
     /// ```
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::new((2, 3));
+    /// let matrix = Matrix::<i32>::new((2, 3));
     /// ```
     ///
     /// ```should_panic
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::new((2, usize::MAX));
+    /// let matrix = Matrix::<i32>::new((2, usize::MAX));
     /// ```
     ///
     /// ```should_panic
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::new((1, isize::MAX as usize + 1));
+    /// let matrix = Matrix::<i32>::new((1, isize::MAX as usize + 1));
     /// ```
     pub fn new<S: ShapeLike>(shape: S) -> Self {
         match Self::build(shape) {
@@ -79,67 +80,21 @@ impl<T: Default> Matrix<T> {
     /// ```
     /// use matreex::{Error, Matrix};
     ///
-    /// let result = Matrix::<u8>::build((2, 3));
+    /// let result = Matrix::<i32>::build((2, 3));
     /// assert!(result.is_ok());
     ///
-    /// let result = Matrix::<u8>::build((2, usize::MAX));
+    /// let result = Matrix::<i32>::build((2, usize::MAX));
     /// assert_eq!(result, Err(Error::SizeOverflow));
     ///
-    /// let result = Matrix::<u8>::build((1, isize::MAX as usize + 1));
+    /// let result = Matrix::<i32>::build((1, isize::MAX as usize + 1));
     /// assert_eq!(result, Err(Error::CapacityExceeded));
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
-        let shape = AxisShape::try_from_shape_with(shape, order)?;
+        let shape = shape.try_into_axis_shape(order)?;
         let size = Self::check_size(shape.size())?;
         let data = std::iter::repeat_with(T::default).take(size).collect();
         Ok(Self { data, order, shape })
-    }
-}
-
-impl<T: Clone> Matrix<T> {
-    /// Creates a new [`Matrix`] instance from the given slice.
-    ///
-    /// # Notes
-    ///
-    /// The matrix returned will always have `1` row and `src.len()` columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let slice = [0, 1, 2, 3, 4, 5];
-    /// let matrix = Matrix::from_slice(&slice);
-    ///
-    /// assert_eq!(matrix.nrows(), 1);
-    /// assert_eq!(matrix.ncols(), 6);
-    /// ```
-    pub fn from_slice(src: &[T]) -> Self {
-        let data = src.to_vec();
-        let order = Order::default();
-        let shape = AxisShape::from_shape_with_unchecked(Shape::new(1, src.len()), order);
-        Self { data, order, shape }
-    }
-}
-
-impl<T> Matrix<T> {
-    /// Creates a new [`Matrix`] instance from the given 2D array.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let array = Box::new([[0, 1, 2], [3, 4, 5]]);
-    /// let matrix = Matrix::from_2darray(array);
-    /// ```
-    pub fn from_2darray<const R: usize, const C: usize>(src: Box<[[T; C]; R]>) -> Self {
-        let ptr = Box::leak(src).as_mut_ptr() as *mut T;
-        let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
-        let order = Order::default();
-        let shape = AxisShape::from_shape_with_unchecked(Shape::new(R, C), order);
-        Self { data, order, shape }
     }
 }
 
@@ -225,7 +180,7 @@ impl<T: Default> Matrix<T> {
     /// assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
     /// ```
     pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
-        let shape = AxisShape::try_from_shape_with(shape, self.order)?;
+        let shape = shape.try_into_axis_shape(self.order)?;
         let size = Self::check_size(shape.size())?;
         self.data.resize_with(size, T::default);
         self.shape = shape;
@@ -259,7 +214,7 @@ impl<T> Matrix<T> {
             Ok(size) if (self.size() == size) => (),
             _ => return Err(Error::SizeMismatch),
         }
-        self.shape = AxisShape::from_shape_with_unchecked(shape, self.order);
+        self.shape = shape.into_axis_shape_unchecked(self.order);
         Ok(self)
     }
 
@@ -438,20 +393,6 @@ mod tests {
     }
 
     #[test]
-    fn test_from_2darray() {
-        let data = vec![0, 1, 2, 3, 4, 5];
-        let order = Order::default();
-        let shape = AxisShape::try_from_shape_with((2, 3), order).unwrap();
-        let expected = Matrix { data, order, shape };
-
-        let array = Box::new([[0, 1, 2], [3, 4, 5]]);
-        assert_eq!(Matrix::from_2darray(array), expected);
-
-        let array = Box::new([[0, 1], [2, 3], [4, 5]]);
-        assert_ne!(Matrix::from_2darray(array), expected);
-    }
-
-    #[test]
     fn test_new() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
 
@@ -467,20 +408,9 @@ mod tests {
         assert_ne!(Matrix::build((3, 2)).unwrap(), expected);
 
         assert_eq!(
-            Matrix::<u8>::build((usize::MAX, 2)),
+            Matrix::<i32>::build((usize::MAX, 2)),
             Err(Error::SizeOverflow)
         );
-    }
-
-    #[test]
-    fn test_from_slice() {
-        let expected = matrix![[0, 1, 2, 3, 4, 5]];
-
-        let slice = [0, 1, 2, 3, 4, 5];
-        assert_eq!(Matrix::from_slice(&slice), expected);
-
-        let slice = [0; 6];
-        assert_ne!(Matrix::from_slice(&slice), expected);
     }
 
     #[test]
@@ -682,11 +612,82 @@ mod tests {
 
     #[test]
     fn test_check_size() {
-        assert!(Matrix::<u8>::check_size(isize::MAX as usize).is_ok());
+        const MAX: usize = isize::MAX as usize;
+
+        assert!(Matrix::<u8>::check_size(MAX).is_ok());
         assert_eq!(
-            Matrix::<u8>::check_size(isize::MAX as usize + 1),
+            Matrix::<u8>::check_size(MAX + 1),
             Err(Error::CapacityExceeded)
         );
-        assert!(Matrix::<()>::check_size(isize::MAX as usize + 1).is_ok());
+
+        assert!(Matrix::<u16>::check_size(MAX / 2).is_ok());
+        assert_eq!(
+            Matrix::<u16>::check_size(MAX / 2 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<u32>::check_size(MAX / 4).is_ok());
+        assert_eq!(
+            Matrix::<u32>::check_size(MAX / 4 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<u64>::check_size(MAX / 8).is_ok());
+        assert_eq!(
+            Matrix::<u64>::check_size(MAX / 8 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<u128>::check_size(MAX / 16).is_ok());
+        assert_eq!(
+            Matrix::<u128>::check_size(MAX / 16 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i8>::check_size(MAX).is_ok());
+        assert_eq!(
+            Matrix::<i8>::check_size(MAX + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i16>::check_size(MAX / 2).is_ok());
+        assert_eq!(
+            Matrix::<i16>::check_size(MAX / 2 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i32>::check_size(MAX / 4).is_ok());
+        assert_eq!(
+            Matrix::<i32>::check_size(MAX / 4 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i64>::check_size(MAX / 8).is_ok());
+        assert_eq!(
+            Matrix::<i64>::check_size(MAX / 8 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<i128>::check_size(MAX / 16).is_ok());
+        assert_eq!(
+            Matrix::<i128>::check_size(MAX / 16 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<bool>::check_size(MAX).is_ok());
+        assert_eq!(
+            Matrix::<bool>::check_size(MAX + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<char>::check_size(MAX / 4).is_ok());
+        assert_eq!(
+            Matrix::<char>::check_size(MAX / 4 + 1),
+            Err(Error::CapacityExceeded)
+        );
+
+        assert!(Matrix::<()>::check_size(MAX).is_ok());
+        assert!(Matrix::<()>::check_size(MAX + 1).is_ok());
+        assert!(Matrix::<()>::check_size(usize::MAX).is_ok());
     }
 }

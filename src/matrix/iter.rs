@@ -189,7 +189,7 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let data: Vec<u8> = matrix.into_iter_elements().collect();
+    /// let data: Vec<i32> = matrix.into_iter_elements().collect();
     /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
     /// ```
     pub fn into_iter_elements(self) -> impl Iterator<Item = T> {
@@ -212,7 +212,7 @@ where
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// assert_eq!(matrix.par_iter_elements().sum::<u8>(), 15);
+    /// assert_eq!(matrix.par_iter_elements().sum::<i32>(), 15);
     /// ```
     pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T> {
         self.data.par_iter()
@@ -247,7 +247,7 @@ where
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// assert_eq!(matrix.into_par_iter_elements().sum::<u8>(), 15);
+    /// assert_eq!(matrix.into_par_iter_elements().sum::<i32>(), 15);
     /// ```
     pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T> {
         self.data.into_par_iter()
