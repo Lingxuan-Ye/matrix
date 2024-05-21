@@ -53,18 +53,6 @@ impl<T> Vector<T> {
     }
 }
 
-impl<T, S> From<S> for Vector<T>
-where
-    S: Into<Vec<T>>,
-{
-    fn from(value: S) -> Self {
-        Self {
-            data: value.into(),
-            kind: Kind::default(),
-        }
-    }
-}
-
 impl<T> std::ops::Deref for Vector<T> {
     type Target = Vec<T>;
     fn deref(&self) -> &Self::Target {
@@ -75,6 +63,19 @@ impl<T> std::ops::Deref for Vector<T> {
 impl<T> std::ops::DerefMut for Vector<T> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.data
+    }
+}
+
+impl<T, S> From<S> for Vector<T>
+where
+    T: Clone,
+    S: AsRef<[T]>,
+{
+    fn from(value: S) -> Self {
+        Self {
+            data: value.as_ref().to_vec(),
+            kind: Kind::default(),
+        }
     }
 }
 
