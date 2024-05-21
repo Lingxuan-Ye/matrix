@@ -413,7 +413,7 @@ where
     Ok(())
 }
 
-/// Performs multiplicatio-like operation `op` on two matrices.
+/// Performs multiplication-like operation `op` on two matrices.
 ///
 /// # Errors
 ///
