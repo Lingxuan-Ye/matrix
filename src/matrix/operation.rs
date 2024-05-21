@@ -106,7 +106,7 @@ where
         .reduce(|acc, v| acc + v)
 }
 
-/// Performs element-wise operation `op` on two matrices.
+/// Performs element-wise operation on two matrices.
 ///
 /// # Errors
 ///
@@ -159,7 +159,7 @@ where
     })
 }
 
-/// Performs element-wise operation `op` on two matrices, consuming `rhs`.
+/// Performs element-wise operation on two matrices, consuming `rhs`.
 ///
 /// # Errors
 ///
@@ -213,7 +213,7 @@ where
     })
 }
 
-/// Performs element-wise operation `op` on two matrices, consuming `lhs`.
+/// Performs element-wise operation on two matrices, consuming `lhs`.
 ///
 /// # Errors
 ///
@@ -266,7 +266,7 @@ where
     })
 }
 
-/// Performs element-wise operation `op` on two matrices, consuming both.
+/// Performs element-wise operation on two matrices, consuming both.
 ///
 /// # Errors
 ///
@@ -320,7 +320,7 @@ where
     })
 }
 
-/// Performs element-wise operation `op` on two matrices, assigning the result
+/// Performs element-wise operation on two matrices, assigning the result
 /// to `lhs`.
 ///
 /// # Errors
@@ -366,7 +366,7 @@ where
     Ok(())
 }
 
-/// Performs element-wise operation `op` on two matrices, assigning the result
+/// Performs element-wise operation on two matrices, assigning the result
 /// to `lhs` and consuming `rhs`.
 ///
 /// # Errors
@@ -413,7 +413,9 @@ where
     Ok(())
 }
 
-/// Performs multiplicatio-like operation `op` on two matrices.
+/// Performs multiplication-like operation on two matrices. The operation
+/// can abort and fill the result with default values if `op` returns `None`
+/// at any point.
 ///
 /// # Errors
 ///
@@ -493,6 +495,20 @@ where
     Ok(Matrix { data, order, shape })
 }
 
+/// Performs scalar operation on the matrix.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::operation::scalar_operation;
+///
+/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+/// let scalar = 2;
+///
+/// let result = scalar_operation(&matrix, &scalar, |x, y| x.clone() + y.clone());
+/// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+/// ```
 pub fn scalar_operation<T, S, U, F>(matrix: &Matrix<T>, scalar: &S, mut op: F) -> Matrix<U>
 where
     S: Scalar,
@@ -507,6 +523,20 @@ where
     }
 }
 
+/// Performs scalar operation on the `matrix`, consuming `scalar`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::operation::scalar_operation_consume_scalar;
+///
+/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+/// let scalar = 2;
+///
+/// let result = scalar_operation_consume_scalar(&matrix, scalar, |x, y| x.clone() + y);
+/// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+/// ```
 pub fn scalar_operation_consume_scalar<T, S, U, F>(
     matrix: &Matrix<T>,
     scalar: S,
@@ -525,6 +555,20 @@ where
     }
 }
 
+/// Performs scalar operation on the `matrix`, consuming `matrix`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::operation::scalar_operation_consume_matrix;
+///
+/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+/// let scalar = 2;
+///
+/// let result = scalar_operation_consume_matrix(matrix, &scalar, |x, y| x + y.clone());
+/// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+/// ```
 pub fn scalar_operation_consume_matrix<T, S, U, F>(
     matrix: Matrix<T>,
     scalar: &S,
@@ -543,6 +587,20 @@ where
     }
 }
 
+/// Performs scalar operation on the `matrix`, consuming both.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::operation::scalar_operation_consume_both;
+///
+/// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+/// let scalar = 2;
+///
+/// let result = scalar_operation_consume_both(matrix, scalar, |x, y| x + y);
+/// assert_eq!(result, matrix![[2, 3, 4], [5, 6, 7]]);
+/// ```
 pub fn scalar_operation_consume_both<T, S, U, F>(
     matrix: Matrix<T>,
     scalar: S,
@@ -565,6 +623,21 @@ where
     }
 }
 
+/// Performs scalar operation on the `matrix`, assigning the result
+/// to `matrix`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::operation::scalar_operation_assign;
+///
+/// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+/// let scalar = 2;
+///
+/// scalar_operation_assign(&mut matrix, &scalar, |x, y| *x += y.clone());
+/// assert_eq!(matrix, matrix![[2, 3, 4], [5, 6, 7]]);
+/// ```
 pub fn scalar_operation_assign<T, S, F>(matrix: &mut Matrix<T>, scalar: &S, mut op: F)
 where
     S: Scalar,
@@ -573,6 +646,21 @@ where
     matrix.data.iter_mut().for_each(|x| op(x, scalar));
 }
 
+/// Performs scalar operation on the `matrix`, assigning the result
+/// to `matrix` and consuming `scalar`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::matrix;
+/// use matreex::matrix::operation::scalar_operation_assign_consume_scalar;
+///
+/// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+/// let scalar = 2;
+///
+/// scalar_operation_assign_consume_scalar(&mut matrix, scalar, |x, y| *x += y);
+/// assert_eq!(matrix, matrix![[2, 3, 4], [5, 6, 7]]);
+/// ```
 pub fn scalar_operation_assign_consume_scalar<T, S, F>(matrix: &mut Matrix<T>, scalar: S, mut op: F)
 where
     S: Scalar + Clone,
