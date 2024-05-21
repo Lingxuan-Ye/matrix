@@ -466,6 +466,7 @@ pub(super) struct AxisIndex {
 }
 
 impl AxisIndex {
+    #[allow(unused)]
     pub(super) fn new(major: usize, minor: usize) -> Self {
         Self { major, minor }
     }
