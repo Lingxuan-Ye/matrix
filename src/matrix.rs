@@ -47,19 +47,19 @@ impl<T: Default> Matrix<T> {
     /// ```
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::new((2, 3));
+    /// let matrix = Matrix::<i32>::new((2, 3));
     /// ```
     ///
     /// ```should_panic
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::new((2, usize::MAX));
+    /// let matrix = Matrix::<i32>::new((2, usize::MAX));
     /// ```
     ///
     /// ```should_panic
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<u8>::new((1, isize::MAX as usize + 1));
+    /// let matrix = Matrix::<i32>::new((1, isize::MAX as usize + 1));
     /// ```
     pub fn new<S: ShapeLike>(shape: S) -> Self {
         match Self::build(shape) {
@@ -80,13 +80,13 @@ impl<T: Default> Matrix<T> {
     /// ```
     /// use matreex::{Error, Matrix};
     ///
-    /// let result = Matrix::<u8>::build((2, 3));
+    /// let result = Matrix::<i32>::build((2, 3));
     /// assert!(result.is_ok());
     ///
-    /// let result = Matrix::<u8>::build((2, usize::MAX));
+    /// let result = Matrix::<i32>::build((2, usize::MAX));
     /// assert_eq!(result, Err(Error::SizeOverflow));
     ///
-    /// let result = Matrix::<u8>::build((1, isize::MAX as usize + 1));
+    /// let result = Matrix::<i32>::build((1, isize::MAX as usize + 1));
     /// assert_eq!(result, Err(Error::CapacityExceeded));
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
@@ -408,7 +408,7 @@ mod tests {
         assert_ne!(Matrix::build((3, 2)).unwrap(), expected);
 
         assert_eq!(
-            Matrix::<u8>::build((usize::MAX, 2)),
+            Matrix::<i32>::build((usize::MAX, 2)),
             Err(Error::SizeOverflow)
         );
     }

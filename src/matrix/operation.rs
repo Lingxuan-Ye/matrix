@@ -18,13 +18,13 @@ use crate::marker::Scalar;
 /// use matreex::{Error, Matrix};
 /// use matreex::matrix::operation::ensure_elementwise_operation_conformable;
 ///
-/// let lhs = Matrix::<u8>::new((2, 3));
+/// let lhs = Matrix::<i32>::new((2, 3));
 ///
-/// let rhs = Matrix::<u8>::new((2, 3));
+/// let rhs = Matrix::<i32>::new((2, 3));
 /// let result = ensure_elementwise_operation_conformable(&lhs, &rhs);
 /// assert!(result.is_ok());
 ///
-/// let rhs = Matrix::<u8>::new((2, 2));
+/// let rhs = Matrix::<i32>::new((2, 2));
 /// let result = ensure_elementwise_operation_conformable(&lhs, &rhs);
 /// assert_eq!(result, Err(Error::ShapeInconformable));
 /// ```
@@ -51,13 +51,13 @@ pub fn ensure_elementwise_operation_conformable<L, R>(
 /// use matreex::{Error, Matrix};
 /// use matreex::matrix::operation::ensure_multiplication_like_operation_conformable;
 ///
-/// let lhs = Matrix::<u8>::new((2, 3));
+/// let lhs = Matrix::<i32>::new((2, 3));
 ///
-/// let rhs = Matrix::<u8>::new((3, 1));
+/// let rhs = Matrix::<i32>::new((3, 1));
 /// let result = ensure_multiplication_like_operation_conformable(&lhs, &rhs);
 /// assert!(result.is_ok());
 ///
-/// let rhs = Matrix::<u8>::new((2, 3));
+/// let rhs = Matrix::<i32>::new((2, 3));
 /// let result = ensure_multiplication_like_operation_conformable(&lhs, &rhs);
 /// assert_eq!(result, Err(Error::ShapeInconformable));
 /// ```
@@ -91,7 +91,7 @@ pub fn ensure_multiplication_like_operation_conformable<L, R>(
 /// assert_eq!(vector_dot_product(lhs, rhs), Some(4));
 ///
 /// let lhs = matrix.iter_nth_row(0).unwrap();
-/// let zero_rows_matrix = Matrix::<u8>::new((0, 3));
+/// let zero_rows_matrix = Matrix::<i32>::new((0, 3));
 /// let rhs = zero_rows_matrix.iter_nth_col(1).unwrap();
 /// assert!(vector_dot_product(lhs, rhs).is_none());
 /// ```

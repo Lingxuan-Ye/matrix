@@ -9,9 +9,9 @@ use crate::error::{Error, Result};
 /// ```
 /// use matreex::{Matrix, Shape};
 ///
-/// let foo = Matrix::<u8>::new(Shape::new(2, 3));
-/// let bar = Matrix::<u8>::new((2, 3));
-/// let baz = Matrix::<u8>::new([2, 3]);
+/// let foo = Matrix::<i32>::new(Shape::new(2, 3));
+/// let bar = Matrix::<i32>::new((2, 3));
+/// let baz = Matrix::<i32>::new([2, 3]);
 /// ```
 ///
 /// [`Matrix`]: crate::matrix::Matrix
