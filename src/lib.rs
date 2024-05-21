@@ -2,30 +2,6 @@
 //!
 //! # Quick Start
 //!
-//! ## Addition
-//!
-//! ```
-//! use matreex::matrix;
-//!
-//! let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-//! let rhs = matrix![[5, 4, 3], [2, 1, 0]];
-//!
-//! assert_eq!(lhs + rhs, matrix![[5, 5, 5], [5, 5, 5]]);
-//! ```
-//!
-//! ## Subtraction
-//!
-//! ```
-//! use matreex::matrix;
-//!
-//! let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-//! let rhs = matrix![[5, 4, 3], [2, 1, 0]];
-//!
-//! assert_eq!(lhs - rhs, matrix![[-5, -3, -1], [1, 3, 5]]);
-//! ```
-//!
-//! ## Multiplication
-//!
 //! ```
 //! use matreex::matrix;
 //!
