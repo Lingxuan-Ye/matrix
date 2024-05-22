@@ -1,4 +1,3 @@
-use super::super::operation;
 use super::super::Matrix;
 use crate::marker::Scalar;
 use std::ops::{Div, DivAssign};
@@ -11,7 +10,7 @@ where
     type Output = Matrix<T>;
 
     fn div(self, rhs: R) -> Self::Output {
-        operation::scalar_operation_consume_scalar(self, rhs, |x, y| x.clone() / y)
+        self.scalar_operation(&rhs, |x, y| x.clone() / y.clone())
     }
 }
 
@@ -23,7 +22,7 @@ where
     type Output = Matrix<T>;
 
     fn div(self, rhs: R) -> Self::Output {
-        operation::scalar_operation_consume_both(self, rhs, |x, y| x / y)
+        self.scalar_operation_consume_self(&rhs, |x, y| x / y.clone())
     }
 }
 
@@ -33,7 +32,7 @@ where
     R: Scalar + Clone,
 {
     fn div_assign(&mut self, rhs: R) {
-        operation::scalar_operation_assign_consume_scalar(self, rhs, |x, y| *x /= y)
+        self.scalar_operation_assign(&rhs, |x, y| *x /= y.clone());
     }
 }
 

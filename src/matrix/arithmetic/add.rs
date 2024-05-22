@@ -1,4 +1,3 @@
-use super::super::operation;
 use super::super::Matrix;
 use crate::marker::Scalar;
 use std::ops::{Add, AddAssign};
@@ -11,7 +10,7 @@ where
     type Output = Matrix<T>;
 
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = operation::elementwise_operation(self, rhs, |(x, y)| x.clone() + y.clone());
+        let result = self.elementwise_operation(rhs, |(x, y)| x.clone() + y.clone());
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -27,8 +26,7 @@ where
     type Output = Matrix<T>;
 
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        let result =
-            operation::elementwise_operation_consume_rhs(self, rhs, |(x, y)| x.clone() + y);
+        let result = self.elementwise_operation_consume_rhs(rhs, |(x, y)| x.clone() + y);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -44,8 +42,7 @@ where
     type Output = Matrix<T>;
 
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
-        let result =
-            operation::elementwise_operation_consume_lhs(self, rhs, |(x, y)| x + y.clone());
+        let result = self.elementwise_operation_consume_self(rhs, |(x, y)| x + y.clone());
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -61,7 +58,7 @@ where
     type Output = Matrix<T>;
 
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        let result = operation::elementwise_operation_consume_both(self, rhs, |(x, y)| x + y);
+        let result = self.elementwise_operation_consume_both(rhs, |(x, y)| x + y);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -75,8 +72,7 @@ where
     R: Clone,
 {
     fn add_assign(&mut self, rhs: &Matrix<R>) {
-        let result =
-            operation::elementwise_operation_assign_to_lhs(self, rhs, |(x, y)| *x += y.clone());
+        let result = self.elementwise_operation_assign(rhs, |(x, y)| *x += y.clone());
         if let Err(error) = result {
             panic!("{error}");
         }
@@ -89,8 +85,7 @@ where
     R: Clone,
 {
     fn add_assign(&mut self, rhs: Matrix<R>) {
-        let result =
-            operation::elementwise_operation_assign_to_lhs_consume_rhs(self, rhs, |(x, y)| *x += y);
+        let result = self.elementwise_operation_assign_consume_rhs(rhs, |(x, y)| *x += y);
         if let Err(error) = result {
             panic!("{error}");
         }
@@ -105,7 +100,7 @@ where
     type Output = Matrix<T>;
 
     fn add(self, rhs: R) -> Self::Output {
-        operation::scalar_operation_consume_scalar(self, rhs, |x, y| x.clone() + y)
+        self.scalar_operation(&rhs, |x, y| x.clone() + y.clone())
     }
 }
 
@@ -117,7 +112,7 @@ where
     type Output = Matrix<T>;
 
     fn add(self, rhs: R) -> Self::Output {
-        operation::scalar_operation_consume_both(self, rhs, |x, y| x + y)
+        self.scalar_operation_consume_self(&rhs, |x, y| x + y.clone())
     }
 }
 
@@ -127,7 +122,7 @@ where
     R: Scalar + Clone,
 {
     fn add_assign(&mut self, rhs: R) {
-        operation::scalar_operation_assign_consume_scalar(self, rhs, |x, y| *x += y)
+        self.scalar_operation_assign(&rhs, |x, y| *x += y.clone());
     }
 }
 

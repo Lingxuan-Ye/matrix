@@ -1,4 +1,4 @@
-use super::super::operation;
+use super::super::arithmetic::vector_dot_product;
 use super::super::Matrix;
 use crate::marker::Scalar;
 use std::ops::{Add, Mul, MulAssign};
@@ -12,8 +12,7 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result =
-            operation::multiplication_like_operation(self, rhs, operation::vector_dot_product);
+        let result = self.multiplication_like_operation(rhs, vector_dot_product);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -30,8 +29,7 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result =
-            operation::multiplication_like_operation(self, &rhs, operation::vector_dot_product);
+        let result = self.multiplication_like_operation(&rhs, vector_dot_product);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -48,8 +46,7 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result =
-            operation::multiplication_like_operation(&self, rhs, operation::vector_dot_product);
+        let result = self.multiplication_like_operation(rhs, vector_dot_product);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -66,8 +63,7 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result =
-            operation::multiplication_like_operation(&self, &rhs, operation::vector_dot_product);
+        let result = self.multiplication_like_operation(&rhs, vector_dot_product);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -83,7 +79,7 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: R) -> Self::Output {
-        operation::scalar_operation_consume_scalar(self, rhs, |x, y| x.clone() * y)
+        self.scalar_operation(&rhs, |x, y| x.clone() * y.clone())
     }
 }
 
@@ -95,7 +91,7 @@ where
     type Output = Matrix<T>;
 
     fn mul(self, rhs: R) -> Self::Output {
-        operation::scalar_operation_consume_both(self, rhs, |x, y| x * y)
+        self.scalar_operation_consume_self(&rhs, |x, y| x * y.clone())
     }
 }
 
@@ -105,7 +101,7 @@ where
     R: Scalar + Clone,
 {
     fn mul_assign(&mut self, rhs: R) {
-        operation::scalar_operation_assign_consume_scalar(self, rhs, |x, y| *x *= y)
+        self.scalar_operation_assign(&rhs, |x, y| *x *= y.clone());
     }
 }
 
