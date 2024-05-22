@@ -10,7 +10,7 @@ use crate::marker::Scalar;
 ///
 /// # Errors
 ///
-/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
+/// - [`Error::NotConformable`] if the matrices are not conformable.
 ///
 /// # Examples
 ///
@@ -26,14 +26,14 @@ use crate::marker::Scalar;
 ///
 /// let rhs = Matrix::<i32>::new((2, 2));
 /// let result = ensure_elementwise_operation_conformable(&lhs, &rhs);
-/// assert_eq!(result, Err(Error::ShapeInconformable));
+/// assert_eq!(result, Err(Error::NotConformable));
 /// ```
 pub fn ensure_elementwise_operation_conformable<L, R>(
     lhs: &Matrix<L>,
     rhs: &Matrix<R>,
 ) -> Result<()> {
     if lhs.shape() != rhs.shape() {
-        Err(Error::ShapeInconformable)
+        Err(Error::NotConformable)
     } else {
         Ok(())
     }
@@ -43,7 +43,7 @@ pub fn ensure_elementwise_operation_conformable<L, R>(
 ///
 /// # Errors
 ///
-/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
+/// - [`Error::NotConformable`] if the matrices are not conformable.
 ///
 /// # Examples
 ///
@@ -59,14 +59,14 @@ pub fn ensure_elementwise_operation_conformable<L, R>(
 ///
 /// let rhs = Matrix::<i32>::new((2, 3));
 /// let result = ensure_multiplication_like_operation_conformable(&lhs, &rhs);
-/// assert_eq!(result, Err(Error::ShapeInconformable));
+/// assert_eq!(result, Err(Error::NotConformable));
 /// ```
 pub fn ensure_multiplication_like_operation_conformable<L, R>(
     lhs: &Matrix<L>,
     rhs: &Matrix<R>,
 ) -> Result<()> {
     if lhs.ncols() != rhs.nrows() {
-        Err(Error::ShapeInconformable)
+        Err(Error::NotConformable)
     } else {
         Ok(())
     }
@@ -110,7 +110,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
+/// - [`Error::NotConformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -163,7 +163,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
+/// - [`Error::NotConformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -217,7 +217,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
+/// - [`Error::NotConformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -270,7 +270,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
+/// - [`Error::NotConformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -325,7 +325,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
+/// - [`Error::NotConformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -371,7 +371,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
+/// - [`Error::NotConformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
@@ -419,7 +419,7 @@ where
 ///
 /// # Errors
 ///
-/// - [`Error::ShapeInconformable`] if the matrices are not conformable.
+/// - [`Error::NotConformable`] if the matrices are not conformable.
 ///
 /// # Notes
 ///
