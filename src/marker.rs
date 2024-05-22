@@ -1,7 +1,5 @@
 //! This module provides marker traits for scalar and number types.
 
-use crate::vector::Vector;
-
 /// A marker trait for scalar types.
 ///
 /// # Notes
@@ -39,7 +37,6 @@ impl Scalar for () {}
 impl<T> Scalar for [T] {}
 impl<T, const N: usize> Scalar for [T; N] {}
 impl<T> Scalar for Vec<T> {}
-impl<T> Scalar for Vector<T> {}
 impl<T> Scalar for *const T {}
 impl<T> Scalar for *mut T {}
 impl<T> Scalar for Box<T> {}
