@@ -1,8 +1,12 @@
 use super::index::Index;
 use super::Matrix;
-use crate::fmt::{
-    COMMA, LEFT_DELIMITER, RIGHT_DELIMITER, SEP_LEN, SET_DIM, SPACE, TAB_LEN, UNSET_DIM,
-};
+use crate::consts::{COMMA, LEFT_DELIMITER, RIGHT_DELIMITER, SEP_LEN, SPACE, TAB_LEN};
+
+macro_rules! set_dim {
+    ($($arg:tt)*) => {
+        std::format_args!("\u{001b}[2m{}\u{001b}[22m", std::format_args!($($arg)*))
+    };
+}
 
 impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -32,7 +36,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
             if col != 0 {
                 write!(f, "{SPACE:<SEP_LEN$}")?;
             }
-            write!(f, "{SET_DIM}{col:>index_max_width$}{UNSET_DIM}")?;
+            write!(f, "{}", set_dim!("{col:>index_max_width$}"))?;
             if col != (shape.ncols - 1) {
                 write!(f, "{SPACE}")?;
                 write!(f, "{SPACE:>element_max_width$}")?;
@@ -43,7 +47,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
         for row in 0..shape.nrows {
             write!(f, "{SPACE:TAB_LEN$}{SPACE:TAB_LEN$}")?;
             write!(f, "{SPACE:TAB_LEN$}")?;
-            write!(f, "{SET_DIM}{row:>index_max_width$}{UNSET_DIM}")?;
+            write!(f, "{}", set_dim!("{row:>index_max_width$}"))?;
             write!(f, "{SPACE:SEP_LEN$}")?;
             write!(f, "{LEFT_DELIMITER}")?;
             for col in 0..shape.ncols {
@@ -52,7 +56,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                 }
                 let index = Index::new(row, col).into_flattened_unchecked_for(self);
                 let element = &cache[index];
-                write!(f, "{SET_DIM}{index:>index_max_width$}{UNSET_DIM}")?;
+                write!(f, "{}", set_dim!("{index:>index_max_width$}"))?;
                 write!(f, "{SPACE}")?;
                 write!(f, "{element:>element_max_width$}")?;
             }
