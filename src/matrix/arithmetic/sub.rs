@@ -9,7 +9,7 @@ where
     type Output = Matrix<U>;
 
     fn sub(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation(rhs, |(x, y)| x.clone() - y.clone());
+        let result = self.elementwise_operation(rhs, |(left, right)| left.clone() - right.clone());
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -25,7 +25,8 @@ where
     type Output = Matrix<U>;
 
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation_consume_rhs(rhs, |(x, y)| x.clone() - y);
+        let result =
+            self.elementwise_operation_consume_rhs(rhs, |(left, right)| left.clone() - right);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -41,7 +42,8 @@ where
     type Output = Matrix<U>;
 
     fn sub(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation_consume_self(rhs, |(x, y)| x - y.clone());
+        let result =
+            self.elementwise_operation_consume_self(rhs, |(left, right)| left - right.clone());
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -57,7 +59,7 @@ where
     type Output = Matrix<U>;
 
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation_consume_both(rhs, |(x, y)| x - y);
+        let result = self.elementwise_operation_consume_both(rhs, |(left, right)| left - right);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -71,7 +73,7 @@ where
     R: Clone,
 {
     fn sub_assign(&mut self, rhs: &Matrix<R>) {
-        let result = self.elementwise_operation_assign(rhs, |(x, y)| *x -= y.clone());
+        let result = self.elementwise_operation_assign(rhs, |(left, right)| *left -= right.clone());
         if let Err(error) = result {
             panic!("{error}");
         }
@@ -84,7 +86,8 @@ where
     R: Clone,
 {
     fn sub_assign(&mut self, rhs: Matrix<R>) {
-        let result = self.elementwise_operation_assign_consume_rhs(rhs, |(x, y)| *x -= y);
+        let result =
+            self.elementwise_operation_assign_consume_rhs(rhs, |(left, right)| *left -= right);
         if let Err(error) = result {
             panic!("{error}");
         }
