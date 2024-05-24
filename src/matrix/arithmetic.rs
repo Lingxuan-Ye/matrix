@@ -35,6 +35,6 @@ where
     U: std::ops::Add<Output = U>,
 {
     lhs.zip(rhs)
-        .map(|(x, y)| x.clone() * y.clone())
-        .reduce(|acc, v| acc + v)
+        .map(|(left, right)| left.clone() * right.clone())
+        .reduce(|accumulator, product| accumulator + product)
 }
