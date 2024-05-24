@@ -21,10 +21,7 @@ pub enum Error {
     IndexOutOfBounds,
 
     /// Error when shape is not conformable.
-    ShapeInconformable,
-
-    /// Error for invalid step in iteration.
-    ZeroStep,
+    NotConformable,
 }
 
 impl std::fmt::Display for Error {
@@ -35,8 +32,7 @@ impl std::fmt::Display for Error {
             Self::CapacityExceeded => "capacity exceeds",
             Self::LengthInconsistent => "length inconsistent",
             Self::IndexOutOfBounds => "index out of bounds",
-            Self::ShapeInconformable => "shape not conformable",
-            Self::ZeroStep => "step invalid",
+            Self::NotConformable => "shape not conformable",
         };
         write!(f, "{content}")
     }

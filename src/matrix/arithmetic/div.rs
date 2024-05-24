@@ -1,93 +1,341 @@
-use super::super::operation;
-use super::super::Matrix;
-use crate::marker::Scalar;
-use std::ops::{Div, DivAssign};
+/// Implements scalar division for [`Matrix`].
+///
+/// # Notes
+///
+/// Refer to [`impl_scalar_add!`] for more information.
+///
+/// [`Matrix`]: crate::matrix::Matrix
+/// [`impl_scalar_add!`]: crate::impl_scalar_add!
+#[macro_export]
+macro_rules! impl_scalar_div {
+    ($($t:ty)*) => {
+        $(
+            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
 
-impl<L, R, T> Div<R> for &Matrix<L>
-where
-    L: Div<R, Output = T> + Clone,
-    R: Scalar + Clone,
-{
-    type Output = Matrix<T>;
+                fn div(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| (*element).clone() / scalar.clone())
+                }
+            }
 
-    fn div(self, rhs: R) -> Self::Output {
-        operation::scalar_operation_consume_scalar(self, rhs, |x, y| x.clone() / y)
+            impl std::ops::Div<$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<&$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| element.clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| element.clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() / (*element).clone())
+                }
+            }
+
+            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() / element.clone())
+                }
+            }
+
+            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() / element.clone())
+                }
+            }
+
+            impl std::ops::Div<$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() / element)
+                }
+            }
+
+            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() / (*element).clone())
+                }
+            }
+
+            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() / element.clone())
+                }
+            }
+
+            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() / element.clone())
+                }
+            }
+
+            impl std::ops::Div<$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() / element)
+                }
+            }
+
+            impl std::ops::DivAssign<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
+                fn div_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(rhs, |element, scalar| *element /= scalar.clone());
+                }
+            }
+
+            impl std::ops::DivAssign<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
+                fn div_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element /= scalar.clone());
+                }
+            }
+        )*
     }
 }
 
-impl<L, R, T> Div<R> for Matrix<L>
-where
-    L: Div<R, Output = T>,
-    R: Scalar + Clone,
-{
-    type Output = Matrix<T>;
-
-    fn div(self, rhs: R) -> Self::Output {
-        operation::scalar_operation_consume_both(self, rhs, |x, y| x / y)
-    }
-}
-
-impl<L, R> DivAssign<R> for Matrix<L>
-where
-    L: DivAssign<R>,
-    R: Scalar + Clone,
-{
-    fn div_assign(&mut self, rhs: R) {
-        operation::scalar_operation_assign_consume_scalar(self, rhs, |x, y| *x /= y)
-    }
-}
+impl_scalar_div!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64);
 
 #[cfg(test)]
 mod tests {
+    use super::super::super::Matrix;
     use crate::matrix;
 
     #[test]
-    fn test_scalar_div() {
+    #[allow(clippy::op_ref)]
+    fn test_matrix_div_scalar() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let rhs = 2;
         let expected = matrix![[0, 0, 1], [1, 2, 2]];
 
-        let result = &lhs / rhs;
-        assert_eq!(result, expected);
+        {
+            let result = &lhs / &rhs;
+            assert_eq!(result, expected);
 
-        lhs.switch_order();
-        let mut result = &lhs / rhs;
-        assert_ne!(result, expected);
-        result.switch_order();
-        assert_eq!(result, expected);
+            let result = &lhs / rhs;
+            assert_eq!(result, expected);
+
+            let result = lhs.clone() / &rhs;
+            assert_eq!(result, expected);
+
+            let result = lhs.clone() / rhs;
+            assert_eq!(result, expected);
+        }
+
+        {
+            lhs.switch_order();
+
+            let mut result: Matrix<i32> = &lhs / &rhs;
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+
+            let mut result: Matrix<i32> = &lhs / rhs;
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+
+            let mut result: Matrix<i32> = lhs.clone() / &rhs;
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+
+            let mut result: Matrix<i32> = lhs.clone() / rhs;
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+        }
     }
 
     #[test]
-    fn test_scalar_div_consume_matrix() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = 2;
-        let expected = matrix![[0, 0, 1], [1, 2, 2]];
+    #[allow(clippy::op_ref)]
+    fn test_scalar_div_matrix() {
+        let lhs = 12;
+        let mut rhs = matrix![[1, 2, 3], [4, 5, 6]];
+        let expected = matrix![[12, 6, 4], [3, 2, 2]];
 
-        let result = lhs.clone() / rhs;
-        assert_eq!(result, expected);
+        {
+            let result = &lhs / &rhs;
+            assert_eq!(result, expected);
 
-        lhs.switch_order();
-        let mut result = lhs.clone() / rhs;
-        assert_ne!(result, expected);
-        result.switch_order();
-        assert_eq!(result, expected);
+            let result = lhs / &rhs;
+            assert_eq!(result, expected);
+
+            let result = &lhs / rhs.clone();
+            assert_eq!(result, expected);
+
+            let result = lhs / rhs.clone();
+            assert_eq!(result, expected);
+        }
+
+        {
+            rhs.switch_order();
+
+            let mut result: Matrix<i32> = &lhs / &rhs;
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+
+            let mut result: Matrix<i32> = lhs / &rhs;
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+
+            let mut result: Matrix<i32> = &lhs / rhs.clone();
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+
+            let mut result: Matrix<i32> = lhs / rhs.clone();
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+        }
     }
 
     #[test]
-    fn test_scalar_div_assign() {
+    fn test_matrix_div_scalar_assign() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let rhs = 2;
         let expected = matrix![[0, 0, 1], [1, 2, 2]];
 
-        let mut result = lhs.clone();
-        result /= rhs;
-        assert_eq!(result, expected);
+        {
+            let mut result = lhs.clone();
+            result /= &rhs;
+            assert_eq!(result, expected);
 
-        lhs.switch_order();
-        let mut result = lhs.clone();
-        result /= rhs;
-        assert_ne!(result, expected);
-        result.switch_order();
-        assert_eq!(result, expected);
+            let mut result = lhs.clone();
+            result /= rhs;
+            assert_eq!(result, expected);
+        }
+
+        {
+            lhs.switch_order();
+
+            let mut result = lhs.clone();
+            result /= &rhs;
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+
+            let mut result = lhs.clone();
+            result /= rhs;
+            assert_ne!(result, expected);
+            result.switch_order();
+            assert_eq!(result, expected);
+        }
     }
 }
