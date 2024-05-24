@@ -102,105 +102,184 @@ where
 macro_rules! impl_scalar_sub {
     ($($t:ty)*) => {
         $(
-            impl<L, U> std::ops::Sub<&$t> for &$crate::matrix::Matrix<L>
+            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<&$t>
             where
-                L: std::ops::Sub<$t, Output = U> + Clone,
                 $t: Clone,
             {
-                type Output = $crate::matrix::Matrix<U>;
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| (*element).clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation(rhs, |element, scalar| element.clone() - scalar.clone())
                 }
             }
 
-            impl<L, U> std::ops::Sub<$t> for &$crate::matrix::Matrix<L>
+            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<$t>
             where
-                L: std::ops::Sub<$t, Output = U> + Clone,
                 $t: Clone,
             {
-                type Output = $crate::matrix::Matrix<U>;
+                type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $t) -> Self::Output {
                     self.scalar_operation(&rhs, |element, scalar| element.clone() - scalar.clone())
                 }
             }
 
-            impl<L, U> std::ops::Sub<&$t> for $crate::matrix::Matrix<L>
+            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<$t>
             where
-                L: std::ops::Sub<$t, Output = U>,
                 $t: Clone,
             {
-                type Output = $crate::matrix::Matrix<U>;
+                type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$t) -> Self::Output {
                     self.scalar_operation_consume_self(rhs, |element, scalar| element - scalar.clone())
                 }
             }
 
-            impl<L, U> std::ops::Sub<$t> for $crate::matrix::Matrix<L>
+            impl std::ops::Sub<$t> for $crate::matrix::Matrix<$t>
             where
-                L: std::ops::Sub<$t, Output = U>,
                 $t: Clone,
             {
-                type Output = $crate::matrix::Matrix<U>;
+                type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $t) -> Self::Output {
                     self.scalar_operation_consume_self(&rhs, |element, scalar| element - scalar.clone())
                 }
             }
 
-            impl<R, U> std::ops::Sub<&$crate::matrix::Matrix<R>> for &$t
+            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for &$t
             where
-                $t: std::ops::Sub<R, Output = U> + Clone,
-                R: Clone,
+                $t: Clone,
             {
-                type Output = $crate::matrix::Matrix<U>;
+                type Output = $crate::matrix::Matrix<$t>;
 
-                fn sub(self, rhs: &$crate::matrix::Matrix<R>) -> Self::Output {
-                    rhs.scalar_operation(self, |element, scalar| scalar.clone() - element.clone())
+                fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() - (*element).clone())
                 }
             }
 
-            impl<R, U> std::ops::Sub<$crate::matrix::Matrix<R>> for &$t
+            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for &$t
             where
-                $t: std::ops::Sub<R, Output = U> + Clone,
-                R: Clone,
+                $t: Clone,
             {
-                type Output = $crate::matrix::Matrix<U>;
+                type Output = $crate::matrix::Matrix<$t>;
 
-                fn sub(self, rhs: $crate::matrix::Matrix<R>) -> Self::Output {
+                fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() - element.clone())
                 }
             }
 
-            impl<R, U> std::ops::Sub<&$crate::matrix::Matrix<R>> for $t
+            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for &$t
             where
-                $t: std::ops::Sub<R, Output = U> + Clone,
-                R: Clone,
+                $t: Clone,
             {
-                type Output = $crate::matrix::Matrix<U>;
+                type Output = $crate::matrix::Matrix<$t>;
 
-                fn sub(self, rhs: &$crate::matrix::Matrix<R>) -> Self::Output {
-                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() - element.clone())
+                fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() - element.clone())
                 }
             }
 
-            impl<R, U> std::ops::Sub<$crate::matrix::Matrix<R>> for $t
+            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for &$t
             where
-                $t: std::ops::Sub<R, Output = U> + Clone,
-                R: Clone,
+                $t: Clone,
             {
-                type Output = $crate::matrix::Matrix<U>;
+                type Output = $crate::matrix::Matrix<$t>;
 
-                fn sub(self, rhs: $crate::matrix::Matrix<R>) -> Self::Output {
+                fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() - element)
+                }
+            }
+
+            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() - (*element).clone())
+                }
+            }
+
+            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
                     rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() - element.clone())
                 }
             }
 
-            impl<L> std::ops::SubAssign<&$t> for $crate::matrix::Matrix<L>
+            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for $t
             where
-                L: std::ops::SubAssign<$t>,
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() - element.clone())
+                }
+            }
+
+            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() - element)
+                }
+            }
+
+            impl std::ops::SubAssign<&$t> for $crate::matrix::Matrix<$t>
+            where
                 $t: Clone,
             {
                 fn sub_assign(&mut self, rhs: &$t) {
@@ -208,9 +287,8 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl<L> std::ops::SubAssign<$t> for $crate::matrix::Matrix<L>
+            impl std::ops::SubAssign<$t> for $crate::matrix::Matrix<$t>
             where
-                L: std::ops::SubAssign<$t>,
                 $t: Clone,
             {
                 fn sub_assign(&mut self, rhs: $t) {
