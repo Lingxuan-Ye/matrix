@@ -2,8 +2,6 @@ use super::order::Order;
 use super::shape::{IntoAxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
-use crate::vector::kind::Kind;
-use crate::vector::Vector;
 
 impl<T: Clone> Matrix<T> {
     /// Creates a new [`Matrix`] instance from the given slice.
@@ -41,19 +39,6 @@ impl<T> Matrix<T> {
     /// ```
     pub fn from_2darray<const R: usize, const C: usize>(src: Box<[[T; C]; R]>) -> Self {
         Self::from(src)
-    }
-}
-
-impl<T> From<Vector<T>> for Matrix<T> {
-    fn from(value: Vector<T>) -> Self {
-        let (nrows, ncols) = match value.kind() {
-            Kind::RowVector => (1, value.len()),
-            Kind::ColVector => (value.len(), 1),
-        };
-        let data = value.into();
-        let order = Order::default();
-        let shape = Shape::new(nrows, ncols).into_axis_shape_unchecked(order);
-        Self { data, order, shape }
     }
 }
 
@@ -104,7 +89,7 @@ impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{matrix, vector};
+    use crate::matrix;
 
     // This test ensures that the `matrix!` macro works as expected.
     #[test]
@@ -125,19 +110,6 @@ mod tests {
         assert_ne!(Matrix::from(*array.clone()), expected);
         assert_ne!(Matrix::from_2darray(array), expected);
         assert_ne!(matrix![[0, 1], [2, 3], [4, 5]], expected);
-    }
-
-    #[test]
-    fn test_from_vector() {
-        let mut vector = vector![0, 1, 2, 3, 4, 5];
-
-        let expected = matrix![[0, 1, 2, 3, 4, 5]];
-        assert_eq!(Matrix::from(vector.clone()), expected);
-
-        vector.transpose();
-
-        let expected = matrix![[0], [1], [2], [3], [4], [5]];
-        assert_eq!(Matrix::from(vector), expected);
     }
 
     #[test]

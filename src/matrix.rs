@@ -1,14 +1,14 @@
 //! This module defines [`Matrix`] and all its related components.
 
+pub mod arithmetic;
 pub mod index;
 pub mod iter;
-pub mod operation;
 pub mod order;
 pub mod shape;
 
-mod arithmetic;
 mod conversion;
 mod fmt;
+mod operation;
 
 use self::index::{translate_index_between_orders_unchecked, Index};
 use self::order::Order;
