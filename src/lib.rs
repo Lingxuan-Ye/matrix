@@ -20,7 +20,6 @@
 pub mod error;
 pub mod matrix;
 
-mod consts;
 mod macros;
 
 pub use self::error::{Error, Result};
