@@ -309,6 +309,17 @@ impl<T> Matrix<T> {
         self
     }
 
+    pub fn map<U, F>(&self, f: F) -> Matrix<U>
+    where
+        F: FnMut(&T) -> U,
+    {
+        Matrix {
+            data: self.data.iter().map(f).collect(),
+            order: self.order,
+            shape: self.shape,
+        }
+    }
+
     /// Shrinks the capacity of the matrix as much as possible.
     pub fn shrink_capacity_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
