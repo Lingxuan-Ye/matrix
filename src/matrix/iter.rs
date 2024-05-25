@@ -268,7 +268,9 @@ impl<T> Matrix<T> {
             Order::ColMajor => unsafe { self.iter_nth_major_axis_vector_unchecked(n) },
         }
     }
+}
 
+impl<T> Matrix<T> {
     unsafe fn iter_nth_major_axis_vector_unchecked(&self, n: usize) -> VectorIter<&T> {
         let lower = n * self.major_stride();
         let upper = lower + self.major_stride();
