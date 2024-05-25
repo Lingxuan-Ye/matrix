@@ -9,7 +9,7 @@ macro_rules! set_dim {
 }
 
 impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let size = self.size();
         let index_max_width = format!("{size}").chars().count();
         let mut element_max_width = 0;
@@ -72,7 +72,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
 }
 
 impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         let size = self.size();
         let mut element_max_width = 0;
         let mut cache = Vec::with_capacity(size);
