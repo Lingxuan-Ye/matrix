@@ -1,113 +1,186 @@
 use super::index::Index;
 use super::Matrix;
-use crate::consts::{COMMA, LEFT_DELIMITER, RIGHT_DELIMITER, SEP_LEN, SPACE, TAB_LEN};
 
-macro_rules! set_dim {
-    ($($arg:tt)*) => {
-        std::format_args!("\u{001b}[2m{}\u{001b}[22m", std::format_args!($($arg)*))
+const LEFT_DELIMITER: &str = "[";
+const RIGHT_DELIMITER: &str = "]";
+const SPACE: &str = " ";
+const TAB_SIZE: usize = 4;
+const OUTER_GAP: usize = 2;
+const INNER_GAP: usize = 1;
+
+macro_rules! write_dim {
+    ($dst:expr, $($arg:tt)*) => {
+        std::write!($dst, "\u{001b}[2m{}\u{001b}[22m", std::format_args!($($arg)*))
     };
 }
 
 impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let shape = self.shape();
+        let nrows = shape.nrows;
+        let ncols = shape.ncols;
         let size = self.size();
-        let index_max_width = format!("{size}").chars().count();
-        let mut element_max_width = 0;
+        let index_width = size.to_string().chars().count();
+        let mut element_width = 0;
+        let mut element_hight = 0;
         let mut cache = Vec::with_capacity(size);
         for element in self.data.iter() {
-            let string = format!("{element:?}");
-            let width = string.chars().count();
-            if width > element_max_width {
-                element_max_width = width;
+            let lines = Lines::from_debug(element);
+            let width = lines.width();
+            if width > element_width {
+                element_width = width;
             }
-            cache.push(string);
+            let height = lines.height();
+            if height > element_hight {
+                element_hight = height;
+            }
+            cache.push(lines);
         }
 
         writeln!(f, "Matrix{SPACE}{{")?;
-        writeln!(f, "{SPACE:TAB_LEN$}data:")?;
+        writeln!(f, "{SPACE:TAB_SIZE$}data:")?;
 
-        let shape = self.shape();
-        write!(f, "{SPACE:TAB_LEN$}{SPACE:TAB_LEN$}")?;
-        write!(f, "{LEFT_DELIMITER:<TAB_LEN$}")?;
-        write!(f, "{SPACE:>index_max_width$}")?;
-        write!(f, "{SPACE:SEP_LEN$}")?;
+        write!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}")?;
+        write!(f, "{LEFT_DELIMITER:<TAB_SIZE$}")?;
+        write!(f, "{SPACE:>index_width$}")?;
+        write!(f, "{SPACE:OUTER_GAP$}")?;
         write!(f, "{SPACE}")?;
-        for col in 0..shape.ncols {
-            if col != 0 {
-                write!(f, "{SPACE:<SEP_LEN$}")?;
-            }
-            write!(f, "{}", set_dim!("{col:>index_max_width$}"))?;
-            if col != (shape.ncols - 1) {
-                write!(f, "{SPACE}")?;
-                write!(f, "{SPACE:>element_max_width$}")?;
+        for col in 0..ncols {
+            write_dim!(f, "{col:>index_width$}")?;
+            write!(f, "{SPACE:INNER_GAP$}")?;
+            write!(f, "{SPACE:<element_width$}")?;
+            if col != (ncols - 1) {
+                write!(f, "{SPACE:OUTER_GAP$}")?;
             }
         }
         writeln!(f)?;
 
-        for row in 0..shape.nrows {
-            write!(f, "{SPACE:TAB_LEN$}{SPACE:TAB_LEN$}")?;
-            write!(f, "{SPACE:TAB_LEN$}")?;
-            write!(f, "{}", set_dim!("{row:>index_max_width$}"))?;
-            write!(f, "{SPACE:SEP_LEN$}")?;
-            write!(f, "{LEFT_DELIMITER}")?;
-            for col in 0..shape.ncols {
-                if col != 0 {
-                    write!(f, "{COMMA:<SEP_LEN$}")?;
+        for row in 0..nrows {
+            for line in 0..element_hight {
+                write!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}")?;
+                write!(f, "{SPACE:TAB_SIZE$}")?;
+                if line == 0 {
+                    write_dim!(f, "{row:>index_width$}")?;
+                    write!(f, "{SPACE:OUTER_GAP$}")?;
+                    write!(f, "{LEFT_DELIMITER}")?;
+                } else {
+                    write!(f, "{SPACE:>index_width$}")?;
+                    write!(f, "{SPACE:OUTER_GAP$}")?;
+                    write!(f, "{SPACE}")?;
                 }
-                let index = Index::new(row, col).into_flattened_unchecked_for(self);
-                let element = &cache[index];
-                write!(f, "{}", set_dim!("{index:>index_max_width$}"))?;
-                write!(f, "{SPACE}")?;
-                write!(f, "{element:>element_max_width$}")?;
+                for col in 0..ncols {
+                    let index = Index::new(row, col).into_flattened_unchecked_for(self);
+                    if line == 0 {
+                        write_dim!(f, "{index:>index_width$}")?;
+                    } else {
+                        write!(f, "{SPACE:>index_width$}")?;
+                    }
+                    write!(f, "{SPACE:INNER_GAP$}")?;
+                    match cache[index].next() {
+                        None => write!(f, "{SPACE:<element_width$}")?,
+                        Some(element_line) => write!(f, "{element_line:<element_width$}")?,
+                    }
+                    if col != (ncols - 1) {
+                        write!(f, "{SPACE:<OUTER_GAP$}")?;
+                    }
+                }
+                if line == 0 {
+                    write!(f, "{RIGHT_DELIMITER}")?;
+                }
+                writeln!(f)?;
             }
-            writeln!(f, "{RIGHT_DELIMITER}{COMMA}")?;
         }
 
-        writeln!(f, "{SPACE:TAB_LEN$}{SPACE:TAB_LEN$}{RIGHT_DELIMITER}")?;
+        writeln!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}{RIGHT_DELIMITER}")?;
 
-        writeln!(f, "{SPACE:TAB_LEN$}order:{SPACE}{:?}", self.order)?;
-        writeln!(f, "{SPACE:TAB_LEN$}shape:{SPACE}{:?}", self.shape)?;
+        writeln!(f, "{SPACE:TAB_SIZE$}order:{SPACE}{:?}", self.order)?;
+        writeln!(f, "{SPACE:TAB_SIZE$}shape:{SPACE}{:?}", self.shape)?;
         writeln!(f, "}}")
     }
 }
 
 impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        let shape = self.shape();
+        let nrows = shape.nrows;
+        let ncols = shape.ncols;
         let size = self.size();
-        let mut element_max_width = 0;
+        let mut element_width = 0;
+        let mut element_hight = 0;
         let mut cache = Vec::with_capacity(size);
         for element in self.data.iter() {
-            let string = format!("{element}");
-            let width = string.chars().count();
-            if width > element_max_width {
-                element_max_width = width;
+            let lines = Lines::from_display(element);
+            let width = lines.width();
+            if width > element_width {
+                element_width = width;
             }
-            cache.push(string);
+            let height = lines.height();
+            if height > element_hight {
+                element_hight = height;
+            }
+            cache.push(lines);
         }
 
-        let shape = self.shape();
-        for row in 0..shape.nrows {
-            if row == 0 {
-                write!(f, "{LEFT_DELIMITER}{LEFT_DELIMITER}")?;
-            } else {
-                write!(f, "{SPACE}{LEFT_DELIMITER}")?;
-            }
-            for col in 0..shape.ncols {
-                if col != 0 {
-                    write! {f, "{SPACE:<SEP_LEN$}"}?;
+        writeln!(f, "{LEFT_DELIMITER}")?;
+
+        for row in 0..nrows {
+            for line in 0..element_hight {
+                write!(f, "{SPACE:TAB_SIZE$}")?;
+                if line == 0 {
+                    write!(f, "{LEFT_DELIMITER}")?;
+                } else {
+                    write!(f, "{SPACE}")?;
                 }
-                let index = Index::new(row, col).into_flattened_unchecked_for(self);
-                let element = &cache[index];
-                write!(f, "{element:>element_max_width$}")?;
-            }
-            if row != (shape.nrows - 1) {
-                writeln!(f, "{RIGHT_DELIMITER}")?;
-            } else {
-                writeln!(f, "{RIGHT_DELIMITER}{RIGHT_DELIMITER}")?;
+                for col in 0..ncols {
+                    let index = Index::new(row, col).into_flattened_unchecked_for(self);
+                    match cache[index].next() {
+                        None => write!(f, "{SPACE:<element_width$}")?,
+                        Some(element_line) => write!(f, "{element_line:<element_width$}")?,
+                    }
+                    if col != (ncols - 1) {
+                        write!(f, "{SPACE:OUTER_GAP$}")?;
+                    }
+                }
+                if line == 0 {
+                    write!(f, "{RIGHT_DELIMITER}")?;
+                }
+                writeln!(f)?;
             }
         }
 
-        Ok(())
+        writeln!(f, "{RIGHT_DELIMITER}")
+    }
+}
+
+struct Lines(std::collections::VecDeque<String>);
+
+impl Lines {
+    fn from_debug<T: std::fmt::Debug>(element: T) -> Self {
+        Self(format!("{:?}", element).lines().map(String::from).collect())
+    }
+
+    fn from_display<T: std::fmt::Display>(element: T) -> Self {
+        Self(format!("{}", element).lines().map(String::from).collect())
+    }
+
+    fn width(&self) -> usize {
+        self.0
+            .iter()
+            .map(|line| line.chars().count())
+            .max()
+            .unwrap_or(0)
+    }
+
+    fn height(&self) -> usize {
+        self.0.len()
+    }
+}
+
+impl Iterator for Lines {
+    type Item = String;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.pop_front()
     }
 }
 
@@ -115,32 +188,44 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
 mod tests {
     use crate::matrix;
 
+    struct Mock(usize);
+
+    impl std::fmt::Debug for Mock {
+        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            for i in 0..self.0 {
+                writeln!(f, "{}", "+".repeat(i + 1))?;
+            }
+            Ok(())
+        }
+    }
+
+    impl std::fmt::Display for Mock {
+        fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+            for i in 0..self.0 {
+                writeln!(f, "{}", "=".repeat(i + 1))?;
+            }
+            Ok(())
+        }
+    }
+
+    /*
+    The expected strings are not formatted to multiple lines to prevent
+    the trailing whitespaces from being removed by the editor.
+    */
+
     #[test]
     fn test_debug() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[Mock(0), Mock(1), Mock(2)], [Mock(3), Mock(4), Mock(5)]];
         let result = format!("{:?}", matrix);
-        let expected = "\
-Matrix {
-    data:
-        [       \u{1b}[2m0\u{1b}[22m    \u{1b}[2m1\u{1b}[22m    \u{1b}[2m2\u{1b}[22m
-            \u{1b}[2m0\u{1b}[22m  [\u{1b}[2m0\u{1b}[22m 1, \u{1b}[2m1\u{1b}[22m 2, \u{1b}[2m2\u{1b}[22m 3],
-            \u{1b}[2m1\u{1b}[22m  [\u{1b}[2m3\u{1b}[22m 4, \u{1b}[2m4\u{1b}[22m 5, \u{1b}[2m5\u{1b}[22m 6],
-        ]
-    order: RowMajor
-    shape: AxisShape { major: 2, minor: 3 }
-}
-";
+        let expected = "Matrix {\n    data:\n        [       \u{1b}[2m0\u{1b}[22m        \u{1b}[2m1\u{1b}[22m        \u{1b}[2m2\u{1b}[22m      \n            \u{1b}[2m0\u{1b}[22m  [\u{1b}[2m0\u{1b}[22m        \u{1b}[2m1\u{1b}[22m +      \u{1b}[2m2\u{1b}[22m +    ]\n                                    ++   \n                                         \n                                         \n                                         \n            \u{1b}[2m1\u{1b}[22m  [\u{1b}[2m3\u{1b}[22m +      \u{1b}[2m4\u{1b}[22m +      \u{1b}[2m5\u{1b}[22m +    ]\n                  ++       ++       ++   \n                  +++      +++      +++  \n                           ++++     ++++ \n                                    +++++\n        ]\n    order: RowMajor\n    shape: AxisShape { major: 2, minor: 3 }\n}\n";
         assert_eq!(result, expected);
     }
 
     #[test]
     fn test_display() {
-        let matrix = matrix![[1, 2, 3], [4, 5, 6]];
+        let matrix = matrix![[Mock(0), Mock(1), Mock(2)], [Mock(3), Mock(4), Mock(5)]];
         let result = format!("{}", matrix);
-        let expected = "\
-[[1  2  3]
- [4  5  6]]
-";
+        let expected = "[\n    [       =      =    ]\n                   ==   \n                        \n                        \n                        \n    [=      =      =    ]\n     ==     ==     ==   \n     ===    ===    ===  \n            ====   ==== \n                   =====\n]\n";
         assert_eq!(result, expected);
     }
 }
