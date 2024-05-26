@@ -44,10 +44,10 @@ pub trait ShapeLike {
 /// [`Matrix`]: crate::matrix::Matrix
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct Shape {
-    // Number of rows.
+    /// Number of rows.
     pub nrows: usize,
 
-    // Number of columns.
+    /// Number of columns.
     pub ncols: usize,
 }
 
