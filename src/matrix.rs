@@ -312,25 +312,6 @@ impl<T> Matrix<T> {
         self
     }
 
-    pub fn map<U, F>(&self, f: F) -> Matrix<U>
-    where
-        F: FnMut(&T) -> U,
-    {
-        Matrix {
-            data: self.data.iter().map(f).collect(),
-            order: self.order,
-            shape: self.shape,
-        }
-    }
-
-    pub fn apply<F>(&mut self, f: F) -> &mut Self
-    where
-        F: FnMut(&mut T),
-    {
-        self.data.iter_mut().for_each(f);
-        self
-    }
-
     /// Shrinks the capacity of the matrix as much as possible.
     pub fn shrink_capacity_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
@@ -348,6 +329,51 @@ impl<T> Matrix<T> {
         self.data.shrink_to(min_capacity);
         self
     }
+
+    /// Applies a closure to each element of the matrix,
+    /// modifying the matrix in place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.apply(|x| *x *= 2);
+    /// assert_eq!(matrix, matrix![[0, 2, 4], [6, 8, 10]]);
+    /// ```
+    pub fn apply<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnMut(&mut T),
+    {
+        self.data.iter_mut().for_each(f);
+        self
+    }
+
+    /// Applies a closure to each element of the matrix,
+    /// returning a new matrix with the results.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let matrix_f64 = matrix_i32.map(|x| *x as f64);
+    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// ```
+    pub fn map<U, F>(&self, f: F) -> Matrix<U>
+    where
+        F: FnMut(&T) -> U,
+    {
+        Matrix {
+            data: self.data.iter().map(f).collect(),
+            order: self.order,
+            shape: self.shape,
+        }
+    }
 }
 
 #[cfg(feature = "rayon")]
@@ -355,6 +381,40 @@ impl<T> Matrix<T>
 where
     T: Sync + Send,
 {
+    /// Applies a closure to each element of the matrix in parallel,
+    /// modifying the matrix in place.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.par_apply(|x| *x *= 2);
+    /// assert_eq!(matrix, matrix![[0, 2, 4], [6, 8, 10]]);
+    /// ```
+    pub fn par_apply<F>(&mut self, f: F) -> &mut Self
+    where
+        F: Fn(&mut T) + Sync + Send,
+    {
+        self.data.par_iter_mut().for_each(f);
+        self
+    }
+
+    /// Applies a closure to each element of the matrix in parallel,
+    /// returning a new matrix with the results.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// let matrix_f64 = matrix_i32.par_map(|x| *x as f64);
+    /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
+    /// ```
     pub fn par_map<U, F>(&self, f: F) -> Matrix<U>
     where
         U: Send,
@@ -365,14 +425,6 @@ where
             order: self.order,
             shape: self.shape,
         }
-    }
-
-    pub fn par_apply<F>(&mut self, f: F) -> &mut Self
-    where
-        F: Fn(&mut T) + Sync + Send,
-    {
-        self.data.par_iter_mut().for_each(f);
-        self
     }
 }
 
