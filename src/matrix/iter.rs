@@ -134,7 +134,8 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// Elements will be iterated in memory order.
+    /// The iteration order of elements is not guaranteed. In the current
+    /// implementation, elements are iterated in memory order.
     ///
     /// # Examples
     ///
@@ -157,7 +158,8 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// Elements will be iterated in memory order.
+    /// The iteration order of elements is not guaranteed. In the current
+    /// implementation, elements are iterated in memory order.
     ///
     /// # Examples
     ///
@@ -180,7 +182,8 @@ impl<T> Matrix<T> {
     ///
     /// # Notes
     ///
-    /// Elements will be iterated in memory order.
+    /// The iteration order of elements is not guaranteed. In the current
+    /// implementation, elements are iterated in memory order.
     ///
     /// # Examples
     ///
@@ -200,7 +203,7 @@ impl<T> Matrix<T> {
 #[cfg(feature = "rayon")]
 impl<T> Matrix<T>
 where
-    T: Send + Sync,
+    T: Sync + Send,
 {
     /// Returns a parallel iterator over the elements of the matrix.
     ///
