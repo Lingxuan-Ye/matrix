@@ -15,6 +15,9 @@ use self::order::Order;
 use self::shape::{AxisShape, IntoAxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
 
+#[cfg(feature = "rayon")]
+use rayon::prelude::*;
+
 /// [`Matrix`] means matrix.
 ///
 /// Instead of using constructor methods, you may prefer to create a
@@ -343,6 +346,32 @@ impl<T> Matrix<T> {
     /// this is a no-op.
     pub fn shrink_capacity_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
+        self
+    }
+}
+
+#[cfg(feature = "rayon")]
+impl<T> Matrix<T>
+where
+    T: Sync + Send,
+{
+    pub fn par_map<U, F>(&self, f: F) -> Matrix<U>
+    where
+        U: Send,
+        F: Fn(&T) -> U + Sync + Send,
+    {
+        Matrix {
+            data: self.data.par_iter().map(f).collect(),
+            order: self.order,
+            shape: self.shape,
+        }
+    }
+
+    pub fn par_apply<F>(&mut self, f: F) -> &mut Self
+    where
+        F: Fn(&mut T) + Sync + Send,
+    {
+        self.data.par_iter_mut().for_each(f);
         self
     }
 }
