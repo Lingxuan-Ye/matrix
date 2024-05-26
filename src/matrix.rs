@@ -159,68 +159,7 @@ impl<T> Matrix<T> {
     }
 }
 
-impl<T: Default> Matrix<T> {
-    /// Resizes the matrix to the specified shape.
-    ///
-    /// # Notes
-    ///
-    /// Reducing the size does not automatically shrink the capacity.
-    /// This choice is made to avoid potential reallocation.
-    /// Consider explicitly calling [`Matrix::shrink_capacity_to_fit`]
-    /// if needed.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::matrix;
-    ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// matrix.resize((2, 2)).unwrap();
-    /// assert_eq!(matrix, matrix![[0, 1], [2, 3]]);
-    ///
-    /// matrix.resize((2, 3)).unwrap();
-    /// assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
-    /// ```
-    pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
-        let shape = shape.try_into_axis_shape(self.order)?;
-        let size = Self::check_size(shape.size())?;
-        self.data.resize_with(size, T::default);
-        self.shape = shape;
-        Ok(self)
-    }
-}
-
 impl<T> Matrix<T> {
-    /// Reshapes the matrix to the specified shape.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::SizeMismatch`] if the size of the new shape does not
-    /// match the current size of the matrix.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Error};
-    ///
-    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// matrix.reshape((3, 2)).unwrap();
-    /// assert_eq!(matrix, matrix![[0, 1], [2, 3], [4, 5]]);
-    ///
-    /// let result = matrix.reshape((2, 2));
-    /// assert_eq!(result, Err(Error::SizeMismatch));
-    /// ```
-    pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
-        match shape.size() {
-            Ok(size) if (self.size() == size) => (),
-            _ => return Err(Error::SizeMismatch),
-        }
-        self.shape = shape.into_axis_shape_unchecked(self.order);
-        Ok(self)
-    }
-
     /// Transposes the matrix.
     ///
     /// # Notes
@@ -312,6 +251,68 @@ impl<T> Matrix<T> {
         self
     }
 
+    /// Resizes the matrix to the specified shape.
+    ///
+    /// # Notes
+    ///
+    /// Reducing the size does not automatically shrink the capacity.
+    /// This choice is made to avoid potential reallocation.
+    /// Consider explicitly calling [`Matrix::shrink_capacity_to_fit`]
+    /// if needed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.resize((2, 2)).unwrap();
+    /// assert_eq!(matrix, matrix![[0, 1], [2, 3]]);
+    ///
+    /// matrix.resize((2, 3)).unwrap();
+    /// assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+    /// ```
+    pub fn resize<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self>
+    where
+        T: Default,
+    {
+        let shape = shape.try_into_axis_shape(self.order)?;
+        let size = Self::check_size(shape.size())?;
+        self.data.resize_with(size, T::default);
+        self.shape = shape;
+        Ok(self)
+    }
+
+    /// Reshapes the matrix to the specified shape.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::SizeMismatch`] if the size of the new shape does not
+    /// match the current size of the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Error};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// matrix.reshape((3, 2)).unwrap();
+    /// assert_eq!(matrix, matrix![[0, 1], [2, 3], [4, 5]]);
+    ///
+    /// let result = matrix.reshape((2, 2));
+    /// assert_eq!(result, Err(Error::SizeMismatch));
+    /// ```
+    pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
+        match shape.size() {
+            Ok(size) if (self.size() == size) => (),
+            _ => return Err(Error::SizeMismatch),
+        }
+        self.shape = shape.into_axis_shape_unchecked(self.order);
+        Ok(self)
+    }
+
     /// Shrinks the capacity of the matrix as much as possible.
     pub fn shrink_capacity_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
@@ -327,6 +328,51 @@ impl<T> Matrix<T> {
     /// this is a no-op.
     pub fn shrink_capacity_to(&mut self, min_capacity: usize) -> &mut Self {
         self.data.shrink_to(min_capacity);
+        self
+    }
+
+    /// Overwrites the overlapping part of this matrix with another one,
+    /// leaving the non-overlapping part unchanged.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Order};
+    ///
+    /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
+    /// let other = matrix![[1, 1], [1, 1], [1, 1]];
+    ///
+    /// matrix.overwrite_with(&other);
+    /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
+    /// ```
+    pub fn overwrite_with(&mut self, other: &Self) -> &mut Self
+    where
+        T: Clone,
+    {
+        if self.order == other.order {
+            let major = std::cmp::min(self.major(), other.major());
+            let minor = std::cmp::min(self.minor(), other.minor());
+            for i in 0..major {
+                let self_start = i * self.major_stride();
+                let self_end = self_start + minor;
+                let other_start = i * other.major_stride();
+                let other_end = other_start + minor;
+                self.data[self_start..self_end]
+                    .clone_from_slice(&other.data[other_start..other_end]);
+            }
+            return self;
+        }
+
+        let self_shape = self.shape();
+        let other_shape = other.shape();
+        let nrows = std::cmp::min(self_shape.nrows, other_shape.nrows);
+        let ncols = std::cmp::min(self_shape.ncols, other_shape.ncols);
+        for row in 0..nrows {
+            for col in 0..ncols {
+                let index = Index::new(row, col);
+                unsafe { *self.get_unchecked_mut(index) = other.get_unchecked(index).clone() }
+            }
+        }
         self
     }
 
@@ -428,50 +474,6 @@ where
     }
 }
 
-impl<T: Clone> Matrix<T> {
-    /// Overwrites the overlapping part of this matrix with another one,
-    /// leaving the non-overlapping part unchanged.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Order};
-    ///
-    /// let mut matrix = matrix![[0, 0, 0], [0, 0, 0]];
-    /// let other = matrix![[1, 1], [1, 1], [1, 1]];
-    ///
-    /// matrix.overwrite_with(&other);
-    /// assert_eq!(matrix, matrix![[1, 1, 0], [1, 1, 0]]);
-    /// ```
-    pub fn overwrite_with(&mut self, other: &Self) -> &mut Self {
-        if self.order == other.order {
-            let major = std::cmp::min(self.major(), other.major());
-            let minor = std::cmp::min(self.minor(), other.minor());
-            for i in 0..major {
-                let self_start = i * self.major_stride();
-                let self_end = self_start + minor;
-                let other_start = i * other.major_stride();
-                let other_end = other_start + minor;
-                self.data[self_start..self_end]
-                    .clone_from_slice(&other.data[other_start..other_end]);
-            }
-            return self;
-        }
-
-        let self_shape = self.shape();
-        let other_shape = other.shape();
-        let nrows = std::cmp::min(self_shape.nrows, other_shape.nrows);
-        let ncols = std::cmp::min(self_shape.ncols, other_shape.ncols);
-        for row in 0..nrows {
-            for col in 0..ncols {
-                let index = Index::new(row, col);
-                unsafe { *self.get_unchecked_mut(index) = other.get_unchecked(index).clone() }
-            }
-        }
-        self
-    }
-}
-
 impl<T> Matrix<T> {
     fn check_size(size: usize) -> Result<usize> {
         // see more info at https://doc.rust-lang.org/stable/std/vec/struct.Vec.html#method.with_capacity
@@ -511,61 +513,6 @@ mod tests {
             Matrix::<i32>::build((usize::MAX, 2)),
             Err(Error::SizeOverflow)
         );
-    }
-
-    #[test]
-    fn test_resize() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        matrix.resize((2, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-
-        matrix.resize((2, 2)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1], [2, 3]]);
-
-        matrix.resize((3, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0], [0, 0, 0]]);
-
-        matrix.resize((2, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
-
-        assert_eq!(matrix.resize((usize::MAX, 2)), Err(Error::SizeOverflow));
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
-
-        assert_eq!(
-            matrix.resize((isize::MAX as usize + 1, 1)),
-            Err(Error::CapacityExceeded)
-        );
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
-
-        matrix.resize((2, 0)).unwrap();
-        assert_eq!(matrix, matrix![[], []]);
-    }
-
-    #[test]
-    fn test_reshape() {
-        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-
-        matrix.reshape((2, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-
-        matrix.reshape((3, 2)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1], [2, 3], [4, 5]]);
-
-        matrix.reshape((1, 6)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2, 3, 4, 5]]);
-
-        matrix.reshape((6, 1)).unwrap();
-        assert_eq!(matrix, matrix![[0], [1], [2], [3], [4], [5]]);
-
-        matrix.reshape((2, 3)).unwrap();
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-
-        assert_eq!(matrix.reshape((usize::MAX, 2)), Err(Error::SizeMismatch));
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
-
-        assert_eq!(matrix.reshape((2, 2)), Err(Error::SizeMismatch));
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
     #[test]
@@ -633,6 +580,61 @@ mod tests {
         matrix.set_order(Order::ColMajor);
         assert_eq!(matrix.order, Order::ColMajor);
         assert_eq!(matrix.shape, shape(3, 2));
+    }
+
+    #[test]
+    fn test_resize() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix.resize((2, 3)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        matrix.resize((2, 2)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1], [2, 3]]);
+
+        matrix.resize((3, 3)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0], [0, 0, 0]]);
+
+        matrix.resize((2, 3)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+
+        assert_eq!(matrix.resize((usize::MAX, 2)), Err(Error::SizeOverflow));
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+
+        assert_eq!(
+            matrix.resize((isize::MAX as usize + 1, 1)),
+            Err(Error::CapacityExceeded)
+        );
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
+
+        matrix.resize((2, 0)).unwrap();
+        assert_eq!(matrix, matrix![[], []]);
+    }
+
+    #[test]
+    fn test_reshape() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix.reshape((2, 3)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        matrix.reshape((3, 2)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1], [2, 3], [4, 5]]);
+
+        matrix.reshape((1, 6)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2, 3, 4, 5]]);
+
+        matrix.reshape((6, 1)).unwrap();
+        assert_eq!(matrix, matrix![[0], [1], [2], [3], [4], [5]]);
+
+        matrix.reshape((2, 3)).unwrap();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        assert_eq!(matrix.reshape((usize::MAX, 2)), Err(Error::SizeMismatch));
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+
+        assert_eq!(matrix.reshape((2, 2)), Err(Error::SizeMismatch));
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 
     #[test]
