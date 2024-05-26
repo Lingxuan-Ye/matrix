@@ -91,7 +91,7 @@ mod tests {
     use super::*;
     use crate::matrix;
 
-    // This test ensures that the `matrix!` macro works as expected.
+    // this test ensures that the `matrix!` macro works as expected
     #[test]
     fn test_from_2darray() {
         let data = vec![0, 1, 2, 3, 4, 5];
