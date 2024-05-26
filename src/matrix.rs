@@ -320,6 +320,14 @@ impl<T> Matrix<T> {
         }
     }
 
+    pub fn apply<F>(&mut self, f: F) -> &mut Self
+    where
+        F: FnMut(&mut T),
+    {
+        self.data.iter_mut().for_each(f);
+        self
+    }
+
     /// Shrinks the capacity of the matrix as much as possible.
     pub fn shrink_capacity_to_fit(&mut self) -> &mut Self {
         self.data.shrink_to_fit();
