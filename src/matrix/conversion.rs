@@ -21,8 +21,8 @@ impl<T: Clone> Matrix<T> {
     /// assert_eq!(matrix.nrows(), 1);
     /// assert_eq!(matrix.ncols(), 6);
     /// ```
-    pub fn from_slice(src: &[T]) -> Self {
-        Self::from(src)
+    pub fn from_slice(value: &[T]) -> Self {
+        Self::from(value)
     }
 }
 
@@ -34,11 +34,11 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::Matrix;
     ///
-    /// let array = Box::new([[0, 1, 2], [3, 4, 5]]);
+    /// let array = [[0, 1, 2], [3, 4, 5]];
     /// let matrix = Matrix::from_2darray(array);
     /// ```
-    pub fn from_2darray<const R: usize, const C: usize>(src: Box<[[T; C]; R]>) -> Self {
-        Self::from(src)
+    pub fn from_2darray<const R: usize, const C: usize>(value: [[T; C]; R]) -> Self {
+        Self::from(value)
     }
 }
 
@@ -51,19 +51,22 @@ impl<T: Clone> From<&[T]> for Matrix<T> {
     }
 }
 
-impl<T, const R: usize, const C: usize> From<Box<[[T; C]; R]>> for Matrix<T> {
-    fn from(value: Box<[[T; C]; R]>) -> Self {
-        let ptr = Box::leak(value).as_mut_ptr() as *mut T;
-        let data = unsafe { Vec::from_raw_parts(ptr, R * C, R * C) };
+impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
+    fn from(value: &[[T; C]]) -> Self {
+        let data = value.iter().flatten().cloned().collect();
         let order = Order::default();
-        let shape = Shape::new(R, C).into_axis_shape_unchecked(order);
+        let nrows = value.len();
+        let shape = Shape::new(nrows, C).into_axis_shape_unchecked(order);
         Self { data, order, shape }
     }
 }
 
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     fn from(value: [[T; C]; R]) -> Self {
-        Self::from(Box::new(value))
+        let data = value.into_iter().flatten().collect();
+        let order = Order::default();
+        let shape = Shape::new(R, C).into_axis_shape_unchecked(order);
+        Self { data, order, shape }
     }
 }
 
@@ -99,15 +102,13 @@ mod tests {
         let shape = Shape::new(2, 3).into_axis_shape_unchecked(order);
         let expected = Matrix { data, order, shape };
 
-        let array = Box::new([[0, 1, 2], [3, 4, 5]]);
-        assert_eq!(Matrix::from(array.clone()), expected);
-        assert_eq!(Matrix::from(*array.clone()), expected);
+        let array = [[0, 1, 2], [3, 4, 5]];
+        assert_eq!(Matrix::from(array), expected);
         assert_eq!(Matrix::from_2darray(array), expected);
         assert_eq!(matrix![[0, 1, 2], [3, 4, 5]], expected);
 
-        let array = Box::new([[0, 1], [2, 3], [4, 5]]);
-        assert_ne!(Matrix::from(array.clone()), expected);
-        assert_ne!(Matrix::from(*array.clone()), expected);
+        let array = [[0, 1], [2, 3], [4, 5]];
+        assert_ne!(Matrix::from(array), expected);
         assert_ne!(Matrix::from_2darray(array), expected);
         assert_ne!(matrix![[0, 1], [2, 3], [4, 5]], expected);
     }

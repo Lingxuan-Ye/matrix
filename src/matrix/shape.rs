@@ -109,12 +109,6 @@ pub(super) struct AxisShape {
 }
 
 impl AxisShape {
-    #[allow(unused)]
-    pub(super) fn build(major: usize, minor: usize) -> Result<Self> {
-        major.checked_mul(minor).ok_or(Error::SizeOverflow)?;
-        Ok(Self { major, minor })
-    }
-
     pub(super) fn major(&self) -> usize {
         self.major
     }
@@ -174,21 +168,12 @@ impl AxisShape {
         shape.size()?;
         Ok(Self::from_shape_with_unchecked(shape, order))
     }
-
-    pub(super) fn from_shape_with<S: ShapeLike>(shape: S, order: Order) -> Self {
-        match Self::try_from_shape_with(shape, order) {
-            Err(error) => panic!("{error}"),
-            Ok(shape) => shape,
-        }
-    }
 }
 
 pub(super) trait IntoAxisShape {
     fn into_axis_shape_unchecked(self, order: Order) -> AxisShape;
 
     fn try_into_axis_shape(self, order: Order) -> Result<AxisShape>;
-
-    fn into_axis_shape(self, order: Order) -> AxisShape;
 }
 
 impl<S: ShapeLike> IntoAxisShape for S {
@@ -198,10 +183,6 @@ impl<S: ShapeLike> IntoAxisShape for S {
 
     fn try_into_axis_shape(self, order: Order) -> Result<AxisShape> {
         AxisShape::try_from_shape_with(self, order)
-    }
-
-    fn into_axis_shape(self, order: Order) -> AxisShape {
-        AxisShape::from_shape_with(self, order)
     }
 }
 

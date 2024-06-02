@@ -92,3 +92,627 @@ macro_rules! col_vec {
         $crate::matrix::Matrix::from([$([$x]),+])
     };
 }
+
+/*
+For simplicity, all arithmetic operations rely on the behavior of `$t`,
+including those performed on references.
+*/
+
+/// Implements scalar addition for [`Matrix`].
+///
+/// # Notes
+///
+/// A `scalar` does not have to be a scalar in the mathematical sense. Instead,
+/// it can be any type except for [`Matrix`]. However, if you do need to treat
+/// some concrete type of [`Matrix`] as a scalar, you can wrap it in a newtype
+/// and implement all the necessary trait bounds for it.
+///
+/// [`Matrix`]: crate::matrix::Matrix
+#[macro_export]
+macro_rules! impl_scalar_add {
+    ($($t:ty)*) => {
+        $(
+            impl std::ops::Add<$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element + scalar.clone())
+                }
+            }
+
+            impl std::ops::Add<&$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element + scalar.clone())
+                }
+            }
+
+            impl std::ops::Add<$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| element.clone() + scalar.clone())
+                }
+            }
+
+            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| element.clone() + scalar.clone())
+                }
+            }
+
+            impl std::ops::Add<$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() + scalar.clone())
+                }
+            }
+
+            impl std::ops::Add<&$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() + scalar.clone())
+                }
+            }
+
+            impl std::ops::Add<$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() + scalar.clone())
+                }
+            }
+
+            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| (*element).clone() + scalar.clone())
+                }
+            }
+
+            impl std::ops::Add<$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() + element)
+                }
+            }
+
+            impl std::ops::Add<$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() + element)
+                }
+            }
+
+            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() + element.clone())
+                }
+            }
+
+            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() + element.clone())
+                }
+            }
+
+            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() + element.clone())
+                }
+            }
+
+            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() + element.clone())
+                }
+            }
+
+            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() + (*element).clone())
+                }
+            }
+
+            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn add(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() + (*element).clone())
+                }
+            }
+
+            impl std::ops::AddAssign<$t> for $crate::matrix::Matrix<$t> {
+                fn add_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element += scalar.clone());
+                }
+            }
+
+            impl std::ops::AddAssign<&$t> for $crate::matrix::Matrix<$t> {
+                fn add_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(rhs, |element, scalar| *element += scalar.clone());
+                }
+            }
+        )*
+    }
+}
+
+/// Implements scalar subtraction for [`Matrix`].
+///
+/// # Notes
+///
+/// Refer to [`impl_scalar_add!`] for more information.
+///
+/// [`Matrix`]: crate::matrix::Matrix
+#[macro_export]
+macro_rules! impl_scalar_sub {
+    ($($t:ty)*) => {
+        $(
+            impl std::ops::Sub<$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| element.clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| element.clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| (*element).clone() - scalar.clone())
+                }
+            }
+
+            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() - element)
+                }
+            }
+
+            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() - element)
+                }
+            }
+
+            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() - element.clone())
+                }
+            }
+
+            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() - element.clone())
+                }
+            }
+
+            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() - element.clone())
+                }
+            }
+
+            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() - element.clone())
+                }
+            }
+
+            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() - (*element).clone())
+                }
+            }
+
+            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() - (*element).clone())
+                }
+            }
+
+            impl std::ops::SubAssign<$t> for $crate::matrix::Matrix<$t> {
+                fn sub_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element -= scalar.clone());
+                }
+            }
+
+            impl std::ops::SubAssign<&$t> for $crate::matrix::Matrix<$t> {
+                fn sub_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(rhs, |element, scalar| *element -= scalar.clone());
+                }
+            }
+        )*
+    }
+}
+
+/// Implements scalar multiplication for [`Matrix`].
+///
+/// # Notes
+///
+/// Refer to [`impl_scalar_add!`] for more information.
+///
+/// [`Matrix`]: crate::matrix::Matrix
+#[macro_export]
+macro_rules! impl_scalar_mul {
+    ($($t:ty)*) => {
+        $(
+            impl std::ops::Mul<$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element * scalar.clone())
+                }
+            }
+
+            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element * scalar.clone())
+                }
+            }
+
+            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| element.clone() * scalar.clone())
+                }
+            }
+
+            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| element.clone() * scalar.clone())
+                }
+            }
+
+            impl std::ops::Mul<$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() * scalar.clone())
+                }
+            }
+
+            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() * scalar.clone())
+                }
+            }
+
+            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() * scalar.clone())
+                }
+            }
+
+            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| (*element).clone() * scalar.clone())
+                }
+            }
+
+            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() * element)
+                }
+            }
+
+            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() * element)
+                }
+            }
+
+            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() * element.clone())
+                }
+            }
+
+            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() * element.clone())
+                }
+            }
+
+            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() * element.clone())
+                }
+            }
+
+            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() * element.clone())
+                }
+            }
+
+            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() * (*element).clone())
+                }
+            }
+
+            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn mul(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() * (*element).clone())
+                }
+            }
+
+            impl std::ops::MulAssign<$t> for $crate::matrix::Matrix<$t> {
+                fn mul_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element *= scalar.clone());
+                }
+            }
+
+            impl std::ops::MulAssign<&$t> for $crate::matrix::Matrix<$t> {
+                fn mul_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(rhs, |element, scalar| *element *= scalar.clone());
+                }
+            }
+        )*
+    }
+}
+
+/// Implements scalar division for [`Matrix`].
+///
+/// # Notes
+///
+/// Refer to [`impl_scalar_add!`] for more information.
+///
+/// [`Matrix`]: crate::matrix::Matrix
+#[macro_export]
+macro_rules! impl_scalar_div {
+    ($($t:ty)*) => {
+        $(
+            impl std::ops::Div<$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<&$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| element.clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| element.clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<&$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| (*element).clone() / scalar.clone())
+                }
+            }
+
+            impl std::ops::Div<$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() / element)
+                }
+            }
+
+            impl std::ops::Div<$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() / element)
+                }
+            }
+
+            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() / element.clone())
+                }
+            }
+
+            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() / element.clone())
+                }
+            }
+
+            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() / element.clone())
+                }
+            }
+
+            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() / element.clone())
+                }
+            }
+
+            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() / (*element).clone())
+                }
+            }
+
+            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn div(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() / (*element).clone())
+                }
+            }
+
+            impl std::ops::DivAssign<$t> for $crate::matrix::Matrix<$t> {
+                fn div_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element /= scalar.clone());
+                }
+            }
+
+            impl std::ops::DivAssign<&$t> for $crate::matrix::Matrix<$t> {
+                fn div_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(rhs, |element, scalar| *element /= scalar.clone());
+                }
+            }
+        )*
+    }
+}

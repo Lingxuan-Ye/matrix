@@ -140,14 +140,13 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Index};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// for (index, element) in matrix.iter_elements().enumerate() {
-    ///     let index = Index::from_flattened_for(index, &matrix);
-    ///     assert_eq!(element, &matrix[index]);
-    /// }
+    /// let mut data: Vec<&i32> = matrix.iter_elements().collect();
+    /// data.sort();  // order of elements is not guaranteed
+    /// assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
     /// ```
     pub fn iter_elements(&self) -> impl Iterator<Item = &T> {
         self.data.iter()
@@ -192,7 +191,8 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let data: Vec<i32> = matrix.into_iter_elements().collect();
+    /// let mut data: Vec<i32> = matrix.into_iter_elements().collect();
+    /// data.sort();  // order of elements is not guaranteed
     /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
     /// ```
     pub fn into_iter_elements(self) -> impl Iterator<Item = T> {
@@ -267,14 +267,17 @@ impl<T> Matrix<T> {
         unsafe { self.data.get_unchecked(lower..upper).iter() }
     }
 
-    fn iter_nth_major_axis_vector(&self, n: usize) -> Result<impl DoubleEndedIterator<Item = &T>> {
+    pub(super) fn iter_nth_major_axis_vector(
+        &self,
+        n: usize,
+    ) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.major() {
             return Err(Error::IndexOutOfBounds);
         }
         unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
     }
 
-    fn iter_by_major_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
+    pub(super) fn iter_by_major_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
         (0..self.major()).map(|n| -> VectorIter<&T> {
             unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
         })
@@ -287,14 +290,17 @@ impl<T> Matrix<T> {
         self.data.iter().skip(n).step_by(self.major_stride())
     }
 
-    fn iter_nth_minor_axis_vector(&self, n: usize) -> Result<impl DoubleEndedIterator<Item = &T>> {
+    pub(super) fn iter_nth_minor_axis_vector(
+        &self,
+        n: usize,
+    ) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.minor() {
             return Err(Error::IndexOutOfBounds);
         }
         Ok(self.iter_nth_minor_axis_vector_unchecked(n))
     }
 
-    fn iter_by_minor_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
+    pub(super) fn iter_by_minor_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
         (0..self.minor())
             .map(|n| -> VectorIter<&T> { Box::new(self.iter_nth_minor_axis_vector_unchecked(n)) })
     }

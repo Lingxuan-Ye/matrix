@@ -489,10 +489,6 @@ mod tests {
     use super::*;
     use crate::matrix;
 
-    fn shape(major: usize, minor: usize) -> AxisShape {
-        AxisShape::build(major, minor).unwrap()
-    }
-
     #[test]
     fn test_new() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
@@ -543,7 +539,8 @@ mod tests {
     fn test_switch_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
         assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.shape, shape(2, 3));
+        assert_eq!(matrix.major(), 2);
+        assert_eq!(matrix.minor(), 3);
 
         matrix.switch_order();
         assert_eq!(matrix[(0, 0)], 0);
@@ -553,7 +550,8 @@ mod tests {
         assert_eq!(matrix[(1, 1)], 4);
         assert_eq!(matrix[(1, 2)], 5);
         assert_eq!(matrix.order, Order::ColMajor);
-        assert_eq!(matrix.shape, shape(3, 2));
+        assert_eq!(matrix.major(), 3);
+        assert_eq!(matrix.minor(), 2);
 
         matrix.switch_order();
         assert_eq!(matrix[(0, 0)], 0);
@@ -563,22 +561,26 @@ mod tests {
         assert_eq!(matrix[(1, 1)], 4);
         assert_eq!(matrix[(1, 2)], 5);
         assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.shape, shape(2, 3));
+        assert_eq!(matrix.major(), 2);
+        assert_eq!(matrix.minor(), 3);
     }
 
     #[test]
     fn test_set_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
         assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.shape, shape(2, 3));
+        assert_eq!(matrix.major(), 2);
+        assert_eq!(matrix.minor(), 3);
 
         matrix.set_order(Order::RowMajor);
         assert_eq!(matrix.order, Order::RowMajor);
-        assert_eq!(matrix.shape, shape(2, 3));
+        assert_eq!(matrix.major(), 2);
+        assert_eq!(matrix.minor(), 3);
 
         matrix.set_order(Order::ColMajor);
         assert_eq!(matrix.order, Order::ColMajor);
-        assert_eq!(matrix.shape, shape(3, 2));
+        assert_eq!(matrix.major(), 3);
+        assert_eq!(matrix.minor(), 2);
     }
 
     #[test]
