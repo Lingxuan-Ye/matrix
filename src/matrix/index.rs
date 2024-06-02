@@ -466,11 +466,6 @@ pub(super) struct AxisIndex {
 }
 
 impl AxisIndex {
-    #[allow(unused)]
-    pub(super) fn new(major: usize, minor: usize) -> Self {
-        Self { major, minor }
-    }
-
     pub(super) fn is_out_of_bounds_of(&self, shape: AxisShape) -> bool {
         self.major >= shape.major() || self.minor >= shape.minor()
     }
@@ -604,7 +599,6 @@ pub(super) fn translate_index_between_orders_unchecked(
     Note that `dest_axis_index` is always the transpose of `src_axis_index`,
     which allows us to simplify it to the following implementation:
     */
-
     let mut index = AxisIndex::from_flattened_unchecked_for(index, src_shape);
     index.transpose();
     let mut dest_shape = src_shape;
