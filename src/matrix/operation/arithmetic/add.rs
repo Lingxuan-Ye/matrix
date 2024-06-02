@@ -2,32 +2,15 @@ use super::super::super::Matrix;
 use crate::impl_scalar_add;
 use std::ops::{Add, AddAssign};
 
-impl<L, R, U> Add<&Matrix<R>> for &Matrix<L>
+impl<L, R, U> Add<Matrix<R>> for Matrix<L>
 where
-    L: Add<R, Output = U> + Clone,
-    R: Clone,
-{
-    type Output = Matrix<U>;
-
-    fn add(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation(rhs, |(left, right)| left.clone() + right.clone());
-        match result {
-            Err(error) => panic!("{error}"),
-            Ok(output) => output,
-        }
-    }
-}
-
-impl<L, R, U> Add<Matrix<R>> for &Matrix<L>
-where
-    L: Add<R, Output = U> + Clone,
+    L: Add<R, Output = U>,
     R: Clone,
 {
     type Output = Matrix<U>;
 
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        let result =
-            self.elementwise_operation_consume_rhs(rhs, |(left, right)| left.clone() + right);
+        let result = self.elementwise_operation_consume_both(rhs, |(left, right)| left + right);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -52,15 +35,16 @@ where
     }
 }
 
-impl<L, R, U> Add<Matrix<R>> for Matrix<L>
+impl<L, R, U> Add<Matrix<R>> for &Matrix<L>
 where
-    L: Add<R, Output = U>,
+    L: Add<R, Output = U> + Clone,
     R: Clone,
 {
     type Output = Matrix<U>;
 
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation_consume_both(rhs, |(left, right)| left + right);
+        let result =
+            self.elementwise_operation_consume_rhs(rhs, |(left, right)| left.clone() + right);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -68,15 +52,18 @@ where
     }
 }
 
-impl<L, R> AddAssign<&Matrix<R>> for Matrix<L>
+impl<L, R, U> Add<&Matrix<R>> for &Matrix<L>
 where
-    L: AddAssign<R>,
+    L: Add<R, Output = U> + Clone,
     R: Clone,
 {
-    fn add_assign(&mut self, rhs: &Matrix<R>) {
-        let result = self.elementwise_operation_assign(rhs, |(left, right)| *left += right.clone());
-        if let Err(error) = result {
-            panic!("{error}");
+    type Output = Matrix<U>;
+
+    fn add(self, rhs: &Matrix<R>) -> Self::Output {
+        let result = self.elementwise_operation(rhs, |(left, right)| left.clone() + right.clone());
+        match result {
+            Err(error) => panic!("{error}"),
+            Ok(output) => output,
         }
     }
 }
@@ -95,222 +82,20 @@ where
     }
 }
 
-/*
-The `Clone` trait is specified for the concrete type `$t` to ensure that
-`scalar.clone` does not produce a reference but an owned object. This helps
-to generate a more intuitive error message when the bound is not satisfied.
-*/
-
-/// Implements scalar addition for [`Matrix`].
-///
-/// # Notes
-///
-/// A `scalar` does not have to be a scalar in the mathematical sense. Instead,
-/// it can be any type except for [`Matrix`]. However, if you do need to treat
-/// some concrete type of [`Matrix`] as a scalar, you can wrap it in a newtype
-/// and implement all the necessary trait bounds for it.
-#[macro_export]
-macro_rules! impl_scalar_add {
-    ($($t:ty)*) => {
-        $(
-            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation(rhs, |element, scalar| (*element).clone() + scalar.clone())
-                }
-            }
-
-            impl std::ops::Add<$t> for &$crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() + scalar.clone())
-                }
-            }
-
-            impl std::ops::Add<&$t> for $crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() + scalar.clone())
-                }
-            }
-
-            impl std::ops::Add<$t> for $crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() + scalar.clone())
-                }
-            }
-
-            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation(rhs, |element, scalar| element.clone() + scalar.clone())
-                }
-            }
-
-            impl std::ops::Add<$t> for &$crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation(&rhs, |element, scalar| element.clone() + scalar.clone())
-                }
-            }
-
-            impl std::ops::Add<&$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation_consume_self(rhs, |element, scalar| element + scalar.clone())
-                }
-            }
-
-            impl std::ops::Add<$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation_consume_self(&rhs, |element, scalar| element + scalar.clone())
-                }
-            }
-
-            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation(self, |element, scalar| scalar.clone() + (*element).clone())
-                }
-            }
-
-            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() + element.clone())
-                }
-            }
-
-            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation(self, |element, scalar| scalar.clone() + element.clone())
-                }
-            }
-
-            impl std::ops::Add<$crate::matrix::Matrix<$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() + element)
-                }
-            }
-
-            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() + (*element).clone())
-                }
-            }
-
-            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() + element.clone())
-                }
-            }
-
-            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() + element.clone())
-                }
-            }
-
-            impl std::ops::Add<$crate::matrix::Matrix<$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn add(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() + element)
-                }
-            }
-
-            impl std::ops::AddAssign<&$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                fn add_assign(&mut self, rhs: &$t) {
-                    self.scalar_operation_assign(rhs, |element, scalar| *element += scalar.clone());
-                }
-            }
-
-            impl std::ops::AddAssign<$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                fn add_assign(&mut self, rhs: $t) {
-                    self.scalar_operation_assign(&rhs, |element, scalar| *element += scalar.clone());
-                }
-            }
-        )*
+impl<L, R> AddAssign<&Matrix<R>> for Matrix<L>
+where
+    L: AddAssign<R>,
+    R: Clone,
+{
+    fn add_assign(&mut self, rhs: &Matrix<R>) {
+        let result = self.elementwise_operation_assign(rhs, |(left, right)| *left += right.clone());
+        if let Err(error) = result {
+            panic!("{error}");
+        }
     }
 }
 
-impl_scalar_add!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64);
+impl_scalar_add! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
 
 #[cfg(test)]
 mod tests {

@@ -51,21 +51,21 @@ impl<T: Clone> From<&[T]> for Matrix<T> {
     }
 }
 
-impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
-    fn from(value: [[T; C]; R]) -> Self {
-        let data = value.into_iter().flatten().collect();
-        let order = Order::default();
-        let shape = Shape::new(R, C).into_axis_shape_unchecked(order);
-        Self { data, order, shape }
-    }
-}
-
 impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
     fn from(value: &[[T; C]]) -> Self {
         let data = value.iter().flatten().cloned().collect();
         let order = Order::default();
         let nrows = value.len();
         let shape = Shape::new(nrows, C).into_axis_shape_unchecked(order);
+        Self { data, order, shape }
+    }
+}
+
+impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
+    fn from(value: [[T; C]; R]) -> Self {
+        let data = value.into_iter().flatten().collect();
+        let order = Order::default();
+        let shape = Shape::new(R, C).into_axis_shape_unchecked(order);
         Self { data, order, shape }
     }
 }
