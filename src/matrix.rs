@@ -9,7 +9,7 @@ mod conversion;
 mod fmt;
 mod operation;
 
-use self::index::{translate_index_between_orders_unchecked, Index};
+use self::index::translate_index_between_orders_unchecked;
 use self::order::Order;
 use self::shape::{AxisShape, IntoAxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
@@ -359,17 +359,16 @@ impl<T> Matrix<T> {
                 self.data[self_start..self_end]
                     .clone_from_slice(&other.data[other_start..other_end]);
             }
-            return self;
-        }
-
-        let self_shape = self.shape();
-        let other_shape = other.shape();
-        let nrows = std::cmp::min(self_shape.nrows, other_shape.nrows);
-        let ncols = std::cmp::min(self_shape.ncols, other_shape.ncols);
-        for row in 0..nrows {
-            for col in 0..ncols {
-                let index = Index::new(row, col);
-                unsafe { *self.get_unchecked_mut(index) = other.get_unchecked(index).clone() }
+        } else {
+            let major = std::cmp::min(self.major(), other.minor());
+            let minor = std::cmp::min(self.minor(), other.major());
+            for i in 0..major {
+                let self_start = i * self.major_stride();
+                let self_end = self_start + minor;
+                self.data[self_start..self_end]
+                    .iter_mut()
+                    .zip(other.iter_nth_minor_axis_vector_unchecked(i))
+                    .for_each(|(x, y)| *x = y.clone());
             }
         }
         self
