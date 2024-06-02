@@ -1,4 +1,4 @@
-use super::super::Matrix;
+use super::super::super::Matrix;
 use std::ops::{Sub, SubAssign};
 
 impl<L, R, U> Sub<&Matrix<R>> for &Matrix<L>

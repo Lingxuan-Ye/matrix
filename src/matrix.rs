@@ -1,6 +1,5 @@
 //! This module defines [`Matrix`] and all its related components.
 
-pub mod arithmetic;
 pub mod index;
 pub mod iter;
 pub mod order;

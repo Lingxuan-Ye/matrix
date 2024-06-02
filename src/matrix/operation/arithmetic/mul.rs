@@ -1,5 +1,8 @@
-use super::super::Matrix;
-use super::vector_dot_product;
+use super::super::super::iter::VectorIter;
+use super::super::super::order::Order;
+use super::super::super::shape::{IntoAxisShape, Shape};
+use super::super::super::Matrix;
+use crate::error::Result;
 use std::ops::{Add, Mul};
 
 impl<L, R, U> Mul<&Matrix<R>> for &Matrix<L>
@@ -11,7 +14,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.multiplication_like_operation(rhs, vector_dot_product);
+        let result = self.multiply(rhs);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -28,7 +31,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.multiplication_like_operation(&rhs, vector_dot_product);
+        let result = self.multiply(&rhs);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -45,7 +48,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.multiplication_like_operation(rhs, vector_dot_product);
+        let result = self.multiply(rhs);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -62,7 +65,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.multiplication_like_operation(&rhs, vector_dot_product);
+        let result = self.multiply(&rhs);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -279,6 +282,149 @@ macro_rules! impl_scalar_mul {
 }
 
 impl_scalar_mul!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64);
+
+/// Performs multiplication on two matrices.
+///
+/// # Errors
+///
+/// - [`Error::NotConformable`] if the matrices are not conformable.
+///
+/// # Notes
+///
+/// The resulting matrix will always have the same order as `self`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::{matrix, VectorIter};
+///
+/// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+/// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+///
+/// let result = lhs.multiply(&rhs);
+/// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
+/// ```
+///
+/// [`Error::NotConformable`]: crate::error::Error::NotConformable
+impl<L> Matrix<L> {
+    pub fn multiply<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
+    where
+        L: std::ops::Mul<R, Output = U> + Clone,
+        R: Clone,
+        U: std::ops::Add<Output = U> + Default,
+    {
+        self.ensure_multiplication_like_operation_conformable(rhs)?;
+
+        let nrows = self.nrows();
+        let ncols = rhs.ncols();
+        let order = self.order;
+        let shape = Shape::new(nrows, ncols).try_into_axis_shape(order)?;
+        let size = shape.size();
+        let mut data = Vec::with_capacity(size);
+
+        if self.ncols() == 0 {
+            data.resize_with(size, U::default);
+            return Ok(Matrix { data, order, shape });
+        }
+
+        match (self.order, rhs.order) {
+            (Order::RowMajor, Order::RowMajor) => {
+                for row in 0..nrows {
+                    for col in 0..ncols {
+                        match dot_product_static(
+                            unsafe { self.iter_nth_major_axis_vector_unchecked(row) },
+                            rhs.iter_nth_minor_axis_vector_unchecked(col),
+                        ) {
+                            None => unreachable!(),
+                            Some(element) => data.push(element),
+                        }
+                    }
+                }
+            }
+
+            // best scenario
+            (Order::RowMajor, Order::ColMajor) => {
+                for row in 0..nrows {
+                    for col in 0..ncols {
+                        match dot_product_static(
+                            unsafe { self.iter_nth_major_axis_vector_unchecked(row) },
+                            unsafe { rhs.iter_nth_major_axis_vector_unchecked(col) },
+                        ) {
+                            None => unreachable!(),
+                            Some(element) => data.push(element),
+                        }
+                    }
+                }
+            }
+
+            // worst scenario
+            (Order::ColMajor, Order::RowMajor) => {
+                for col in 0..ncols {
+                    for row in 0..nrows {
+                        /*
+                        In this scenario, dynamic dispatch proves to be more
+                        efficient than static dispatch, which can seem
+                        counterintuitive but is indeed true.
+                        */
+                        match dot_product_dynamic(
+                            self.iter_nth_minor_axis_vector_unchecked(row),
+                            rhs.iter_nth_minor_axis_vector_unchecked(col),
+                        ) {
+                            None => unreachable!(),
+                            Some(element) => data.push(element),
+                        }
+                    }
+                }
+            }
+
+            (Order::ColMajor, Order::ColMajor) => {
+                for col in 0..ncols {
+                    for row in 0..nrows {
+                        match dot_product_static(
+                            self.iter_nth_minor_axis_vector_unchecked(row),
+                            unsafe { rhs.iter_nth_major_axis_vector_unchecked(col) },
+                        ) {
+                            None => unreachable!(),
+                            Some(element) => data.push(element),
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(Matrix { data, order, shape })
+    }
+}
+
+#[inline]
+fn dot_product_static<'a, L, R, U>(
+    lhs: impl DoubleEndedIterator<Item = &'a L>,
+    rhs: impl DoubleEndedIterator<Item = &'a R>,
+) -> Option<U>
+where
+    L: Mul<R, Output = U> + Clone + 'a,
+    R: Clone + 'a,
+    U: Add<Output = U>,
+{
+    lhs.zip(rhs)
+        .map(|(left, right)| left.clone() * right.clone())
+        .reduce(|accumulator, product| accumulator + product)
+}
+
+#[inline]
+fn dot_product_dynamic<'a, L, R, U>(
+    lhs: impl DoubleEndedIterator<Item = &'a L>,
+    rhs: impl DoubleEndedIterator<Item = &'a R>,
+) -> Option<U>
+where
+    L: Mul<R, Output = U> + Clone + 'a,
+    R: Clone + 'a,
+    U: Add<Output = U>,
+{
+    let lhs: VectorIter<&L> = Box::new(lhs);
+    let rhs: VectorIter<&R> = Box::new(rhs);
+    dot_product_static(lhs, rhs)
+}
 
 #[cfg(test)]
 mod tests {
