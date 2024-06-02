@@ -378,13 +378,15 @@ impl<L> Matrix<L> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::matrix;
-    /// use matreex::matrix::operation::arithmetic::vector_dot_product;
+    /// use matreex::{matrix, VectorIter};
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
     /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    /// let op = |vl: VectorIter<&i32>, vr: VectorIter<&i32>| {
+    ///     vl.zip(vr).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
+    /// };
     ///
-    /// let result = lhs.multiplication_like_operation(&rhs, vector_dot_product);
+    /// let result = lhs.multiplication_like_operation(&rhs, op);
     /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
     /// ```
     pub fn multiplication_like_operation<R, F, U>(
@@ -393,7 +395,7 @@ impl<L> Matrix<L> {
         mut op: F,
     ) -> Result<Matrix<U>>
     where
-        F: FnMut(VectorIter<&L>, VectorIter<&R>) -> Option<U>,
+        F: FnMut(VectorIter<&L>, VectorIter<&R>) -> U,
         U: Default,
     {
         self.ensure_multiplication_like_operation_conformable(rhs)?;
@@ -405,77 +407,58 @@ impl<L> Matrix<L> {
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 
+        if self.ncols() == 0 {
+            data.resize_with(size, U::default);
+            return Ok(Matrix { data, order, shape });
+        }
+
         match (self.order, rhs.order) {
             (Order::RowMajor, Order::RowMajor) => {
-                'outer: for row in 0..nrows {
+                for row in 0..nrows {
                     for col in 0..ncols {
-                        match op(
+                        let element = op(
                             unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
                             Box::new(rhs.iter_nth_minor_axis_vector_unchecked(col)),
-                        ) {
-                            None => {
-                                data.clear();
-                                data.resize_with(size, U::default);
-                                break 'outer;
-                            }
-                            Some(value) => data.push(value),
-                        }
+                        );
+                        data.push(element);
                     }
                 }
             }
 
             // best scenario
             (Order::RowMajor, Order::ColMajor) => {
-                'outer: for row in 0..nrows {
+                for row in 0..nrows {
                     for col in 0..ncols {
-                        match op(
+                        let element = op(
                             unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
                             unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
-                        ) {
-                            None => {
-                                data.clear();
-                                data.resize_with(size, U::default);
-                                break 'outer;
-                            }
-                            Some(value) => data.push(value),
-                        }
+                        );
+                        data.push(element);
                     }
                 }
             }
 
             // worst scenario
             (Order::ColMajor, Order::RowMajor) => {
-                'outer: for col in 0..ncols {
+                for col in 0..ncols {
                     for row in 0..nrows {
-                        match op(
+                        let element = op(
                             Box::new(self.iter_nth_minor_axis_vector_unchecked(row)),
                             Box::new(rhs.iter_nth_minor_axis_vector_unchecked(col)),
-                        ) {
-                            None => {
-                                data.clear();
-                                data.resize_with(size, U::default);
-                                break 'outer;
-                            }
-                            Some(value) => data.push(value),
-                        }
+                        );
+                        data.push(element);
                     }
                 }
             }
 
             (Order::ColMajor, Order::ColMajor) => {
-                'outer: for col in 0..ncols {
+                for col in 0..ncols {
                     for row in 0..nrows {
-                        match op(
+                        let element = op(
                             Box::new(self.iter_nth_minor_axis_vector_unchecked(row)),
                             unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
-                        ) {
-                            None => {
-                                data.clear();
-                                data.resize_with(size, U::default);
-                                break 'outer;
-                            }
-                            Some(value) => data.push(value),
-                        }
+                        );
+                        data.push(element);
                     }
                 }
             }
