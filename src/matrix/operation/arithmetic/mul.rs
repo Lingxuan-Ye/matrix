@@ -1,25 +1,12 @@
-use super::super::Matrix;
-use super::vector_dot_product;
+use super::super::super::iter::VectorIter;
+use super::super::super::order::Order;
+use super::super::super::shape::{IntoAxisShape, Shape};
+use super::super::super::Matrix;
+use crate::error::Result;
+use crate::impl_scalar_mul;
 use std::ops::{Add, Mul};
 
-impl<L, R, U> Mul<&Matrix<R>> for &Matrix<L>
-where
-    L: Mul<R, Output = U> + Clone,
-    R: Clone,
-    U: Add<Output = U> + Default,
-{
-    type Output = Matrix<U>;
-
-    fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.multiplication_like_operation(rhs, vector_dot_product);
-        match result {
-            Err(error) => panic!("{error}"),
-            Ok(output) => output,
-        }
-    }
-}
-
-impl<L, R, U> Mul<Matrix<R>> for &Matrix<L>
+impl<L, R, U> Mul<Matrix<R>> for Matrix<L>
 where
     L: Mul<R, Output = U> + Clone,
     R: Clone,
@@ -28,7 +15,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.multiplication_like_operation(&rhs, vector_dot_product);
+        let result = self.multiply(&rhs);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -45,7 +32,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.multiplication_like_operation(rhs, vector_dot_product);
+        let result = self.multiply(rhs);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -53,7 +40,7 @@ where
     }
 }
 
-impl<L, R, U> Mul<Matrix<R>> for Matrix<L>
+impl<L, R, U> Mul<Matrix<R>> for &Matrix<L>
 where
     L: Mul<R, Output = U> + Clone,
     R: Clone,
@@ -62,7 +49,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.multiplication_like_operation(&rhs, vector_dot_product);
+        let result = self.multiply(&rhs);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -70,215 +57,167 @@ where
     }
 }
 
-/// Implements scalar multiplication for [`Matrix`].
-///
-/// # Notes
-///
-/// Refer to [`impl_scalar_add!`] for more information.
-///
-/// [`impl_scalar_add!`]: crate::impl_scalar_add!
-#[macro_export]
-macro_rules! impl_scalar_mul {
-    ($($t:ty)*) => {
-        $(
-            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
+impl<L, R, U> Mul<&Matrix<R>> for &Matrix<L>
+where
+    L: Mul<R, Output = U> + Clone,
+    R: Clone,
+    U: Add<Output = U> + Default,
+{
+    type Output = Matrix<U>;
 
-                fn mul(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation(rhs, |element, scalar| (*element).clone() * scalar.clone())
-                }
-            }
-
-            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() * scalar.clone())
-                }
-            }
-
-            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() * scalar.clone())
-                }
-            }
-
-            impl std::ops::Mul<$t> for $crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() * scalar.clone())
-                }
-            }
-
-            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation(rhs, |element, scalar| element.clone() * scalar.clone())
-                }
-            }
-
-            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation(&rhs, |element, scalar| element.clone() * scalar.clone())
-                }
-            }
-
-            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation_consume_self(rhs, |element, scalar| element * scalar.clone())
-                }
-            }
-
-            impl std::ops::Mul<$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation_consume_self(&rhs, |element, scalar| element * scalar.clone())
-                }
-            }
-
-            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation(self, |element, scalar| scalar.clone() * (*element).clone())
-                }
-            }
-
-            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() * element.clone())
-                }
-            }
-
-            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation(self, |element, scalar| scalar.clone() * element.clone())
-                }
-            }
-
-            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() * element)
-                }
-            }
-
-            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() * (*element).clone())
-                }
-            }
-
-            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() * element.clone())
-                }
-            }
-
-            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() * element.clone())
-                }
-            }
-
-            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn mul(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() * element)
-                }
-            }
-
-            impl std::ops::MulAssign<&$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                fn mul_assign(&mut self, rhs: &$t) {
-                    self.scalar_operation_assign(rhs, |element, scalar| *element *= scalar.clone());
-                }
-            }
-
-            impl std::ops::MulAssign<$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                fn mul_assign(&mut self, rhs: $t) {
-                    self.scalar_operation_assign(&rhs, |element, scalar| *element *= scalar.clone());
-                }
-            }
-        )*
+    fn mul(self, rhs: &Matrix<R>) -> Self::Output {
+        let result = self.multiply(rhs);
+        match result {
+            Err(error) => panic!("{error}"),
+            Ok(output) => output,
+        }
     }
 }
 
-impl_scalar_mul!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64);
+impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
+
+/// Performs multiplication on two matrices.
+///
+/// # Errors
+///
+/// - [`Error::NotConformable`] if the matrices are not conformable.
+///
+/// # Notes
+///
+/// The resulting matrix will always have the same order as `self`.
+///
+/// # Examples
+///
+/// ```
+/// use matreex::{matrix, VectorIter};
+///
+/// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+/// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+///
+/// let result = lhs.multiply(&rhs);
+/// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
+/// ```
+///
+/// [`Error::NotConformable`]: crate::error::Error::NotConformable
+impl<L> Matrix<L> {
+    pub fn multiply<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
+    where
+        L: std::ops::Mul<R, Output = U> + Clone,
+        R: Clone,
+        U: std::ops::Add<Output = U> + Default,
+    {
+        self.ensure_multiplication_like_operation_conformable(rhs)?;
+
+        let nrows = self.nrows();
+        let ncols = rhs.ncols();
+        let order = self.order;
+        let shape = Shape::new(nrows, ncols).try_into_axis_shape(order)?;
+        let size = shape.size();
+        let mut data = Vec::with_capacity(size);
+
+        if self.ncols() == 0 {
+            data.resize_with(size, U::default);
+            return Ok(Matrix { data, order, shape });
+        }
+
+        match (self.order, rhs.order) {
+            (Order::RowMajor, Order::RowMajor) => {
+                for row in 0..nrows {
+                    for col in 0..ncols {
+                        match dot_product_static(
+                            unsafe { self.iter_nth_major_axis_vector_unchecked(row) },
+                            rhs.iter_nth_minor_axis_vector_unchecked(col),
+                        ) {
+                            None => unreachable!(),
+                            Some(element) => data.push(element),
+                        }
+                    }
+                }
+            }
+
+            // best scenario
+            (Order::RowMajor, Order::ColMajor) => {
+                for row in 0..nrows {
+                    for col in 0..ncols {
+                        match dot_product_static(
+                            unsafe { self.iter_nth_major_axis_vector_unchecked(row) },
+                            unsafe { rhs.iter_nth_major_axis_vector_unchecked(col) },
+                        ) {
+                            None => unreachable!(),
+                            Some(element) => data.push(element),
+                        }
+                    }
+                }
+            }
+
+            // worst scenario
+            (Order::ColMajor, Order::RowMajor) => {
+                for col in 0..ncols {
+                    for row in 0..nrows {
+                        /*
+                        In this scenario, dynamic dispatch proves to be more
+                        efficient than static dispatch, which can seem
+                        counterintuitive but is indeed true.
+                        */
+                        match dot_product_dynamic(
+                            self.iter_nth_minor_axis_vector_unchecked(row),
+                            rhs.iter_nth_minor_axis_vector_unchecked(col),
+                        ) {
+                            None => unreachable!(),
+                            Some(element) => data.push(element),
+                        }
+                    }
+                }
+            }
+
+            (Order::ColMajor, Order::ColMajor) => {
+                for col in 0..ncols {
+                    for row in 0..nrows {
+                        match dot_product_static(
+                            self.iter_nth_minor_axis_vector_unchecked(row),
+                            unsafe { rhs.iter_nth_major_axis_vector_unchecked(col) },
+                        ) {
+                            None => unreachable!(),
+                            Some(element) => data.push(element),
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(Matrix { data, order, shape })
+    }
+}
+
+#[inline]
+fn dot_product_static<'a, L, R, U>(
+    lhs: impl DoubleEndedIterator<Item = &'a L>,
+    rhs: impl DoubleEndedIterator<Item = &'a R>,
+) -> Option<U>
+where
+    L: Mul<R, Output = U> + Clone + 'a,
+    R: Clone + 'a,
+    U: Add<Output = U>,
+{
+    lhs.zip(rhs)
+        .map(|(left, right)| left.clone() * right.clone())
+        .reduce(|accumulator, product| accumulator + product)
+}
+
+#[inline]
+fn dot_product_dynamic<'a, L, R, U>(
+    lhs: impl DoubleEndedIterator<Item = &'a L>,
+    rhs: impl DoubleEndedIterator<Item = &'a R>,
+) -> Option<U>
+where
+    L: Mul<R, Output = U> + Clone + 'a,
+    R: Clone + 'a,
+    U: Add<Output = U>,
+{
+    let lhs: VectorIter<&L> = Box::new(lhs);
+    let rhs: VectorIter<&R> = Box::new(rhs);
+    dot_product_static(lhs, rhs)
+}
 
 #[cfg(test)]
 mod tests {

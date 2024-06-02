@@ -1,32 +1,16 @@
-use super::super::Matrix;
+use super::super::super::Matrix;
+use crate::impl_scalar_sub;
 use std::ops::{Sub, SubAssign};
 
-impl<L, R, U> Sub<&Matrix<R>> for &Matrix<L>
+impl<L, R, U> Sub<Matrix<R>> for Matrix<L>
 where
-    L: Sub<R, Output = U> + Clone,
-    R: Clone,
-{
-    type Output = Matrix<U>;
-
-    fn sub(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation(rhs, |(left, right)| left.clone() - right.clone());
-        match result {
-            Err(error) => panic!("{error}"),
-            Ok(output) => output,
-        }
-    }
-}
-
-impl<L, R, U> Sub<Matrix<R>> for &Matrix<L>
-where
-    L: Sub<R, Output = U> + Clone,
+    L: Sub<R, Output = U>,
     R: Clone,
 {
     type Output = Matrix<U>;
 
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        let result =
-            self.elementwise_operation_consume_rhs(rhs, |(left, right)| left.clone() - right);
+        let result = self.elementwise_operation_consume_both(rhs, |(left, right)| left - right);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -51,15 +35,16 @@ where
     }
 }
 
-impl<L, R, U> Sub<Matrix<R>> for Matrix<L>
+impl<L, R, U> Sub<Matrix<R>> for &Matrix<L>
 where
-    L: Sub<R, Output = U>,
+    L: Sub<R, Output = U> + Clone,
     R: Clone,
 {
     type Output = Matrix<U>;
 
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation_consume_both(rhs, |(left, right)| left - right);
+        let result =
+            self.elementwise_operation_consume_rhs(rhs, |(left, right)| left.clone() - right);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -67,15 +52,18 @@ where
     }
 }
 
-impl<L, R> SubAssign<&Matrix<R>> for Matrix<L>
+impl<L, R, U> Sub<&Matrix<R>> for &Matrix<L>
 where
-    L: SubAssign<R>,
+    L: Sub<R, Output = U> + Clone,
     R: Clone,
 {
-    fn sub_assign(&mut self, rhs: &Matrix<R>) {
-        let result = self.elementwise_operation_assign(rhs, |(left, right)| *left -= right.clone());
-        if let Err(error) = result {
-            panic!("{error}");
+    type Output = Matrix<U>;
+
+    fn sub(self, rhs: &Matrix<R>) -> Self::Output {
+        let result = self.elementwise_operation(rhs, |(left, right)| left.clone() - right.clone());
+        match result {
+            Err(error) => panic!("{error}"),
+            Ok(output) => output,
         }
     }
 }
@@ -94,215 +82,20 @@ where
     }
 }
 
-/// Implements scalar subtraction for [`Matrix`].
-///
-/// # Notes
-///
-/// Refer to [`impl_scalar_add!`] for more information.
-///
-/// [`impl_scalar_add!`]: crate::impl_scalar_add!
-#[macro_export]
-macro_rules! impl_scalar_sub {
-    ($($t:ty)*) => {
-        $(
-            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation(rhs, |element, scalar| (*element).clone() - scalar.clone())
-                }
-            }
-
-            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() - scalar.clone())
-                }
-            }
-
-            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() - scalar.clone())
-                }
-            }
-
-            impl std::ops::Sub<$t> for $crate::matrix::Matrix<&$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() - scalar.clone())
-                }
-            }
-
-            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation(rhs, |element, scalar| element.clone() - scalar.clone())
-                }
-            }
-
-            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation(&rhs, |element, scalar| element.clone() - scalar.clone())
-                }
-            }
-
-            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: &$t) -> Self::Output {
-                    self.scalar_operation_consume_self(rhs, |element, scalar| element - scalar.clone())
-                }
-            }
-
-            impl std::ops::Sub<$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: $t) -> Self::Output {
-                    self.scalar_operation_consume_self(&rhs, |element, scalar| element - scalar.clone())
-                }
-            }
-
-            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation(self, |element, scalar| scalar.clone() - (*element).clone())
-                }
-            }
-
-            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() - element.clone())
-                }
-            }
-
-            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation(self, |element, scalar| scalar.clone() - element.clone())
-                }
-            }
-
-            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for &$t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() - element)
-                }
-            }
-
-            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() - (*element).clone())
-                }
-            }
-
-            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() - element.clone())
-                }
-            }
-
-            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() - element.clone())
-                }
-            }
-
-            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for $t
-            where
-                $t: Clone,
-            {
-                type Output = $crate::matrix::Matrix<$t>;
-
-                fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
-                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() - element)
-                }
-            }
-
-            impl std::ops::SubAssign<&$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                fn sub_assign(&mut self, rhs: &$t) {
-                    self.scalar_operation_assign(rhs, |element, scalar| *element -= scalar.clone());
-                }
-            }
-
-            impl std::ops::SubAssign<$t> for $crate::matrix::Matrix<$t>
-            where
-                $t: Clone,
-            {
-                fn sub_assign(&mut self, rhs: $t) {
-                    self.scalar_operation_assign(&rhs, |element, scalar| *element -= scalar.clone());
-                }
-            }
-        )*
+impl<L, R> SubAssign<&Matrix<R>> for Matrix<L>
+where
+    L: SubAssign<R>,
+    R: Clone,
+{
+    fn sub_assign(&mut self, rhs: &Matrix<R>) {
+        let result = self.elementwise_operation_assign(rhs, |(left, right)| *left -= right.clone());
+        if let Err(error) = result {
+            panic!("{error}");
+        }
     }
 }
 
-impl_scalar_sub!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64);
+impl_scalar_sub! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
 
 #[cfg(test)]
 mod tests {
