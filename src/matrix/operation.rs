@@ -362,8 +362,10 @@ impl<L> Matrix<L> {
     }
 
     /// Performs multiplication-like operation on two matrices.
-    /// The operation can abort and fill the result with default
-    /// values if `op` returns `None` at any point.
+    ///
+    /// This method is designed to handle **multiplication-like**
+    /// operations. For multiplication itself, use [`Matrix::multiply`]
+    /// instead, which is more efficient.
     ///
     /// # Errors
     ///
