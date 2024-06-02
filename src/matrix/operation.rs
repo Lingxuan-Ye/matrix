@@ -1,4 +1,9 @@
-pub mod arithmetic;
+mod arithmetic {
+    mod add;
+    mod div;
+    mod mul;
+    mod sub;
+}
 
 use super::index::translate_index_between_orders_unchecked;
 use super::iter::VectorIter;
