@@ -402,13 +402,15 @@ impl<L> Matrix<L> {
         let shape = Shape::new(nrows, ncols).try_into_axis_shape(order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
-        match order {
-            Order::RowMajor => {
+
+        match (self.order, rhs.order) {
+            (Order::RowMajor, Order::RowMajor) => {
                 'outer: for row in 0..nrows {
                     for col in 0..ncols {
-                        let row_vector = unsafe { self.iter_nth_row_unchecked(row) };
-                        let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
-                        match op(row_vector, col_vector) {
+                        match op(
+                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
+                            Box::new(rhs.iter_nth_minor_axis_vector_unchecked(col)),
+                        ) {
                             None => {
                                 data.clear();
                                 data.resize_with(size, U::default);
@@ -419,12 +421,52 @@ impl<L> Matrix<L> {
                     }
                 }
             }
-            Order::ColMajor => {
+
+            // best scenario
+            (Order::RowMajor, Order::ColMajor) => {
+                'outer: for row in 0..nrows {
+                    for col in 0..ncols {
+                        match op(
+                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
+                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
+                        ) {
+                            None => {
+                                data.clear();
+                                data.resize_with(size, U::default);
+                                break 'outer;
+                            }
+                            Some(value) => data.push(value),
+                        }
+                    }
+                }
+            }
+
+            // worst scenario
+            (Order::ColMajor, Order::RowMajor) => {
                 'outer: for col in 0..ncols {
                     for row in 0..nrows {
-                        let row_vector = unsafe { self.iter_nth_row_unchecked(row) };
-                        let col_vector = unsafe { rhs.iter_nth_col_unchecked(col) };
-                        match op(row_vector, col_vector) {
+                        match op(
+                            Box::new(self.iter_nth_minor_axis_vector_unchecked(row)),
+                            Box::new(rhs.iter_nth_minor_axis_vector_unchecked(col)),
+                        ) {
+                            None => {
+                                data.clear();
+                                data.resize_with(size, U::default);
+                                break 'outer;
+                            }
+                            Some(value) => data.push(value),
+                        }
+                    }
+                }
+            }
+
+            (Order::ColMajor, Order::ColMajor) => {
+                'outer: for col in 0..ncols {
+                    for row in 0..nrows {
+                        match op(
+                            Box::new(self.iter_nth_minor_axis_vector_unchecked(row)),
+                            unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
+                        ) {
                             None => {
                                 data.clear();
                                 data.resize_with(size, U::default);

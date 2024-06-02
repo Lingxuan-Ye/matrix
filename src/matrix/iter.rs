@@ -38,8 +38,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_rows(&self) -> MatrixIter<&T> {
         match self.order {
-            Order::RowMajor => self.iter_by_major_axis(),
-            Order::ColMajor => self.iter_by_minor_axis(),
+            Order::RowMajor => Box::new(self.iter_by_major_axis()),
+            Order::ColMajor => Box::new(self.iter_by_minor_axis()),
         }
     }
 
@@ -72,8 +72,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_cols(&self) -> MatrixIter<&T> {
         match self.order {
-            Order::RowMajor => self.iter_by_minor_axis(),
-            Order::ColMajor => self.iter_by_major_axis(),
+            Order::RowMajor => Box::new(self.iter_by_minor_axis()),
+            Order::ColMajor => Box::new(self.iter_by_major_axis()),
         }
     }
 
@@ -99,8 +99,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_nth_row(&self, n: usize) -> Result<VectorIter<&T>> {
         match self.order {
-            Order::RowMajor => self.iter_nth_major_axis_vector(n),
-            Order::ColMajor => self.iter_nth_minor_axis_vector(n),
+            Order::RowMajor => Ok(Box::new(self.iter_nth_major_axis_vector(n)?)),
+            Order::ColMajor => Ok(Box::new(self.iter_nth_minor_axis_vector(n)?)),
         }
     }
 
@@ -125,8 +125,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_nth_col(&self, n: usize) -> Result<VectorIter<&T>> {
         match self.order {
-            Order::RowMajor => self.iter_nth_minor_axis_vector(n),
-            Order::ColMajor => self.iter_nth_major_axis_vector(n),
+            Order::RowMajor => Ok(Box::new(self.iter_nth_minor_axis_vector(n)?)),
+            Order::ColMajor => Ok(Box::new(self.iter_nth_major_axis_vector(n)?)),
         }
     }
 
@@ -258,52 +258,45 @@ where
 }
 
 impl<T> Matrix<T> {
-    pub(super) unsafe fn iter_nth_row_unchecked(&self, n: usize) -> VectorIter<&T> {
-        match self.order {
-            Order::RowMajor => unsafe { self.iter_nth_major_axis_vector_unchecked(n) },
-            Order::ColMajor => self.iter_nth_minor_axis_vector_unchecked(n),
-        }
-    }
-
-    pub(super) unsafe fn iter_nth_col_unchecked(&self, n: usize) -> VectorIter<&T> {
-        match self.order {
-            Order::RowMajor => self.iter_nth_minor_axis_vector_unchecked(n),
-            Order::ColMajor => unsafe { self.iter_nth_major_axis_vector_unchecked(n) },
-        }
-    }
-}
-
-impl<T> Matrix<T> {
-    unsafe fn iter_nth_major_axis_vector_unchecked(&self, n: usize) -> VectorIter<&T> {
+    pub(super) unsafe fn iter_nth_major_axis_vector_unchecked(
+        &self,
+        n: usize,
+    ) -> impl DoubleEndedIterator<Item = &T> {
         let lower = n * self.major_stride();
         let upper = lower + self.major_stride();
-        unsafe { Box::new(self.data.get_unchecked(lower..upper).iter()) }
+        unsafe { self.data.get_unchecked(lower..upper).iter() }
     }
 
-    fn iter_nth_major_axis_vector(&self, n: usize) -> Result<VectorIter<&T>> {
+    fn iter_nth_major_axis_vector(&self, n: usize) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.major() {
             return Err(Error::IndexOutOfBounds);
         }
         unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
     }
 
-    fn iter_nth_minor_axis_vector_unchecked(&self, n: usize) -> VectorIter<&T> {
-        Box::new(self.data.iter().skip(n).step_by(self.major_stride()))
+    fn iter_by_major_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
+        (0..self.major()).map(|n| -> VectorIter<&T> {
+            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
+        })
     }
 
-    fn iter_nth_minor_axis_vector(&self, n: usize) -> Result<VectorIter<&T>> {
+    pub(super) fn iter_nth_minor_axis_vector_unchecked(
+        &self,
+        n: usize,
+    ) -> impl DoubleEndedIterator<Item = &T> {
+        self.data.iter().skip(n).step_by(self.major_stride())
+    }
+
+    fn iter_nth_minor_axis_vector(&self, n: usize) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.minor() {
             return Err(Error::IndexOutOfBounds);
         }
         Ok(self.iter_nth_minor_axis_vector_unchecked(n))
     }
 
-    fn iter_by_major_axis(&self) -> MatrixIter<&T> {
-        Box::new((0..self.major()).map(|n| unsafe { self.iter_nth_major_axis_vector_unchecked(n) }))
-    }
-
-    fn iter_by_minor_axis(&self) -> MatrixIter<&T> {
-        Box::new((0..self.minor()).map(|n| self.iter_nth_minor_axis_vector_unchecked(n)))
+    fn iter_by_minor_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
+        (0..self.minor())
+            .map(|n| -> VectorIter<&T> { Box::new(self.iter_nth_minor_axis_vector_unchecked(n)) })
     }
 }
 
