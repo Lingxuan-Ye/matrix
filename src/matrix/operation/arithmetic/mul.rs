@@ -1,4 +1,4 @@
-use super::super::Matrix;
+use super::super::super::Matrix;
 use super::vector_dot_product;
 use std::ops::{Add, Mul};
 

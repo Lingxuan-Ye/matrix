@@ -3,7 +3,7 @@ mod div;
 mod mul;
 mod sub;
 
-use super::iter::VectorIter;
+use super::super::iter::VectorIter;
 
 /// Computes the dot product of two vectors.
 ///
@@ -11,7 +11,7 @@ use super::iter::VectorIter;
 ///
 /// ```
 /// use matreex::{matrix, Matrix};
-/// use matreex::matrix::arithmetic::vector_dot_product;
+/// use matreex::matrix::operation::arithmetic::vector_dot_product;
 ///
 /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
 ///

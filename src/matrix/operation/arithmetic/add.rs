@@ -1,4 +1,4 @@
-use super::super::Matrix;
+use super::super::super::Matrix;
 use crate::impl_scalar_add;
 use std::ops::{Add, AddAssign};
 
