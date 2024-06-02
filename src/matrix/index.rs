@@ -220,27 +220,27 @@ where
     type Output = T;
 
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        AxisIndex::from_index_with(self, matrix.order).get(matrix)
+        self.into_axis_index(matrix.order).get(matrix)
     }
 
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        AxisIndex::from_index_with(self, matrix.order).get_mut(matrix)
+        self.into_axis_index(matrix.order).get_mut(matrix)
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        unsafe { AxisIndex::from_index_with(self, matrix.order).get_unchecked(matrix) }
+        unsafe { self.into_axis_index(matrix.order).get_unchecked(matrix) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        unsafe { AxisIndex::from_index_with(self, matrix.order).get_unchecked_mut(matrix) }
+        unsafe { self.into_axis_index(matrix.order).get_unchecked_mut(matrix) }
     }
 
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        AxisIndex::from_index_with(self, matrix.order).index(matrix)
+        self.into_axis_index(matrix.order).index(matrix)
     }
 
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        AxisIndex::from_index_with(self, matrix.order).index_mut(matrix)
+        self.into_axis_index(matrix.order).index_mut(matrix)
     }
 }
 
@@ -271,155 +271,6 @@ impl Index {
     /// ```
     pub fn new(row: usize, col: usize) -> Self {
         Self { row, col }
-    }
-
-    /// Creates an [`Index`] instance from a flattened index unchecked.
-    ///
-    /// # Notes
-    ///
-    /// Value returned may be out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Index};
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// let index = Index::from_flattened_unchecked_for(4, &matrix);
-    /// assert_eq!(index, Index::new(1, 1));
-    ///
-    /// let index = Index::from_flattened_unchecked_for(6, &matrix);
-    /// assert_eq!(index, Index::new(2, 0));
-    /// ```
-    pub fn from_flattened_unchecked_for<T>(index: usize, matrix: &Matrix<T>) -> Self {
-        AxisIndex::from_flattened_unchecked_for(index, matrix.shape).interpret_with(matrix.order)
-    }
-
-    /// Creates an [`Index`] instance from a flattened index.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Error, Index};
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// let result = Index::try_from_flattened_for(4, &matrix);
-    /// assert_eq!(result, Ok(Index::new(1, 1)));
-    ///
-    /// let result = Index::try_from_flattened_for(6, &matrix);
-    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
-    /// ```
-    pub fn try_from_flattened_for<T>(index: usize, matrix: &Matrix<T>) -> Result<Self> {
-        AxisIndex::try_from_flattened_for(index, matrix.shape)
-            .map(|index| index.interpret_with(matrix.order))
-    }
-
-    /// Creates an [`Index`] instance from a flattened index.
-    ///
-    /// # Panics
-    ///
-    /// Panics if out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Index};
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// let index = Index::from_flattened_for(4, &matrix);
-    /// assert_eq!(index, Index::new(1, 1));
-    /// ```
-    ///
-    /// ```should_panic
-    /// use matreex::{matrix, Index};
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// let index = Index::from_flattened_for(6, &matrix);
-    /// ```
-    pub fn from_flattened_for<T>(index: usize, matrix: &Matrix<T>) -> Self {
-        AxisIndex::from_flattened_for(index, matrix.shape).interpret_with(matrix.order)
-    }
-
-    /// Flattens an [`Index`] instance unchecked.
-    ///
-    /// # Notes
-    ///
-    /// Value returned may be out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Index};
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// let index = Index::new(1, 1).into_flattened_unchecked_for(&matrix);
-    /// assert_eq!(index, 4);
-    ///
-    /// let index = Index::new(2, 0).into_flattened_unchecked_for(&matrix);
-    /// assert_eq!(index, 6);
-    /// ```
-    pub fn into_flattened_unchecked_for<T>(self, matrix: &Matrix<T>) -> usize {
-        AxisIndex::from_index_with(self, matrix.order).into_flattened_unchecked_for(matrix.shape)
-    }
-
-    /// Flattens an [`Index`] instance.
-    ///
-    /// # Errors
-    ///
-    /// - [`Error::IndexOutOfBounds`] if out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Error, Index};
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// let result = Index::new(1, 1).try_into_flattened_for(&matrix);
-    /// assert_eq!(result, Ok(4));
-    ///
-    /// let result = Index::new(2, 0).try_into_flattened_for(&matrix);
-    /// assert_eq!(result, Err(Error::IndexOutOfBounds));
-    /// ```
-    pub fn try_into_flattened_for<T>(self, matrix: &Matrix<T>) -> Result<usize> {
-        AxisIndex::from_index_with(self, matrix.order).try_into_flattened_for(matrix.shape)
-    }
-
-    /// Flattens an `Index` instance.
-    ///
-    /// # Panics
-    ///
-    /// Panics if out of bounds.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::{matrix, Index};
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// let index = Index::new(1, 1).into_flattened_for(&matrix);
-    /// assert_eq!(index, 4);
-    /// ```
-    ///
-    /// ```should_panic
-    /// use matreex::{matrix, Index};
-    ///
-    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
-    ///
-    /// let index = Index::new(2, 0).into_flattened_for(&matrix);
-    /// ```
-    pub fn into_flattened_for<T>(self, matrix: &Matrix<T>) -> usize {
-        AxisIndex::from_index_with(self, matrix.order).into_flattened_for(matrix.shape)
     }
 }
 
@@ -483,49 +334,27 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    pub(super) fn interpret_with(&self, order: Order) -> Index {
-        let (row, col) = match order {
-            Order::RowMajor => (self.major, self.minor),
-            Order::ColMajor => (self.minor, self.major),
-        };
-        Index::new(row, col)
-    }
-
-    pub(super) fn from_flattened_unchecked_for(index: usize, shape: AxisShape) -> Self {
+    pub(super) fn from_flattened_unchecked(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
         // let minor = (index % shape.major_stride()) / shape.minor_stride();
         let minor = index % shape.major_stride();
         Self { major, minor }
     }
 
-    pub(super) fn try_from_flattened_for(index: usize, shape: AxisShape) -> Result<Self> {
-        if index >= shape.size() {
-            return Err(Error::IndexOutOfBounds);
-        }
-        Ok(Self::from_flattened_unchecked_for(index, shape))
-    }
-
-    pub(super) fn from_flattened_for(index: usize, shape: AxisShape) -> Self {
-        match Self::try_from_flattened_for(index, shape) {
-            Err(error) => panic!("{error}"),
-            Ok(index) => index,
-        }
-    }
-
-    pub(super) fn into_flattened_unchecked_for(self, shape: AxisShape) -> usize {
+    pub(super) fn into_flattened_unchecked(self, shape: AxisShape) -> usize {
         // self.major * shape.major_stride() + self.minor * shape.minor_stride()
         self.major * shape.major_stride() + self.minor
     }
 
-    pub(super) fn try_into_flattened_for(self, shape: AxisShape) -> Result<usize> {
+    pub(super) fn try_into_flattened(self, shape: AxisShape) -> Result<usize> {
         if self.is_out_of_bounds_of(shape) {
             return Err(Error::IndexOutOfBounds);
         }
-        Ok(self.into_flattened_unchecked_for(shape))
+        Ok(self.into_flattened_unchecked(shape))
     }
 
-    pub(super) fn into_flattened_for(self, shape: AxisShape) -> usize {
-        match self.try_into_flattened_for(shape) {
+    pub(super) fn into_flattened(self, shape: AxisShape) -> usize {
+        match self.try_into_flattened(shape) {
             Err(error) => panic!("{error}"),
             Ok(index) => index,
         }
@@ -536,33 +365,43 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     type Output = T;
 
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        let index = self.try_into_flattened_for(matrix.shape)?;
+        let index = self.try_into_flattened(matrix.shape)?;
         unsafe { Ok(matrix.data.get_unchecked(index)) }
     }
 
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        let index = self.try_into_flattened_for(matrix.shape)?;
+        let index = self.try_into_flattened(matrix.shape)?;
         unsafe { Ok(matrix.data.get_unchecked_mut(index)) }
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        let index = self.into_flattened_unchecked_for(matrix.shape);
+        let index = self.into_flattened_unchecked(matrix.shape);
         unsafe { matrix.data.get_unchecked(index) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        let index = self.into_flattened_unchecked_for(matrix.shape);
+        let index = self.into_flattened_unchecked(matrix.shape);
         unsafe { matrix.data.get_unchecked_mut(index) }
     }
 
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        let index = self.into_flattened_for(matrix.shape);
+        let index = self.into_flattened(matrix.shape);
         &matrix.data[index]
     }
 
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        let index = self.into_flattened_for(matrix.shape);
+        let index = self.into_flattened(matrix.shape);
         &mut matrix.data[index]
+    }
+}
+
+pub(super) trait IntoAxisIndex {
+    fn into_axis_index(self, order: Order) -> AxisIndex;
+}
+
+impl<I: IndexLike> IntoAxisIndex for I {
+    fn into_axis_index(self, order: Order) -> AxisIndex {
+        AxisIndex::from_index_with(self, order)
     }
 }
 
@@ -578,7 +417,7 @@ pub(super) fn translate_index_between_orders_unchecked(
 
     ```
     let src_flattened_index = index;
-    let src_axis_index = AxisIndex::from_flattened_unchecked_for(src_flattened_index, src_shape);
+    let src_axis_index = AxisIndex::from_flattened_unchecked(src_flattened_index, src_shape);
 
     let position = match src_order {
         Order::RowMajor => Index::new(src_axis_index.major, src_axis_index.minor),
@@ -587,23 +426,23 @@ pub(super) fn translate_index_between_orders_unchecked(
 
     let dest_order = !src_order;
     let dest_axis_index = match dest_order {
-        Order::RowMajor => AxisIndex{major: position.row, minor: position.col},
-        Order::ColMajor => AxisIndex{major: position.col, minor: position.row},
+        Order::RowMajor => AxisIndex {major: position.row, minor: position.col},
+        Order::ColMajor => AxisIndex {major: position.col, minor: position.row},
     };
     let mut dest_shape = src_shape;
     dest_shape.transpose();
-    let dest_flattened_index = dest_axis_index.into_flattened_unchecked_for(dest_shape);
+    let dest_flattened_index = dest_axis_index.into_flattened_unchecked(dest_shape);
     dest_flattened_index
     ```
 
     Note that `dest_axis_index` is always the transpose of `src_axis_index`,
     which allows us to simplify it to the following implementation:
     */
-    let mut index = AxisIndex::from_flattened_unchecked_for(index, src_shape);
+    let mut index = AxisIndex::from_flattened_unchecked(index, src_shape);
     index.transpose();
     let mut dest_shape = src_shape;
     dest_shape.transpose();
-    index.into_flattened_unchecked_for(dest_shape)
+    index.into_flattened_unchecked(dest_shape)
 }
 
 mod internal {
