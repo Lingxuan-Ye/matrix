@@ -267,14 +267,17 @@ impl<T> Matrix<T> {
         unsafe { self.data.get_unchecked(lower..upper).iter() }
     }
 
-    fn iter_nth_major_axis_vector(&self, n: usize) -> Result<impl DoubleEndedIterator<Item = &T>> {
+    pub(super) fn iter_nth_major_axis_vector(
+        &self,
+        n: usize,
+    ) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.major() {
             return Err(Error::IndexOutOfBounds);
         }
         unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
     }
 
-    fn iter_by_major_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
+    pub(super) fn iter_by_major_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
         (0..self.major()).map(|n| -> VectorIter<&T> {
             unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
         })
@@ -287,14 +290,17 @@ impl<T> Matrix<T> {
         self.data.iter().skip(n).step_by(self.major_stride())
     }
 
-    fn iter_nth_minor_axis_vector(&self, n: usize) -> Result<impl DoubleEndedIterator<Item = &T>> {
+    pub(super) fn iter_nth_minor_axis_vector(
+        &self,
+        n: usize,
+    ) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.minor() {
             return Err(Error::IndexOutOfBounds);
         }
         Ok(self.iter_nth_minor_axis_vector_unchecked(n))
     }
 
-    fn iter_by_minor_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
+    pub(super) fn iter_by_minor_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
         (0..self.minor())
             .map(|n| -> VectorIter<&T> { Box::new(self.iter_nth_minor_axis_vector_unchecked(n)) })
     }
