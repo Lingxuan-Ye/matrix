@@ -31,9 +31,9 @@ use rayon::prelude::*;
 /// [`matrix!`]: crate::matrix!
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Matrix<T> {
-    data: Vec<T>,
     order: Order,
     shape: AxisShape,
+    data: Vec<T>,
 }
 
 impl<T: Default> Matrix<T> {
@@ -96,7 +96,7 @@ impl<T: Default> Matrix<T> {
         let shape = shape.try_into_axis_shape(order)?;
         let size = Self::check_size(shape.size())?;
         let data = std::iter::repeat_with(T::default).take(size).collect();
-        Ok(Self { data, order, shape })
+        Ok(Self { order, shape, data })
     }
 }
 
@@ -278,8 +278,8 @@ impl<T> Matrix<T> {
     {
         let shape = shape.try_into_axis_shape(self.order)?;
         let size = Self::check_size(shape.size())?;
-        self.data.resize_with(size, T::default);
         self.shape = shape;
+        self.data.resize_with(size, T::default);
         Ok(self)
     }
 
@@ -413,9 +413,9 @@ impl<T> Matrix<T> {
         F: FnMut(&T) -> U,
     {
         Matrix {
-            data: self.data.iter().map(f).collect(),
             order: self.order,
             shape: self.shape,
+            data: self.data.iter().map(f).collect(),
         }
     }
 }
@@ -465,9 +465,9 @@ where
         F: Fn(&T) -> U + Sync + Send,
     {
         Matrix {
-            data: self.data.par_iter().map(f).collect(),
             order: self.order,
             shape: self.shape,
+            data: self.data.par_iter().map(f).collect(),
         }
     }
 }

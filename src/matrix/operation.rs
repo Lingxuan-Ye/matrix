@@ -84,9 +84,9 @@ impl<L> Matrix<L> {
         };
 
         Ok(Matrix {
-            data,
             order: self.order,
             shape: self.shape,
+            data,
         })
     }
 
@@ -137,9 +137,9 @@ impl<L> Matrix<L> {
         };
 
         Ok(Matrix {
-            data,
             order: self.order,
             shape: self.shape,
+            data,
         })
     }
 
@@ -189,9 +189,9 @@ impl<L> Matrix<L> {
         };
 
         Ok(Matrix {
-            data,
             order: self.order,
             shape: self.shape,
+            data,
         })
     }
 
@@ -242,9 +242,9 @@ impl<L> Matrix<L> {
         };
 
         Ok(Matrix {
-            data,
             order: self.order,
             shape: self.shape,
+            data,
         })
     }
 
@@ -414,7 +414,7 @@ impl<L> Matrix<L> {
 
         if self.ncols() == 0 {
             data.resize_with(size, U::default);
-            return Ok(Matrix { data, order, shape });
+            return Ok(Matrix { order, shape, data });
         }
 
         match (self.order, rhs.order) {
@@ -469,7 +469,7 @@ impl<L> Matrix<L> {
             }
         }
 
-        Ok(Matrix { data, order, shape })
+        Ok(Matrix { order, shape, data })
     }
 }
 
@@ -491,10 +491,16 @@ impl<T> Matrix<T> {
     where
         F: FnMut(&T, &S) -> U,
     {
+        let data = self
+            .data
+            .iter()
+            .map(|element| op(element, scalar))
+            .collect();
+
         Matrix {
-            data: self.data.iter().map(|x| op(x, scalar)).collect(),
             order: self.order,
             shape: self.shape,
+            data,
         }
     }
 
@@ -515,10 +521,16 @@ impl<T> Matrix<T> {
     where
         F: FnMut(T, &S) -> U,
     {
+        let data = self
+            .data
+            .into_iter()
+            .map(|element| op(element, scalar))
+            .collect();
+
         Matrix {
-            data: self.data.into_iter().map(|x| op(x, scalar)).collect(),
             order: self.order,
             shape: self.shape,
+            data,
         }
     }
 
@@ -540,7 +552,7 @@ impl<T> Matrix<T> {
     where
         F: FnMut(&mut T, &S),
     {
-        self.data.iter_mut().for_each(|x| op(x, scalar));
+        self.data.iter_mut().for_each(|element| op(element, scalar));
         self
     }
 }

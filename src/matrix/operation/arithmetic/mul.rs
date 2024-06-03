@@ -117,7 +117,7 @@ impl<L> Matrix<L> {
 
         if self.ncols() == 0 {
             data.resize_with(size, U::default);
-            return Ok(Matrix { data, order, shape });
+            return Ok(Matrix { order, shape, data });
         }
 
         match (self.order, rhs.order) {
@@ -185,7 +185,7 @@ impl<L> Matrix<L> {
             }
         }
 
-        Ok(Matrix { data, order, shape })
+        Ok(Matrix { order, shape, data })
     }
 }
 
