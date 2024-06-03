@@ -78,6 +78,7 @@ impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
         let nrows = value.len();
         let ncols = value.first().map_or(0, |row| row.len());
         let shape = Shape::new(nrows, ncols).try_into_axis_shape(order)?;
+        Self::check_size(shape.size())?;
         let mut data = Vec::with_capacity(shape.size());
         for row in value {
             if row.len() != ncols {
