@@ -405,18 +405,17 @@ impl<T> Matrix<T> {
     ///
     /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let matrix_f64 = matrix_i32.map(|x| *x as f64);
+    /// let matrix_f64 = matrix_i32.map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
-    pub fn map<U, F>(&self, f: F) -> Matrix<U>
+    pub fn map<U, F>(self, f: F) -> Matrix<U>
     where
-        F: FnMut(&T) -> U,
+        F: FnMut(T) -> U,
     {
-        Matrix {
-            order: self.order,
-            shape: self.shape,
-            data: self.data.iter().map(f).collect(),
-        }
+        let order = self.order;
+        let shape = self.shape;
+        let data = self.data.into_iter().map(f).collect();
+        Matrix { order, shape, data }
     }
 }
 
@@ -456,19 +455,18 @@ where
     ///
     /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let matrix_f64 = matrix_i32.par_map(|x| *x as f64);
+    /// let matrix_f64 = matrix_i32.par_map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
-    pub fn par_map<U, F>(&self, f: F) -> Matrix<U>
+    pub fn par_map<U, F>(self, f: F) -> Matrix<U>
     where
         U: Send,
-        F: Fn(&T) -> U + Sync + Send,
+        F: Fn(T) -> U + Sync + Send,
     {
-        Matrix {
-            order: self.order,
-            shape: self.shape,
-            data: self.data.par_iter().map(f).collect(),
-        }
+        let order = self.order;
+        let shape = self.shape;
+        let data = self.data.into_par_iter().map(f).collect();
+        Matrix { order, shape, data }
     }
 }
 
