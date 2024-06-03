@@ -220,27 +220,27 @@ where
     type Output = T;
 
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        self.into_axis_index(matrix.order).get(matrix)
+        AxisIndex::from_index_with(self, matrix.order).get(matrix)
     }
 
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        self.into_axis_index(matrix.order).get_mut(matrix)
+        AxisIndex::from_index_with(self, matrix.order).get_mut(matrix)
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        unsafe { self.into_axis_index(matrix.order).get_unchecked(matrix) }
+        unsafe { AxisIndex::from_index_with(self, matrix.order).get_unchecked(matrix) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        unsafe { self.into_axis_index(matrix.order).get_unchecked_mut(matrix) }
+        unsafe { AxisIndex::from_index_with(self, matrix.order).get_unchecked_mut(matrix) }
     }
 
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        self.into_axis_index(matrix.order).index(matrix)
+        AxisIndex::from_index_with(self, matrix.order).index(matrix)
     }
 
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        self.into_axis_index(matrix.order).index_mut(matrix)
+        AxisIndex::from_index_with(self, matrix.order).index_mut(matrix)
     }
 }
 
@@ -395,13 +395,9 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     }
 }
 
-pub(super) trait IntoAxisIndex {
-    fn into_axis_index(self, order: Order) -> AxisIndex;
-}
-
-impl<I: IndexLike> IntoAxisIndex for I {
-    fn into_axis_index(self, order: Order) -> AxisIndex {
-        AxisIndex::from_index_with(self, order)
+impl<T> Matrix<T> {
+    pub(super) fn flatten_index_unchecked<I: IndexLike>(&self, index: I) -> usize {
+        AxisIndex::from_index_with(index, self.order).into_flattened_unchecked(self.shape)
     }
 }
 
