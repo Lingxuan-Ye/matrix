@@ -69,6 +69,8 @@ impl<L> Matrix<L> {
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
+        let order = self.order;
+        let shape = self.shape;
         let data = if self.order == rhs.order {
             self.data.iter().zip(rhs.data.iter()).map(op).collect()
         } else {
@@ -83,11 +85,7 @@ impl<L> Matrix<L> {
                 .collect()
         };
 
-        Ok(Matrix {
-            order: self.order,
-            shape: self.shape,
-            data,
-        })
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs elementwise operation on two matrices, consuming `rhs`.
@@ -122,6 +120,8 @@ impl<L> Matrix<L> {
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
+        let order = self.order;
+        let shape = self.shape;
         let data = if self.order == rhs.order {
             self.data.iter().zip(rhs.data).map(op).collect()
         } else {
@@ -136,11 +136,7 @@ impl<L> Matrix<L> {
                 .collect()
         };
 
-        Ok(Matrix {
-            order: self.order,
-            shape: self.shape,
-            data,
-        })
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs elementwise operation on two matrices, consuming `self`.
@@ -174,6 +170,8 @@ impl<L> Matrix<L> {
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
+        let order = self.order;
+        let shape = self.shape;
         let data = if self.order == rhs.order {
             self.data.into_iter().zip(rhs.data.iter()).map(op).collect()
         } else {
@@ -188,11 +186,7 @@ impl<L> Matrix<L> {
                 .collect()
         };
 
-        Ok(Matrix {
-            order: self.order,
-            shape: self.shape,
-            data,
-        })
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs elementwise operation on two matrices, consuming both.
@@ -227,6 +221,8 @@ impl<L> Matrix<L> {
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
+        let order = self.order;
+        let shape = self.shape;
         let data = if self.order == rhs.order {
             self.data.into_iter().zip(rhs.data).map(op).collect()
         } else {
@@ -241,11 +237,7 @@ impl<L> Matrix<L> {
                 .collect()
         };
 
-        Ok(Matrix {
-            order: self.order,
-            shape: self.shape,
-            data,
-        })
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs elementwise operation on two matrices, assigning the result
@@ -491,17 +483,14 @@ impl<T> Matrix<T> {
     where
         F: FnMut(&T, &S) -> U,
     {
+        let order = self.order;
+        let shape = self.shape;
         let data = self
             .data
             .iter()
             .map(|element| op(element, scalar))
             .collect();
-
-        Matrix {
-            order: self.order,
-            shape: self.shape,
-            data,
-        }
+        Matrix { order, shape, data }
     }
 
     /// Performs scalar operation on the matrix, consuming `self`.
@@ -521,17 +510,14 @@ impl<T> Matrix<T> {
     where
         F: FnMut(T, &S) -> U,
     {
+        let order = self.order;
+        let shape = self.shape;
         let data = self
             .data
             .into_iter()
             .map(|element| op(element, scalar))
             .collect();
-
-        Matrix {
-            order: self.order,
-            shape: self.shape,
-            data,
-        }
+        Matrix { order, shape, data }
     }
 
     /// Performs scalar operation on the matrix, assigning the result
