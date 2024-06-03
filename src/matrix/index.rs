@@ -220,27 +220,27 @@ where
     type Output = T;
 
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        AxisIndex::from_index_with(self, matrix.order).get(matrix)
+        AxisIndex::from_index(self, matrix.order).get(matrix)
     }
 
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        AxisIndex::from_index_with(self, matrix.order).get_mut(matrix)
+        AxisIndex::from_index(self, matrix.order).get_mut(matrix)
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        unsafe { AxisIndex::from_index_with(self, matrix.order).get_unchecked(matrix) }
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked(matrix) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        unsafe { AxisIndex::from_index_with(self, matrix.order).get_unchecked_mut(matrix) }
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked_mut(matrix) }
     }
 
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        AxisIndex::from_index_with(self, matrix.order).index(matrix)
+        AxisIndex::from_index(self, matrix.order).index(matrix)
     }
 
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        AxisIndex::from_index_with(self, matrix.order).index_mut(matrix)
+        AxisIndex::from_index(self, matrix.order).index_mut(matrix)
     }
 }
 
@@ -326,7 +326,7 @@ impl AxisIndex {
         self
     }
 
-    pub(super) fn from_index_with<I: IndexLike>(index: I, order: Order) -> Self {
+    pub(super) fn from_index<I: IndexLike>(index: I, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (index.row(), index.col()),
             Order::ColMajor => (index.col(), index.row()),
@@ -413,18 +413,17 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
 
 impl<T> Matrix<T> {
     pub(super) fn flatten_index_unchecked<I: IndexLike>(&self, index: I) -> usize {
-        AxisIndex::from_index_with(index, self.order).into_flattened_unchecked(self.shape)
+        AxisIndex::from_index(index, self.order).into_flattened_unchecked(self.shape)
     }
 
     #[allow(dead_code)]
     pub(super) fn try_flatten_index<I: IndexLike>(&self, index: I) -> Result<usize> {
-        AxisIndex::from_index_with(index, self.order).try_into_flattened(self.shape)
+        AxisIndex::from_index(index, self.order).try_into_flattened(self.shape)
     }
 
     #[allow(dead_code)]
     pub(super) fn flatten_index<I: IndexLike>(&self, index: I) -> usize {
-        AxisIndex::from_index_with(index, self.order).into_flattened(self.shape)
-
+        AxisIndex::from_index(index, self.order).into_flattened(self.shape)
     }
 }
 

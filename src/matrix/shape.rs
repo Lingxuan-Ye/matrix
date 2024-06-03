@@ -134,7 +134,7 @@ impl AxisShape {
         self
     }
 
-    pub(super) fn interpret_with(&self, order: Order) -> Shape {
+    pub(super) fn interpret(&self, order: Order) -> Shape {
         let (nrows, ncols) = match order {
             Order::RowMajor => (self.major, self.minor),
             Order::ColMajor => (self.minor, self.major),
@@ -142,21 +142,21 @@ impl AxisShape {
         Shape::new(nrows, ncols)
     }
 
-    pub(super) fn interpret_nrows_with(&self, order: Order) -> usize {
+    pub(super) fn interpret_nrows(&self, order: Order) -> usize {
         match order {
             Order::RowMajor => self.major,
             Order::ColMajor => self.minor,
         }
     }
 
-    pub(super) fn interpret_ncols_with(&self, order: Order) -> usize {
+    pub(super) fn interpret_ncols(&self, order: Order) -> usize {
         match order {
             Order::RowMajor => self.minor,
             Order::ColMajor => self.major,
         }
     }
 
-    pub(super) fn from_shape_with_unchecked<S: ShapeLike>(shape: S, order: Order) -> Self {
+    pub(super) fn from_shape_unchecked<S: ShapeLike>(shape: S, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (shape.nrows(), shape.ncols()),
             Order::ColMajor => (shape.ncols(), shape.nrows()),
@@ -164,14 +164,14 @@ impl AxisShape {
         Self { major, minor }
     }
 
-    pub(super) fn try_from_shape_with<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
+    pub(super) fn try_from_shape<S: ShapeLike>(shape: S, order: Order) -> Result<Self> {
         shape.size()?;
-        Ok(Self::from_shape_with_unchecked(shape, order))
+        Ok(Self::from_shape_unchecked(shape, order))
     }
 
     #[allow(dead_code)]
-    pub(super) fn from_shape_with<S: ShapeLike>(shape: S, order: Order) -> Self {
-        match Self::try_from_shape_with(shape, order) {
+    pub(super) fn from_shape<S: ShapeLike>(shape: S, order: Order) -> Self {
+        match Self::try_from_shape(shape, order) {
             Err(error) => panic!("{error}"),
             Ok(shape) => shape,
         }

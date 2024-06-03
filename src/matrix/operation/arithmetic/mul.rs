@@ -111,7 +111,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let order = self.order;
-        let shape = AxisShape::try_from_shape_with(Shape::new(nrows, ncols), order)?;
+        let shape = AxisShape::try_from_shape(Shape::new(nrows, ncols), order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 

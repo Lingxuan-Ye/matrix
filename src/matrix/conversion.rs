@@ -45,7 +45,7 @@ impl<T> Matrix<T> {
 impl<T: Clone> From<&[T]> for Matrix<T> {
     fn from(value: &[T]) -> Self {
         let order = Order::default();
-        let shape = AxisShape::from_shape_with_unchecked(Shape::new(1, value.len()), order);
+        let shape = AxisShape::from_shape_unchecked(Shape::new(1, value.len()), order);
         let data = value.to_vec();
         Self { order, shape, data }
     }
@@ -55,7 +55,7 @@ impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
     fn from(value: &[[T; C]]) -> Self {
         let order = Order::default();
         let nrows = value.len();
-        let shape = AxisShape::from_shape_with_unchecked(Shape::new(nrows, C), order);
+        let shape = AxisShape::from_shape_unchecked(Shape::new(nrows, C), order);
         let data = value.iter().flatten().cloned().collect();
         Self { order, shape, data }
     }
@@ -64,7 +64,7 @@ impl<T: Clone, const C: usize> From<&[[T; C]]> for Matrix<T> {
 impl<T, const R: usize, const C: usize> From<[[T; C]; R]> for Matrix<T> {
     fn from(value: [[T; C]; R]) -> Self {
         let order = Order::default();
-        let shape = AxisShape::from_shape_with_unchecked(Shape::new(R, C), order);
+        let shape = AxisShape::from_shape_unchecked(Shape::new(R, C), order);
         let data = value.into_iter().flatten().collect();
         Self { order, shape, data }
     }
@@ -77,7 +77,7 @@ impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
         let order = Order::default();
         let nrows = value.len();
         let ncols = value.first().map_or(0, |row| row.len());
-        let shape = AxisShape::try_from_shape_with(Shape::new(nrows, ncols), order)?;
+        let shape = AxisShape::try_from_shape(Shape::new(nrows, ncols), order)?;
         Self::check_size(shape.size())?;
         let mut data = Vec::with_capacity(shape.size());
         for row in value {
@@ -99,7 +99,7 @@ mod tests {
     #[test]
     fn test_from_2darray() {
         let order = Order::default();
-        let shape = AxisShape::from_shape_with_unchecked(Shape::new(2, 3), order);
+        let shape = AxisShape::from_shape_unchecked(Shape::new(2, 3), order);
         let data = vec![0, 1, 2, 3, 4, 5];
         let expected = Matrix { order, shape, data };
 

@@ -93,7 +93,7 @@ impl<T: Default> Matrix<T> {
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
-        let shape = AxisShape::try_from_shape_with(shape, order)?;
+        let shape = AxisShape::try_from_shape(shape, order)?;
         let size = Self::check_size(shape.size())?;
         let data = std::iter::repeat_with(T::default).take(size).collect();
         Ok(Self { order, shape, data })
@@ -108,17 +108,17 @@ impl<T> Matrix<T> {
 
     /// Returns the shape of the matrix.
     pub fn shape(&self) -> Shape {
-        self.shape.interpret_with(self.order)
+        self.shape.interpret(self.order)
     }
 
     /// Returns the number of rows in the matrix.
     pub fn nrows(&self) -> usize {
-        self.shape.interpret_nrows_with(self.order)
+        self.shape.interpret_nrows(self.order)
     }
 
     /// Returns the number of columns in the matrix.
     pub fn ncols(&self) -> usize {
-        self.shape.interpret_ncols_with(self.order)
+        self.shape.interpret_ncols(self.order)
     }
 
     /// Returns the total number of elements in the matrix.
@@ -276,7 +276,7 @@ impl<T> Matrix<T> {
     where
         T: Default,
     {
-        let shape = AxisShape::try_from_shape_with(shape, self.order)?;
+        let shape = AxisShape::try_from_shape(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
         self.shape = shape;
         self.data.resize_with(size, T::default);
@@ -308,7 +308,7 @@ impl<T> Matrix<T> {
             Ok(size) if (self.size() == size) => (),
             _ => return Err(Error::SizeMismatch),
         }
-        self.shape = AxisShape::from_shape_with_unchecked(shape, self.order);
+        self.shape = AxisShape::from_shape_unchecked(shape, self.order);
         Ok(self)
     }
 
