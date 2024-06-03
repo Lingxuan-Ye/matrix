@@ -341,6 +341,22 @@ impl AxisIndex {
         Self { major, minor }
     }
 
+    #[allow(dead_code)]
+    pub(super) fn try_from_flattened(index: usize, shape: AxisShape) -> Result<Self> {
+        if index >= shape.size() {
+            return Err(Error::IndexOutOfBounds);
+        }
+        Ok(Self::from_flattened_unchecked(index, shape))
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
+        match Self::try_from_flattened(index, shape) {
+            Err(error) => panic!("{error}"),
+            Ok(index) => index,
+        }
+    }
+
     pub(super) fn into_flattened_unchecked(self, shape: AxisShape) -> usize {
         // self.major * shape.major_stride() + self.minor * shape.minor_stride()
         self.major * shape.major_stride() + self.minor
@@ -398,6 +414,17 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
 impl<T> Matrix<T> {
     pub(super) fn flatten_index_unchecked<I: IndexLike>(&self, index: I) -> usize {
         AxisIndex::from_index_with(index, self.order).into_flattened_unchecked(self.shape)
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn try_flatten_index<I: IndexLike>(&self, index: I) -> Result<usize> {
+        AxisIndex::from_index_with(index, self.order).try_into_flattened(self.shape)
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn flatten_index<I: IndexLike>(&self, index: I) -> usize {
+        AxisIndex::from_index_with(index, self.order).into_flattened(self.shape)
+
     }
 }
 
