@@ -352,20 +352,20 @@ impl<T> Matrix<T> {
             let major = std::cmp::min(self.major(), other.major());
             let minor = std::cmp::min(self.minor(), other.minor());
             for i in 0..major {
-                let self_start = i * self.major_stride();
-                let self_end = self_start + minor;
-                let other_start = i * other.major_stride();
-                let other_end = other_start + minor;
-                self.data[self_start..self_end]
-                    .clone_from_slice(&other.data[other_start..other_end]);
+                let self_lower = i * self.major_stride();
+                let self_upper = self_lower + minor;
+                let other_lower = i * other.major_stride();
+                let other_upper = other_lower + minor;
+                self.data[self_lower..self_upper]
+                    .clone_from_slice(&other.data[other_lower..other_upper]);
             }
         } else {
             let major = std::cmp::min(self.major(), other.minor());
             let minor = std::cmp::min(self.minor(), other.major());
             for i in 0..major {
-                let self_start = i * self.major_stride();
-                let self_end = self_start + minor;
-                self.data[self_start..self_end]
+                let self_lower = i * self.major_stride();
+                let self_upper = self_lower + minor;
+                self.data[self_lower..self_upper]
                     .iter_mut()
                     .zip(other.iter_nth_minor_axis_vector_unchecked(i))
                     .for_each(|(x, y)| *x = y.clone());
