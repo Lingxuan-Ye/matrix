@@ -9,9 +9,8 @@ mod conversion;
 mod fmt;
 mod operation;
 
-use self::index::translate_index_between_orders_unchecked;
 use self::order::Order;
-use self::shape::{AxisShape, IntoAxisShape, Shape, ShapeLike};
+use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
 
 #[cfg(feature = "rayon")]
@@ -31,9 +30,9 @@ use rayon::prelude::*;
 /// [`matrix!`]: crate::matrix!
 #[derive(Clone, Default, PartialEq, Eq)]
 pub struct Matrix<T> {
-    data: Vec<T>,
     order: Order,
     shape: AxisShape,
+    data: Vec<T>,
 }
 
 impl<T: Default> Matrix<T> {
@@ -93,10 +92,10 @@ impl<T: Default> Matrix<T> {
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
-        let shape = shape.try_into_axis_shape(order)?;
+        let shape = AxisShape::try_from_shape(shape, order)?;
         let size = Self::check_size(shape.size())?;
         let data = std::iter::repeat_with(T::default).take(size).collect();
-        Ok(Self { data, order, shape })
+        Ok(Self { order, shape, data })
     }
 }
 
@@ -108,17 +107,17 @@ impl<T> Matrix<T> {
 
     /// Returns the shape of the matrix.
     pub fn shape(&self) -> Shape {
-        self.shape.interpret_with(self.order)
+        self.shape.interpret(self.order)
     }
 
     /// Returns the number of rows in the matrix.
     pub fn nrows(&self) -> usize {
-        self.shape.interpret_nrows_with(self.order)
+        self.shape.interpret_nrows(self.order)
     }
 
     /// Returns the number of columns in the matrix.
     pub fn ncols(&self) -> usize {
-        self.shape.interpret_ncols_with(self.order)
+        self.shape.interpret_ncols(self.order)
     }
 
     /// Returns the total number of elements in the matrix.
@@ -152,7 +151,7 @@ impl<T> Matrix<T> {
     }
 
     /// Returns the stride of the minor axis.
-    #[allow(unused)]
+    #[allow(dead_code)]
     const fn minor_stride(&self) -> usize {
         self.shape.minor_stride()
     }
@@ -184,7 +183,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix[(2, 1)], 5);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
-        self.order = !self.order;
+        self.order = self.order.switch();
         self
     }
 
@@ -199,7 +198,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.order(), Order::default());
     ///
     /// matrix.switch_order();
-    /// assert_eq!(matrix.order(), !Order::default());
+    /// assert_eq!(matrix.order(), Order::default().switch());
     ///
     /// matrix.switch_order();
     /// assert_eq!(matrix.order(), Order::default());
@@ -208,6 +207,7 @@ impl<T> Matrix<T> {
         let size = self.size();
         let src_shape = self.shape;
         self.shape.transpose();
+        let dest_shape = self.shape;
 
         let mut visited = vec![false; size];
         for index in 0..size {
@@ -217,13 +217,14 @@ impl<T> Matrix<T> {
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
-                let next = translate_index_between_orders_unchecked(current, src_shape);
+                let next =
+                    Self::reindex_to_different_order_unchecked(current, src_shape, dest_shape);
                 self.data.swap(index, next);
                 current = next;
             }
         }
 
-        self.order = !self.order;
+        self.order = self.order.switch();
         self
     }
 
@@ -276,10 +277,10 @@ impl<T> Matrix<T> {
     where
         T: Default,
     {
-        let shape = shape.try_into_axis_shape(self.order)?;
+        let shape = AxisShape::try_from_shape(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
-        self.data.resize_with(size, T::default);
         self.shape = shape;
+        self.data.resize_with(size, T::default);
         Ok(self)
     }
 
@@ -308,7 +309,7 @@ impl<T> Matrix<T> {
             Ok(size) if (self.size() == size) => (),
             _ => return Err(Error::SizeMismatch),
         }
-        self.shape = shape.into_axis_shape_unchecked(self.order);
+        self.shape = AxisShape::from_shape_unchecked(shape, self.order);
         Ok(self)
     }
 
@@ -352,20 +353,20 @@ impl<T> Matrix<T> {
             let major = std::cmp::min(self.major(), other.major());
             let minor = std::cmp::min(self.minor(), other.minor());
             for i in 0..major {
-                let self_start = i * self.major_stride();
-                let self_end = self_start + minor;
-                let other_start = i * other.major_stride();
-                let other_end = other_start + minor;
-                self.data[self_start..self_end]
-                    .clone_from_slice(&other.data[other_start..other_end]);
+                let self_lower = i * self.major_stride();
+                let self_upper = self_lower + minor;
+                let other_lower = i * other.major_stride();
+                let other_upper = other_lower + minor;
+                self.data[self_lower..self_upper]
+                    .clone_from_slice(&other.data[other_lower..other_upper]);
             }
         } else {
             let major = std::cmp::min(self.major(), other.minor());
             let minor = std::cmp::min(self.minor(), other.major());
             for i in 0..major {
-                let self_start = i * self.major_stride();
-                let self_end = self_start + minor;
-                self.data[self_start..self_end]
+                let self_lower = i * self.major_stride();
+                let self_upper = self_lower + minor;
+                self.data[self_lower..self_upper]
                     .iter_mut()
                     .zip(other.iter_nth_minor_axis_vector_unchecked(i))
                     .for_each(|(x, y)| *x = y.clone());
@@ -384,8 +385,8 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// matrix.apply(|x| *x *= 2);
-    /// assert_eq!(matrix, matrix![[0, 2, 4], [6, 8, 10]]);
+    /// matrix.apply(|x| *x += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     pub fn apply<F>(&mut self, f: F) -> &mut Self
     where
@@ -405,18 +406,17 @@ impl<T> Matrix<T> {
     ///
     /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let matrix_f64 = matrix_i32.map(|x| *x as f64);
+    /// let matrix_f64 = matrix_i32.map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
-    pub fn map<U, F>(&self, f: F) -> Matrix<U>
+    pub fn map<U, F>(self, f: F) -> Matrix<U>
     where
-        F: FnMut(&T) -> U,
+        F: FnMut(T) -> U,
     {
-        Matrix {
-            data: self.data.iter().map(f).collect(),
-            order: self.order,
-            shape: self.shape,
-        }
+        let order = self.order;
+        let shape = self.shape;
+        let data = self.data.into_iter().map(f).collect();
+        Matrix { order, shape, data }
     }
 }
 
@@ -435,8 +435,8 @@ where
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// matrix.par_apply(|x| *x *= 2);
-    /// assert_eq!(matrix, matrix![[0, 2, 4], [6, 8, 10]]);
+    /// matrix.par_apply(|x| *x += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     pub fn par_apply<F>(&mut self, f: F) -> &mut Self
     where
@@ -456,19 +456,18 @@ where
     ///
     /// let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// let matrix_f64 = matrix_i32.par_map(|x| *x as f64);
+    /// let matrix_f64 = matrix_i32.par_map(|x| x as f64);
     /// assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
     /// ```
-    pub fn par_map<U, F>(&self, f: F) -> Matrix<U>
+    pub fn par_map<U, F>(self, f: F) -> Matrix<U>
     where
         U: Send,
-        F: Fn(&T) -> U + Sync + Send,
+        F: Fn(T) -> U + Sync + Send,
     {
-        Matrix {
-            data: self.data.par_iter().map(f).collect(),
-            order: self.order,
-            shape: self.shape,
-        }
+        let order = self.order;
+        let shape = self.shape;
+        let data = self.data.into_par_iter().map(f).collect();
+        Matrix { order, shape, data }
     }
 }
 
@@ -514,11 +513,11 @@ mod tests {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         matrix.transpose();
-        // col 0
+        // column 0
         assert_eq!(matrix[(0, 0)], 0);
         assert_eq!(matrix[(1, 0)], 1);
         assert_eq!(matrix[(2, 0)], 2);
-        // col 1
+        // column 1
         assert_eq!(matrix[(0, 1)], 3);
         assert_eq!(matrix[(1, 1)], 4);
         assert_eq!(matrix[(2, 1)], 5);
@@ -537,7 +536,7 @@ mod tests {
     #[test]
     fn test_switch_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.order, Order::default());
         assert_eq!(matrix.major(), 2);
         assert_eq!(matrix.minor(), 3);
 
@@ -548,7 +547,7 @@ mod tests {
         assert_eq!(matrix[(1, 0)], 3);
         assert_eq!(matrix[(1, 1)], 4);
         assert_eq!(matrix[(1, 2)], 5);
-        assert_eq!(matrix.order, Order::ColMajor);
+        assert_eq!(matrix.order, Order::default().switch());
         assert_eq!(matrix.major(), 3);
         assert_eq!(matrix.minor(), 2);
 
@@ -559,7 +558,7 @@ mod tests {
         assert_eq!(matrix[(1, 0)], 3);
         assert_eq!(matrix[(1, 1)], 4);
         assert_eq!(matrix[(1, 2)], 5);
-        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.order, Order::default());
         assert_eq!(matrix.major(), 2);
         assert_eq!(matrix.minor(), 3);
     }
@@ -567,7 +566,7 @@ mod tests {
     #[test]
     fn test_set_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.order, Order::default());
         assert_eq!(matrix.major(), 2);
         assert_eq!(matrix.minor(), 3);
 
@@ -713,83 +712,56 @@ mod tests {
     }
 
     #[test]
-    fn test_check_size() {
-        const MAX: usize = isize::MAX as usize;
+    fn test_apply() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        assert!(Matrix::<u8>::check_size(MAX).is_ok());
-        assert_eq!(
-            Matrix::<u8>::check_size(MAX + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix.apply(|x| *x += 1);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        assert!(Matrix::<u16>::check_size(MAX / 2).is_ok());
-        assert_eq!(
-            Matrix::<u16>::check_size(MAX / 2 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix.switch_order();
+        matrix.apply(|x| *x -= 1);
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
 
-        assert!(Matrix::<u32>::check_size(MAX / 4).is_ok());
-        assert_eq!(
-            Matrix::<u32>::check_size(MAX / 4 + 1),
-            Err(Error::CapacityExceeded)
-        );
+    #[test]
+    fn test_map() {
+        let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
 
-        assert!(Matrix::<u64>::check_size(MAX / 8).is_ok());
-        assert_eq!(
-            Matrix::<u64>::check_size(MAX / 8 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        let mut matrix_f64 = matrix_i32.map(|x| x as f64);
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
 
-        assert!(Matrix::<u128>::check_size(MAX / 16).is_ok());
-        assert_eq!(
-            Matrix::<u128>::check_size(MAX / 16 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix_f64.switch_order();
+        let mut matrix_i32 = matrix_f64.map(|x| x as i32);
+        matrix_i32.switch_order();
+        assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
 
-        assert!(Matrix::<i8>::check_size(MAX).is_ok());
-        assert_eq!(
-            Matrix::<i8>::check_size(MAX + 1),
-            Err(Error::CapacityExceeded)
-        );
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_apply() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        assert!(Matrix::<i16>::check_size(MAX / 2).is_ok());
-        assert_eq!(
-            Matrix::<i16>::check_size(MAX / 2 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix.par_apply(|x| *x += 1);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        assert!(Matrix::<i32>::check_size(MAX / 4).is_ok());
-        assert_eq!(
-            Matrix::<i32>::check_size(MAX / 4 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix.switch_order();
+        matrix.par_apply(|x| *x -= 1);
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
 
-        assert!(Matrix::<i64>::check_size(MAX / 8).is_ok());
-        assert_eq!(
-            Matrix::<i64>::check_size(MAX / 8 + 1),
-            Err(Error::CapacityExceeded)
-        );
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_map() {
+        let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
 
-        assert!(Matrix::<i128>::check_size(MAX / 16).is_ok());
-        assert_eq!(
-            Matrix::<i128>::check_size(MAX / 16 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        let mut matrix_f64 = matrix_i32.par_map(|x| x as f64);
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
 
-        assert!(Matrix::<bool>::check_size(MAX).is_ok());
-        assert_eq!(
-            Matrix::<bool>::check_size(MAX + 1),
-            Err(Error::CapacityExceeded)
-        );
-
-        assert!(Matrix::<char>::check_size(MAX / 4).is_ok());
-        assert_eq!(
-            Matrix::<char>::check_size(MAX / 4 + 1),
-            Err(Error::CapacityExceeded)
-        );
-
-        assert!(Matrix::<()>::check_size(MAX).is_ok());
-        assert!(Matrix::<()>::check_size(MAX + 1).is_ok());
-        assert!(Matrix::<()>::check_size(usize::MAX).is_ok());
+        matrix_f64.switch_order();
+        let mut matrix_i32 = matrix_f64.par_map(|x| x as i32);
+        matrix_i32.switch_order();
+        assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 }

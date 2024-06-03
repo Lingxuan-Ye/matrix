@@ -220,27 +220,27 @@ where
     type Output = T;
 
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        self.into_axis_index(matrix.order).get(matrix)
+        AxisIndex::from_index(self, matrix.order).get(matrix)
     }
 
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        self.into_axis_index(matrix.order).get_mut(matrix)
+        AxisIndex::from_index(self, matrix.order).get_mut(matrix)
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        unsafe { self.into_axis_index(matrix.order).get_unchecked(matrix) }
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked(matrix) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        unsafe { self.into_axis_index(matrix.order).get_unchecked_mut(matrix) }
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked_mut(matrix) }
     }
 
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        self.into_axis_index(matrix.order).index(matrix)
+        AxisIndex::from_index(self, matrix.order).index(matrix)
     }
 
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        self.into_axis_index(matrix.order).index_mut(matrix)
+        AxisIndex::from_index(self, matrix.order).index_mut(matrix)
     }
 }
 
@@ -326,7 +326,7 @@ impl AxisIndex {
         self
     }
 
-    pub(super) fn from_index_with<I: IndexLike>(index: I, order: Order) -> Self {
+    pub(super) fn from_index<I: IndexLike>(index: I, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (index.row(), index.col()),
             Order::ColMajor => (index.col(), index.row()),
@@ -339,6 +339,22 @@ impl AxisIndex {
         // let minor = (index % shape.major_stride()) / shape.minor_stride();
         let minor = index % shape.major_stride();
         Self { major, minor }
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn try_from_flattened(index: usize, shape: AxisShape) -> Result<Self> {
+        if index >= shape.size() {
+            return Err(Error::IndexOutOfBounds);
+        }
+        Ok(Self::from_flattened_unchecked(index, shape))
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
+        match Self::try_from_flattened(index, shape) {
+            Err(error) => panic!("{error}"),
+            Ok(index) => index,
+        }
     }
 
     pub(super) fn into_flattened_unchecked(self, shape: AxisShape) -> usize {
@@ -395,54 +411,67 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     }
 }
 
-pub(super) trait IntoAxisIndex {
-    fn into_axis_index(self, order: Order) -> AxisIndex;
-}
-
-impl<I: IndexLike> IntoAxisIndex for I {
-    fn into_axis_index(self, order: Order) -> AxisIndex {
-        AxisIndex::from_index_with(self, order)
+impl<T> Matrix<T> {
+    pub(super) fn flatten_index_unchecked<I: IndexLike>(&self, index: I) -> usize {
+        AxisIndex::from_index(index, self.order).into_flattened_unchecked(self.shape)
     }
-}
 
-pub(super) fn translate_index_between_orders_unchecked(
-    index: usize,
-    src_shape: AxisShape,
-) -> usize {
-    /*
-    This implementation is based on the idea that the element at the same
-    position remains the same across different orders. Assuming that the
-    original order is `src_order`, and given that the `Index` instance
-    representing the position is invariant, we have:
+    #[allow(dead_code)]
+    pub(super) fn try_flatten_index<I: IndexLike>(&self, index: I) -> Result<usize> {
+        AxisIndex::from_index(index, self.order).try_into_flattened(self.shape)
+    }
 
-    ```
-    let src_flattened_index = index;
-    let src_axis_index = AxisIndex::from_flattened_unchecked(src_flattened_index, src_shape);
+    #[allow(dead_code)]
+    pub(super) fn flatten_index<I: IndexLike>(&self, index: I) -> usize {
+        AxisIndex::from_index(index, self.order).into_flattened(self.shape)
+    }
 
-    let position = match src_order {
-        Order::RowMajor => Index::new(src_axis_index.major, src_axis_index.minor),
-        Order::ColMajor => Index::new(src_axis_index.minor, src_axis_index.major),
-    };
+    /// # Notes
+    ///
+    /// For performance reasons, this associated function does not
+    /// transpose `src_shape` itself, but it **strictly requires**
+    /// that `src_shape` and `dest_shape` must be transposes of each
+    /// other. Failing to meet this condition will result in undefined
+    /// results.
+    #[inline]
+    pub(super) fn reindex_to_different_order_unchecked(
+        index: usize,
+        src_shape: AxisShape,
+        dest_shape: AxisShape,
+    ) -> usize {
+        /*
+        This implementation is based on the idea that the element at the same
+        position remains the same across different orders. Assuming that the
+        original order is `src_order`, and given that the `Index` instance
+        representing the position is invariant, we have:
 
-    let dest_order = !src_order;
-    let dest_axis_index = match dest_order {
-        Order::RowMajor => AxisIndex {major: position.row, minor: position.col},
-        Order::ColMajor => AxisIndex {major: position.col, minor: position.row},
-    };
-    let mut dest_shape = src_shape;
-    dest_shape.transpose();
-    let dest_flattened_index = dest_axis_index.into_flattened_unchecked(dest_shape);
-    dest_flattened_index
-    ```
+        ```
+        let src_flattened_index = index;
+        let src_axis_index = AxisIndex::from_flattened_unchecked(src_flattened_index, src_shape);
 
-    Note that `dest_axis_index` is always the transpose of `src_axis_index`,
-    which allows us to simplify it to the following implementation:
-    */
-    let mut index = AxisIndex::from_flattened_unchecked(index, src_shape);
-    index.transpose();
-    let mut dest_shape = src_shape;
-    dest_shape.transpose();
-    index.into_flattened_unchecked(dest_shape)
+        // invariant
+        let position = match src_order {
+            Order::RowMajor => Index::new(src_axis_index.major, src_axis_index.minor),
+            Order::ColMajor => Index::new(src_axis_index.minor, src_axis_index.major),
+        };
+
+        let dest_order = !src_order;
+        let (major, minor) = match dest_order {
+            Order::RowMajor => (position.row, position.col),
+            Order::ColMajor => (position.col, position.row),
+        };
+        let dest_axis_index = AxisIndex { major, minor };
+        let dest_flattened_index = dest_axis_index.into_flattened_unchecked(dest_shape);
+        dest_flattened_index
+        ```
+
+        Note that `dest_axis_index` is always the transpose of `src_axis_index`,
+        which allows us to simplify the code to the following:
+        */
+        let mut index = AxisIndex::from_flattened_unchecked(index, src_shape);
+        index.transpose();
+        index.into_flattened_unchecked(dest_shape)
+    }
 }
 
 mod internal {

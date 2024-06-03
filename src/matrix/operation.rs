@@ -5,10 +5,9 @@ mod arithmetic {
     mod sub;
 }
 
-use super::index::translate_index_between_orders_unchecked;
 use super::iter::VectorIter;
 use super::order::Order;
-use super::shape::{IntoAxisShape, Shape};
+use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -69,6 +68,8 @@ impl<L> Matrix<L> {
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
+        let order = self.order;
+        let shape = self.shape;
         let data = if self.order == rhs.order {
             self.data.iter().zip(rhs.data.iter()).map(op).collect()
         } else {
@@ -76,18 +77,15 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = translate_index_between_orders_unchecked(index, self.shape);
+                    let index =
+                        Self::reindex_to_different_order_unchecked(index, self.shape, rhs.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op((left, right))
                 })
                 .collect()
         };
 
-        Ok(Matrix {
-            data,
-            order: self.order,
-            shape: self.shape,
-        })
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs elementwise operation on two matrices, consuming `rhs`.
@@ -122,6 +120,8 @@ impl<L> Matrix<L> {
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
+        let order = self.order;
+        let shape = self.shape;
         let data = if self.order == rhs.order {
             self.data.iter().zip(rhs.data).map(op).collect()
         } else {
@@ -129,18 +129,15 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = translate_index_between_orders_unchecked(index, self.shape);
+                    let index =
+                        Self::reindex_to_different_order_unchecked(index, self.shape, rhs.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) }.clone();
                     op((left, right))
                 })
                 .collect()
         };
 
-        Ok(Matrix {
-            data,
-            order: self.order,
-            shape: self.shape,
-        })
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs elementwise operation on two matrices, consuming `self`.
@@ -174,6 +171,8 @@ impl<L> Matrix<L> {
     {
         self.ensure_elementwise_operation_conformable(rhs)?;
 
+        let order = self.order;
+        let shape = self.shape;
         let data = if self.order == rhs.order {
             self.data.into_iter().zip(rhs.data.iter()).map(op).collect()
         } else {
@@ -181,18 +180,15 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = translate_index_between_orders_unchecked(index, self.shape);
+                    let index =
+                        Self::reindex_to_different_order_unchecked(index, self.shape, rhs.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op((left, right))
                 })
                 .collect()
         };
 
-        Ok(Matrix {
-            data,
-            order: self.order,
-            shape: self.shape,
-        })
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs elementwise operation on two matrices, consuming both.
@@ -227,6 +223,8 @@ impl<L> Matrix<L> {
     {
         self.ensure_elementwise_operation_conformable(&rhs)?;
 
+        let order = self.order;
+        let shape = self.shape;
         let data = if self.order == rhs.order {
             self.data.into_iter().zip(rhs.data).map(op).collect()
         } else {
@@ -234,18 +232,15 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index = translate_index_between_orders_unchecked(index, self.shape);
+                    let index =
+                        Self::reindex_to_different_order_unchecked(index, self.shape, rhs.shape);
                     let right = unsafe { rhs.data.get_unchecked(index).clone() };
                     op((left, right))
                 })
                 .collect()
         };
 
-        Ok(Matrix {
-            data,
-            order: self.order,
-            shape: self.shape,
-        })
+        Ok(Matrix { order, shape, data })
     }
 
     /// Performs elementwise operation on two matrices, assigning the result
@@ -280,7 +275,8 @@ impl<L> Matrix<L> {
             self.data.iter_mut().zip(rhs.data.iter()).for_each(op);
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = translate_index_between_orders_unchecked(index, self.shape);
+                let index =
+                    Self::reindex_to_different_order_unchecked(index, self.shape, rhs.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
                 op((left, right))
             });
@@ -322,7 +318,8 @@ impl<L> Matrix<L> {
             self.data.iter_mut().zip(rhs.data).for_each(op);
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index = translate_index_between_orders_unchecked(index, self.shape);
+                let index =
+                    Self::reindex_to_different_order_unchecked(index, self.shape, rhs.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) }.clone();
                 op((left, right))
             });
@@ -408,13 +405,13 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let order = self.order;
-        let shape = Shape::new(nrows, ncols).try_into_axis_shape(order)?;
+        let shape = AxisShape::try_from_shape(Shape::new(nrows, ncols), order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 
         if self.ncols() == 0 {
             data.resize_with(size, U::default);
-            return Ok(Matrix { data, order, shape });
+            return Ok(Matrix { order, shape, data });
         }
 
         match (self.order, rhs.order) {
@@ -469,7 +466,7 @@ impl<L> Matrix<L> {
             }
         }
 
-        Ok(Matrix { data, order, shape })
+        Ok(Matrix { order, shape, data })
     }
 }
 
@@ -491,11 +488,14 @@ impl<T> Matrix<T> {
     where
         F: FnMut(&T, &S) -> U,
     {
-        Matrix {
-            data: self.data.iter().map(|x| op(x, scalar)).collect(),
-            order: self.order,
-            shape: self.shape,
-        }
+        let order = self.order;
+        let shape = self.shape;
+        let data = self
+            .data
+            .iter()
+            .map(|element| op(element, scalar))
+            .collect();
+        Matrix { order, shape, data }
     }
 
     /// Performs scalar operation on the matrix, consuming `self`.
@@ -515,11 +515,14 @@ impl<T> Matrix<T> {
     where
         F: FnMut(T, &S) -> U,
     {
-        Matrix {
-            data: self.data.into_iter().map(|x| op(x, scalar)).collect(),
-            order: self.order,
-            shape: self.shape,
-        }
+        let order = self.order;
+        let shape = self.shape;
+        let data = self
+            .data
+            .into_iter()
+            .map(|element| op(element, scalar))
+            .collect();
+        Matrix { order, shape, data }
     }
 
     /// Performs scalar operation on the matrix, assigning the result
@@ -540,7 +543,7 @@ impl<T> Matrix<T> {
     where
         F: FnMut(&mut T, &S),
     {
-        self.data.iter_mut().for_each(|x| op(x, scalar));
+        self.data.iter_mut().for_each(|element| op(element, scalar));
         self
     }
 }

@@ -5,10 +5,8 @@ pub enum Order {
     ColMajor,
 }
 
-impl std::ops::Not for Order {
-    type Output = Self;
-
-    fn not(self) -> Self::Output {
+impl Order {
+    pub fn switch(self) -> Self {
         match self {
             Self::RowMajor => Self::ColMajor,
             Self::ColMajor => Self::RowMajor,
@@ -27,8 +25,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_not() {
-        assert_eq!(!Order::RowMajor, Order::ColMajor);
-        assert_eq!(!Order::ColMajor, Order::RowMajor);
+    fn test_switch() {
+        assert_eq!(Order::RowMajor.switch(), Order::ColMajor);
+        assert_eq!(Order::ColMajor.switch(), Order::RowMajor);
     }
 }

@@ -1,4 +1,4 @@
-use super::index::{Index, IntoAxisIndex};
+use super::index::Index;
 use super::Matrix;
 
 const LEFT_DELIMITER: &str = "[";
@@ -38,6 +38,8 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
         }
 
         writeln!(f, "Matrix{SPACE}{{")?;
+        writeln!(f, "{SPACE:TAB_SIZE$}order:{SPACE}{:?}", self.order)?;
+        writeln!(f, "{SPACE:TAB_SIZE$}shape:{SPACE}{:?}", self.shape)?;
         writeln!(f, "{SPACE:TAB_SIZE$}data:")?;
 
         write!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}")?;
@@ -69,9 +71,7 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                     write!(f, "{SPACE}")?;
                 }
                 for col in 0..ncols {
-                    let index = Index::new(row, col)
-                        .into_axis_index(self.order)
-                        .into_flattened_unchecked(self.shape);
+                    let index = self.flatten_index_unchecked(Index::new(row, col));
                     if line == 0 {
                         write_dim!(f, "{index:>index_width$}")?;
                     } else {
@@ -95,8 +95,6 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
 
         writeln!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}{RIGHT_DELIMITER}")?;
 
-        writeln!(f, "{SPACE:TAB_SIZE$}order:{SPACE}{:?}", self.order)?;
-        writeln!(f, "{SPACE:TAB_SIZE$}shape:{SPACE}{:?}", self.shape)?;
         writeln!(f, "}}")
     }
 }
@@ -134,9 +132,7 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
                     write!(f, "{SPACE}")?;
                 }
                 for col in 0..ncols {
-                    let index = Index::new(row, col)
-                        .into_axis_index(self.order)
-                        .into_flattened_unchecked(self.shape);
+                    let index = self.flatten_index_unchecked(Index::new(row, col));
                     match cache[index].next() {
                         None => write!(f, "{SPACE:<element_width$}")?,
                         Some(element_line) => write!(f, "{element_line:<element_width$}")?,
@@ -221,7 +217,7 @@ mod tests {
     fn test_debug() {
         let matrix = matrix![[Mock(0), Mock(1), Mock(2)], [Mock(3), Mock(4), Mock(5)]];
         let result = format!("{:?}", matrix);
-        let expected = "Matrix {\n    data:\n        [       \u{1b}[2m0\u{1b}[22m        \u{1b}[2m1\u{1b}[22m        \u{1b}[2m2\u{1b}[22m      \n            \u{1b}[2m0\u{1b}[22m  [\u{1b}[2m0\u{1b}[22m        \u{1b}[2m1\u{1b}[22m +      \u{1b}[2m2\u{1b}[22m +    ]\n                                    ++   \n                                         \n                                         \n                                         \n            \u{1b}[2m1\u{1b}[22m  [\u{1b}[2m3\u{1b}[22m +      \u{1b}[2m4\u{1b}[22m +      \u{1b}[2m5\u{1b}[22m +    ]\n                  ++       ++       ++   \n                  +++      +++      +++  \n                           ++++     ++++ \n                                    +++++\n        ]\n    order: RowMajor\n    shape: AxisShape { major: 2, minor: 3 }\n}\n";
+        let expected = "Matrix {\n    order: RowMajor\n    shape: AxisShape { major: 2, minor: 3 }\n    data:\n        [       \u{1b}[2m0\u{1b}[22m        \u{1b}[2m1\u{1b}[22m        \u{1b}[2m2\u{1b}[22m      \n            \u{1b}[2m0\u{1b}[22m  [\u{1b}[2m0\u{1b}[22m        \u{1b}[2m1\u{1b}[22m +      \u{1b}[2m2\u{1b}[22m +    ]\n                                    ++   \n                                         \n                                         \n                                         \n            \u{1b}[2m1\u{1b}[22m  [\u{1b}[2m3\u{1b}[22m +      \u{1b}[2m4\u{1b}[22m +      \u{1b}[2m5\u{1b}[22m +    ]\n                  ++       ++       ++   \n                  +++      +++      +++  \n                           ++++     ++++ \n                                    +++++\n        ]\n}\n";
         assert_eq!(result, expected);
     }
 
