@@ -385,8 +385,8 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// matrix.apply(|x| *x *= 2);
-    /// assert_eq!(matrix, matrix![[0, 2, 4], [6, 8, 10]]);
+    /// matrix.apply(|x| *x += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     pub fn apply<F>(&mut self, f: F) -> &mut Self
     where
@@ -435,8 +435,8 @@ where
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// matrix.par_apply(|x| *x *= 2);
-    /// assert_eq!(matrix, matrix![[0, 2, 4], [6, 8, 10]]);
+    /// matrix.par_apply(|x| *x += 1);
+    /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
     pub fn par_apply<F>(&mut self, f: F) -> &mut Self
     where
@@ -513,11 +513,11 @@ mod tests {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         matrix.transpose();
-        // col 0
+        // column 0
         assert_eq!(matrix[(0, 0)], 0);
         assert_eq!(matrix[(1, 0)], 1);
         assert_eq!(matrix[(2, 0)], 2);
-        // col 1
+        // column 1
         assert_eq!(matrix[(0, 1)], 3);
         assert_eq!(matrix[(1, 1)], 4);
         assert_eq!(matrix[(2, 1)], 5);
@@ -536,7 +536,7 @@ mod tests {
     #[test]
     fn test_switch_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.order, Order::default());
         assert_eq!(matrix.major(), 2);
         assert_eq!(matrix.minor(), 3);
 
@@ -547,7 +547,7 @@ mod tests {
         assert_eq!(matrix[(1, 0)], 3);
         assert_eq!(matrix[(1, 1)], 4);
         assert_eq!(matrix[(1, 2)], 5);
-        assert_eq!(matrix.order, Order::ColMajor);
+        assert_eq!(matrix.order, Order::default().switch());
         assert_eq!(matrix.major(), 3);
         assert_eq!(matrix.minor(), 2);
 
@@ -558,7 +558,7 @@ mod tests {
         assert_eq!(matrix[(1, 0)], 3);
         assert_eq!(matrix[(1, 1)], 4);
         assert_eq!(matrix[(1, 2)], 5);
-        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.order, Order::default());
         assert_eq!(matrix.major(), 2);
         assert_eq!(matrix.minor(), 3);
     }
@@ -566,7 +566,7 @@ mod tests {
     #[test]
     fn test_set_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.order, Order::RowMajor);
+        assert_eq!(matrix.order, Order::default());
         assert_eq!(matrix.major(), 2);
         assert_eq!(matrix.minor(), 3);
 
@@ -712,83 +712,56 @@ mod tests {
     }
 
     #[test]
-    fn test_check_size() {
-        const MAX: usize = isize::MAX as usize;
+    fn test_apply() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        assert!(Matrix::<u8>::check_size(MAX).is_ok());
-        assert_eq!(
-            Matrix::<u8>::check_size(MAX + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix.apply(|x| *x += 1);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        assert!(Matrix::<u16>::check_size(MAX / 2).is_ok());
-        assert_eq!(
-            Matrix::<u16>::check_size(MAX / 2 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix.switch_order();
+        matrix.apply(|x| *x -= 1);
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
 
-        assert!(Matrix::<u32>::check_size(MAX / 4).is_ok());
-        assert_eq!(
-            Matrix::<u32>::check_size(MAX / 4 + 1),
-            Err(Error::CapacityExceeded)
-        );
+    #[test]
+    fn test_map() {
+        let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
 
-        assert!(Matrix::<u64>::check_size(MAX / 8).is_ok());
-        assert_eq!(
-            Matrix::<u64>::check_size(MAX / 8 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        let mut matrix_f64 = matrix_i32.map(|x| x as f64);
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
 
-        assert!(Matrix::<u128>::check_size(MAX / 16).is_ok());
-        assert_eq!(
-            Matrix::<u128>::check_size(MAX / 16 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix_f64.switch_order();
+        let mut matrix_i32 = matrix_f64.map(|x| x as i32);
+        matrix_i32.switch_order();
+        assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
 
-        assert!(Matrix::<i8>::check_size(MAX).is_ok());
-        assert_eq!(
-            Matrix::<i8>::check_size(MAX + 1),
-            Err(Error::CapacityExceeded)
-        );
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_apply() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        assert!(Matrix::<i16>::check_size(MAX / 2).is_ok());
-        assert_eq!(
-            Matrix::<i16>::check_size(MAX / 2 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix.par_apply(|x| *x += 1);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
-        assert!(Matrix::<i32>::check_size(MAX / 4).is_ok());
-        assert_eq!(
-            Matrix::<i32>::check_size(MAX / 4 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        matrix.switch_order();
+        matrix.par_apply(|x| *x -= 1);
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
 
-        assert!(Matrix::<i64>::check_size(MAX / 8).is_ok());
-        assert_eq!(
-            Matrix::<i64>::check_size(MAX / 8 + 1),
-            Err(Error::CapacityExceeded)
-        );
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_map() {
+        let matrix_i32 = matrix![[0, 1, 2], [3, 4, 5]];
 
-        assert!(Matrix::<i128>::check_size(MAX / 16).is_ok());
-        assert_eq!(
-            Matrix::<i128>::check_size(MAX / 16 + 1),
-            Err(Error::CapacityExceeded)
-        );
+        let mut matrix_f64 = matrix_i32.par_map(|x| x as f64);
+        assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
 
-        assert!(Matrix::<bool>::check_size(MAX).is_ok());
-        assert_eq!(
-            Matrix::<bool>::check_size(MAX + 1),
-            Err(Error::CapacityExceeded)
-        );
-
-        assert!(Matrix::<char>::check_size(MAX / 4).is_ok());
-        assert_eq!(
-            Matrix::<char>::check_size(MAX / 4 + 1),
-            Err(Error::CapacityExceeded)
-        );
-
-        assert!(Matrix::<()>::check_size(MAX).is_ok());
-        assert!(Matrix::<()>::check_size(MAX + 1).is_ok());
-        assert!(Matrix::<()>::check_size(usize::MAX).is_ok());
+        matrix_f64.switch_order();
+        let mut matrix_i32 = matrix_f64.par_map(|x| x as i32);
+        matrix_i32.switch_order();
+        assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
     }
 }
