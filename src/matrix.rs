@@ -184,7 +184,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix[(2, 1)], 5);
     /// ```
     pub fn transpose(&mut self) -> &mut Self {
-        self.order = !self.order;
+        self.order = self.order.switch();
         self
     }
 
@@ -199,7 +199,7 @@ impl<T> Matrix<T> {
     /// assert_eq!(matrix.order(), Order::default());
     ///
     /// matrix.switch_order();
-    /// assert_eq!(matrix.order(), !Order::default());
+    /// assert_eq!(matrix.order(), Order::default().switch());
     ///
     /// matrix.switch_order();
     /// assert_eq!(matrix.order(), Order::default());
@@ -223,7 +223,7 @@ impl<T> Matrix<T> {
             }
         }
 
-        self.order = !self.order;
+        self.order = self.order.switch();
         self
     }
 
