@@ -534,4 +534,49 @@ mod tests {
             ));
         }
     }
+
+    #[test]
+    fn test_iter_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let mut data: Vec<&i32> = matrix.iter_elements().collect();
+        data.sort();
+        assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
+
+        matrix.switch_order();
+        let mut data: Vec<&i32> = matrix.iter_elements().collect();
+        data.sort();
+        assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
+    }
+
+    #[test]
+    fn test_iter_elements_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        for element in matrix.iter_elements_mut() {
+            *element += 1;
+        }
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+
+        matrix.switch_order();
+        for element in matrix.iter_elements_mut() {
+            *element -= 1;
+        }
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[test]
+    fn test_into_iter_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let mut data: Vec<i32> = matrix.clone().into_iter_elements().collect();
+        data.sort();
+        assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
+
+        matrix.switch_order();
+        let mut data: Vec<i32> = matrix.clone().into_iter_elements().collect();
+        data.sort();
+        assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
+    }
 }
