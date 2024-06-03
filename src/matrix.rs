@@ -9,7 +9,6 @@ mod conversion;
 mod fmt;
 mod operation;
 
-use self::index::translate_index_between_orders_unchecked;
 use self::order::Order;
 use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
@@ -208,6 +207,7 @@ impl<T> Matrix<T> {
         let size = self.size();
         let src_shape = self.shape;
         self.shape.transpose();
+        let dest_shape = self.shape;
 
         let mut visited = vec![false; size];
         for index in 0..size {
@@ -217,7 +217,8 @@ impl<T> Matrix<T> {
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
-                let next = translate_index_between_orders_unchecked(current, src_shape);
+                let next =
+                    Self::reindex_to_different_order_unchecked(current, src_shape, dest_shape);
                 self.data.swap(index, next);
                 current = next;
             }
