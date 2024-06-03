@@ -11,7 +11,7 @@ mod operation;
 
 use self::index::translate_index_between_orders_unchecked;
 use self::order::Order;
-use self::shape::{AxisShape, IntoAxisShape, Shape, ShapeLike};
+use self::shape::{AxisShape, Shape, ShapeLike};
 use crate::error::{Error, Result};
 
 #[cfg(feature = "rayon")]
@@ -93,7 +93,7 @@ impl<T: Default> Matrix<T> {
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
         let order = Order::default();
-        let shape = shape.try_into_axis_shape(order)?;
+        let shape = AxisShape::try_from_shape_with(shape, order)?;
         let size = Self::check_size(shape.size())?;
         let data = std::iter::repeat_with(T::default).take(size).collect();
         Ok(Self { order, shape, data })
@@ -276,7 +276,7 @@ impl<T> Matrix<T> {
     where
         T: Default,
     {
-        let shape = shape.try_into_axis_shape(self.order)?;
+        let shape = AxisShape::try_from_shape_with(shape, self.order)?;
         let size = Self::check_size(shape.size())?;
         self.shape = shape;
         self.data.resize_with(size, T::default);
@@ -308,7 +308,7 @@ impl<T> Matrix<T> {
             Ok(size) if (self.size() == size) => (),
             _ => return Err(Error::SizeMismatch),
         }
-        self.shape = shape.into_axis_shape_unchecked(self.order);
+        self.shape = AxisShape::from_shape_with_unchecked(shape, self.order);
         Ok(self)
     }
 

@@ -170,22 +170,6 @@ impl AxisShape {
     }
 }
 
-pub(super) trait IntoAxisShape {
-    fn into_axis_shape_unchecked(self, order: Order) -> AxisShape;
-
-    fn try_into_axis_shape(self, order: Order) -> Result<AxisShape>;
-}
-
-impl<S: ShapeLike> IntoAxisShape for S {
-    fn into_axis_shape_unchecked(self, order: Order) -> AxisShape {
-        AxisShape::from_shape_with_unchecked(self, order)
-    }
-
-    fn try_into_axis_shape(self, order: Order) -> Result<AxisShape> {
-        AxisShape::try_from_shape_with(self, order)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -8,7 +8,7 @@ mod arithmetic {
 use super::index::translate_index_between_orders_unchecked;
 use super::iter::VectorIter;
 use super::order::Order;
-use super::shape::{IntoAxisShape, Shape};
+use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
@@ -408,7 +408,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let order = self.order;
-        let shape = Shape::new(nrows, ncols).try_into_axis_shape(order)?;
+        let shape = AxisShape::try_from_shape_with(Shape::new(nrows, ncols), order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 

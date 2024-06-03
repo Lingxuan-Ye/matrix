@@ -1,6 +1,6 @@
 use super::super::super::iter::VectorIter;
 use super::super::super::order::Order;
-use super::super::super::shape::{IntoAxisShape, Shape};
+use super::super::super::shape::{AxisShape, Shape};
 use super::super::super::Matrix;
 use crate::error::Result;
 use crate::impl_scalar_mul;
@@ -111,7 +111,7 @@ impl<L> Matrix<L> {
         let nrows = self.nrows();
         let ncols = rhs.ncols();
         let order = self.order;
-        let shape = Shape::new(nrows, ncols).try_into_axis_shape(order)?;
+        let shape = AxisShape::try_from_shape_with(Shape::new(nrows, ncols), order)?;
         let size = shape.size();
         let mut data = Vec::with_capacity(size);
 
