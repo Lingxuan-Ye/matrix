@@ -220,27 +220,27 @@ where
     type Output = T;
 
     fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        self.into_axis_index(matrix.order).get(matrix)
+        AxisIndex::from_index(self, matrix.order).get(matrix)
     }
 
     fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        self.into_axis_index(matrix.order).get_mut(matrix)
+        AxisIndex::from_index(self, matrix.order).get_mut(matrix)
     }
 
     unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        unsafe { self.into_axis_index(matrix.order).get_unchecked(matrix) }
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked(matrix) }
     }
 
     unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        unsafe { self.into_axis_index(matrix.order).get_unchecked_mut(matrix) }
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked_mut(matrix) }
     }
 
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        self.into_axis_index(matrix.order).index(matrix)
+        AxisIndex::from_index(self, matrix.order).index(matrix)
     }
 
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        self.into_axis_index(matrix.order).index_mut(matrix)
+        AxisIndex::from_index(self, matrix.order).index_mut(matrix)
     }
 }
 
@@ -326,7 +326,7 @@ impl AxisIndex {
         self
     }
 
-    pub(super) fn from_index_with<I: IndexLike>(index: I, order: Order) -> Self {
+    pub(super) fn from_index<I: IndexLike>(index: I, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (index.row(), index.col()),
             Order::ColMajor => (index.col(), index.row()),
@@ -339,6 +339,22 @@ impl AxisIndex {
         // let minor = (index % shape.major_stride()) / shape.minor_stride();
         let minor = index % shape.major_stride();
         Self { major, minor }
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn try_from_flattened(index: usize, shape: AxisShape) -> Result<Self> {
+        if index >= shape.size() {
+            return Err(Error::IndexOutOfBounds);
+        }
+        Ok(Self::from_flattened_unchecked(index, shape))
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
+        match Self::try_from_flattened(index, shape) {
+            Err(error) => panic!("{error}"),
+            Ok(index) => index,
+        }
     }
 
     pub(super) fn into_flattened_unchecked(self, shape: AxisShape) -> usize {
@@ -395,13 +411,19 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     }
 }
 
-pub(super) trait IntoAxisIndex {
-    fn into_axis_index(self, order: Order) -> AxisIndex;
-}
+impl<T> Matrix<T> {
+    pub(super) fn flatten_index_unchecked<I: IndexLike>(&self, index: I) -> usize {
+        AxisIndex::from_index(index, self.order).into_flattened_unchecked(self.shape)
+    }
 
-impl<I: IndexLike> IntoAxisIndex for I {
-    fn into_axis_index(self, order: Order) -> AxisIndex {
-        AxisIndex::from_index_with(self, order)
+    #[allow(dead_code)]
+    pub(super) fn try_flatten_index<I: IndexLike>(&self, index: I) -> Result<usize> {
+        AxisIndex::from_index(index, self.order).try_into_flattened(self.shape)
+    }
+
+    #[allow(dead_code)]
+    pub(super) fn flatten_index<I: IndexLike>(&self, index: I) -> usize {
+        AxisIndex::from_index(index, self.order).into_flattened(self.shape)
     }
 }
 
