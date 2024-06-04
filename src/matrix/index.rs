@@ -213,37 +213,6 @@ pub trait IndexLike {
     }
 }
 
-unsafe impl<T, I> MatrixIndex<T> for I
-where
-    I: IndexLike,
-{
-    type Output = T;
-
-    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        AxisIndex::from_index(self, matrix.order).get(matrix)
-    }
-
-    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        AxisIndex::from_index(self, matrix.order).get_mut(matrix)
-    }
-
-    unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked(matrix) }
-    }
-
-    unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked_mut(matrix) }
-    }
-
-    fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        AxisIndex::from_index(self, matrix.order).index(matrix)
-    }
-
-    fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        AxisIndex::from_index(self, matrix.order).index_mut(matrix)
-    }
-}
-
 /// A structure that represents the index of an element in a [`Matrix`].
 ///
 /// # Notes
@@ -307,6 +276,37 @@ impl IndexLike for [usize; 2] {
 
     fn col(&self) -> usize {
         self[1]
+    }
+}
+
+unsafe impl<T, I> MatrixIndex<T> for I
+where
+    I: IndexLike,
+{
+    type Output = T;
+
+    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
+        AxisIndex::from_index(self, matrix.order).get(matrix)
+    }
+
+    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
+        AxisIndex::from_index(self, matrix.order).get_mut(matrix)
+    }
+
+    unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked(matrix) }
+    }
+
+    unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked_mut(matrix) }
+    }
+
+    fn index(self, matrix: &Matrix<T>) -> &Self::Output {
+        AxisIndex::from_index(self, matrix.order).index(matrix)
+    }
+
+    fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
+        AxisIndex::from_index(self, matrix.order).index_mut(matrix)
     }
 }
 
