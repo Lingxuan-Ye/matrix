@@ -1,3 +1,4 @@
+use super::index::Index;
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
@@ -187,7 +188,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Index};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -197,6 +198,89 @@ impl<T> Matrix<T> {
     /// ```
     pub fn into_iter_elements(self) -> impl DoubleEndedIterator<Item = T> {
         self.data.into_iter()
+    }
+
+    /// Returns an iterator over the elements of the matrix along with
+    /// their indices.
+    ///
+    /// # Notes
+    ///
+    /// The iteration order of elements is not guaranteed. In the current
+    /// implementation, elements are iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for (index, element) in matrix.enumerate_elements() {
+    ///     assert_eq!(element, &matrix[index]);
+    /// }
+    /// ```
+    pub fn enumerate_elements(&self) -> impl DoubleEndedIterator<Item = (Index, &T)> {
+        self.data.iter().enumerate().map(|(index, element)| {
+            let index = Self::unflatten_index(index, self.order, self.shape);
+            (index, element)
+        })
+    }
+
+    /// Returns an iterator that allows modifying each element
+    /// of the matrix along with its index.
+    ///
+    /// # Notes
+    ///
+    /// The iteration order of elements is not guaranteed. In the current
+    /// implementation, elements are iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for (index, element) in matrix.enumerate_elements_mut() {
+    ///     *element += index.row as i32 + index.col as i32;
+    /// }
+    ///
+    /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
+    /// ```
+    pub fn enumerate_elements_mut(&mut self) -> impl DoubleEndedIterator<Item = (Index, &mut T)> {
+        self.data.iter_mut().enumerate().map(|(index, element)| {
+            let index = Self::unflatten_index(index, self.order, self.shape);
+            (index, element)
+        })
+    }
+
+    /// Creates a consuming iterator, that is, one that moves each
+    /// element out of the matrix along with its index.
+    ///
+    /// # Notes
+    ///
+    /// The iteration order of elements is not guaranteed. In the current
+    /// implementation, elements are iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for (index, element) in matrix.clone().into_enumerate_elements() {
+    ///     assert_eq!(element, matrix[index]);
+    /// }
+    /// ```
+    pub fn into_enumerate_elements(self) -> impl DoubleEndedIterator<Item = (Index, T)> {
+        self.data
+            .into_iter()
+            .enumerate()
+            .map(move |(index, element)| {
+                let index = Self::unflatten_index(index, self.order, self.shape);
+                (index, element)
+            })
     }
 }
 
