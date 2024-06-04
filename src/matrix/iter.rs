@@ -272,9 +272,10 @@ impl<T> Matrix<T> {
         n: usize,
     ) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.major() {
-            return Err(Error::IndexOutOfBounds);
+            Err(Error::IndexOutOfBounds)
+        } else {
+            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
         }
-        unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
     }
 
     pub(super) fn iter_by_major_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
@@ -295,9 +296,10 @@ impl<T> Matrix<T> {
         n: usize,
     ) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.minor() {
-            return Err(Error::IndexOutOfBounds);
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.iter_nth_minor_axis_vector_unchecked(n))
         }
-        Ok(self.iter_nth_minor_axis_vector_unchecked(n))
     }
 
     pub(super) fn iter_by_minor_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
