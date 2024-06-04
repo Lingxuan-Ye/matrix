@@ -206,41 +206,10 @@ pub trait IndexLike {
     /// Returns the column of the index.
     fn col(&self) -> usize;
 
-    /// Returns `true` if the index is out of bounds of given matrix.
-    fn is_out_of_bounds_of<T>(&self, matrix: &Matrix<T>) -> bool {
+    /// Returns `true` if the index is out of bounds for given matrix.
+    fn is_out_of_bounds<T>(&self, matrix: &Matrix<T>) -> bool {
         let shape = matrix.shape();
         self.row() >= shape.nrows || self.col() >= shape.ncols
-    }
-}
-
-unsafe impl<T, I> MatrixIndex<T> for I
-where
-    I: IndexLike,
-{
-    type Output = T;
-
-    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
-        AxisIndex::from_index(self, matrix.order).get(matrix)
-    }
-
-    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
-        AxisIndex::from_index(self, matrix.order).get_mut(matrix)
-    }
-
-    unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
-        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked(matrix) }
-    }
-
-    unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked_mut(matrix) }
-    }
-
-    fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        AxisIndex::from_index(self, matrix.order).index(matrix)
-    }
-
-    fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        AxisIndex::from_index(self, matrix.order).index_mut(matrix)
     }
 }
 
@@ -310,14 +279,45 @@ impl IndexLike for [usize; 2] {
     }
 }
 
+unsafe impl<T, I> MatrixIndex<T> for I
+where
+    I: IndexLike,
+{
+    type Output = T;
+
+    fn get(self, matrix: &Matrix<T>) -> Result<&Self::Output> {
+        AxisIndex::from_index(self, matrix.order).get(matrix)
+    }
+
+    fn get_mut(self, matrix: &mut Matrix<T>) -> Result<&mut Self::Output> {
+        AxisIndex::from_index(self, matrix.order).get_mut(matrix)
+    }
+
+    unsafe fn get_unchecked(self, matrix: &Matrix<T>) -> &Self::Output {
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked(matrix) }
+    }
+
+    unsafe fn get_unchecked_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
+        unsafe { AxisIndex::from_index(self, matrix.order).get_unchecked_mut(matrix) }
+    }
+
+    fn index(self, matrix: &Matrix<T>) -> &Self::Output {
+        AxisIndex::from_index(self, matrix.order).index(matrix)
+    }
+
+    fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
+        AxisIndex::from_index(self, matrix.order).index_mut(matrix)
+    }
+}
+
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub(super) struct AxisIndex {
-    major: usize,
-    minor: usize,
+    pub(super) major: usize,
+    pub(super) minor: usize,
 }
 
 impl AxisIndex {
-    pub(super) fn is_out_of_bounds_of(&self, shape: AxisShape) -> bool {
+    pub(super) fn is_out_of_bounds(&self, shape: AxisShape) -> bool {
         self.major >= shape.major() || self.minor >= shape.minor()
     }
 
@@ -325,7 +325,14 @@ impl AxisIndex {
         (self.major, self.minor) = (self.minor, self.major);
         self
     }
+}
 
+/*
+For `IndexLike`, `AxisIndex`, and `usize` (flattened index), we assume that
+the flattened index is always valid. Therefore, in the conversions among
+these three, only conversions to a flattened index require boundary checks.
+*/
+impl AxisIndex {
     pub(super) fn from_index<I: IndexLike>(index: I, order: Order) -> Self {
         let (major, minor) = match order {
             Order::RowMajor => (index.row(), index.col()),
@@ -334,26 +341,17 @@ impl AxisIndex {
         Self { major, minor }
     }
 
-    pub(super) fn from_flattened_unchecked(index: usize, shape: AxisShape) -> Self {
+    pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
         let major = index / shape.major_stride();
         // let minor = (index % shape.major_stride()) / shape.minor_stride();
         let minor = index % shape.major_stride();
         Self { major, minor }
     }
 
-    #[allow(dead_code)]
-    pub(super) fn try_from_flattened(index: usize, shape: AxisShape) -> Result<Self> {
-        if index >= shape.size() {
-            return Err(Error::IndexOutOfBounds);
-        }
-        Ok(Self::from_flattened_unchecked(index, shape))
-    }
-
-    #[allow(dead_code)]
-    pub(super) fn from_flattened(index: usize, shape: AxisShape) -> Self {
-        match Self::try_from_flattened(index, shape) {
-            Err(error) => panic!("{error}"),
-            Ok(index) => index,
+    pub(super) fn into_index(self, order: Order) -> Index {
+        match order {
+            Order::RowMajor => Index::new(self.major, self.minor),
+            Order::ColMajor => Index::new(self.minor, self.major),
         }
     }
 
@@ -363,16 +361,10 @@ impl AxisIndex {
     }
 
     pub(super) fn try_into_flattened(self, shape: AxisShape) -> Result<usize> {
-        if self.is_out_of_bounds_of(shape) {
-            return Err(Error::IndexOutOfBounds);
-        }
-        Ok(self.into_flattened_unchecked(shape))
-    }
-
-    pub(super) fn into_flattened(self, shape: AxisShape) -> usize {
-        match self.try_into_flattened(shape) {
-            Err(error) => panic!("{error}"),
-            Ok(index) => index,
+        if self.is_out_of_bounds(shape) {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.into_flattened_unchecked(shape))
         }
     }
 }
@@ -401,38 +393,48 @@ unsafe impl<T> MatrixIndex<T> for AxisIndex {
     }
 
     fn index(self, matrix: &Matrix<T>) -> &Self::Output {
-        let index = self.into_flattened(matrix.shape);
-        &matrix.data[index]
+        match self.try_into_flattened(matrix.shape) {
+            Err(error) => panic!("{error}"),
+            Ok(index) => unsafe { matrix.data.get_unchecked(index) },
+        }
     }
 
     fn index_mut(self, matrix: &mut Matrix<T>) -> &mut Self::Output {
-        let index = self.into_flattened(matrix.shape);
-        &mut matrix.data[index]
+        match self.try_into_flattened(matrix.shape) {
+            Err(error) => panic!("{error}"),
+            Ok(index) => unsafe { matrix.data.get_unchecked_mut(index) },
+        }
     }
 }
 
 impl<T> Matrix<T> {
-    pub(super) fn flatten_index_unchecked<I: IndexLike>(&self, index: I) -> usize {
-        AxisIndex::from_index(index, self.order).into_flattened_unchecked(self.shape)
+    pub(super) fn unflatten_index(index: usize, order: Order, shape: AxisShape) -> Index {
+        AxisIndex::from_flattened(index, shape).into_index(order)
+    }
+
+    pub(super) fn flatten_index_unchecked<I: IndexLike>(
+        index: I,
+        order: Order,
+        shape: AxisShape,
+    ) -> usize {
+        AxisIndex::from_index(index, order).into_flattened_unchecked(shape)
     }
 
     #[allow(dead_code)]
-    pub(super) fn try_flatten_index<I: IndexLike>(&self, index: I) -> Result<usize> {
-        AxisIndex::from_index(index, self.order).try_into_flattened(self.shape)
-    }
-
-    #[allow(dead_code)]
-    pub(super) fn flatten_index<I: IndexLike>(&self, index: I) -> usize {
-        AxisIndex::from_index(index, self.order).into_flattened(self.shape)
+    pub(super) fn try_flatten_index<I: IndexLike>(
+        index: I,
+        order: Order,
+        shape: AxisShape,
+    ) -> Result<usize> {
+        AxisIndex::from_index(index, order).try_into_flattened(shape)
     }
 
     /// # Notes
     ///
     /// For performance reasons, this associated function does not
-    /// transpose `src_shape` itself, but it **strictly requires**
-    /// that `src_shape` and `dest_shape` must be transposes of each
-    /// other. Failing to meet this condition will result in undefined
-    /// results.
+    /// transpose `src_shape` itself, but **strictly requires** that
+    /// `src_shape` and `dest_shape` must be transposes of each other.
+    /// Failing to meet this condition will result in undefined results.
     #[inline]
     pub(super) fn reindex_to_different_order_unchecked(
         index: usize,
@@ -447,7 +449,7 @@ impl<T> Matrix<T> {
 
         ```
         let src_flattened_index = index;
-        let src_axis_index = AxisIndex::from_flattened_unchecked(src_flattened_index, src_shape);
+        let src_axis_index = AxisIndex::from_flattened(src_flattened_index, src_shape);
 
         // invariant
         let position = match src_order {
@@ -468,7 +470,7 @@ impl<T> Matrix<T> {
         Note that `dest_axis_index` is always the transpose of `src_axis_index`,
         which allows us to simplify the code to the following:
         */
-        let mut index = AxisIndex::from_flattened_unchecked(index, src_shape);
+        let mut index = AxisIndex::from_flattened(index, src_shape);
         index.transpose();
         index.into_flattened_unchecked(dest_shape)
     }
@@ -580,24 +582,24 @@ mod tests {
 
         assert_eq!(Index::new(2, 3).row(), 2);
         assert_eq!(Index::new(2, 3).col(), 3);
-        assert!(!Index::new(1, 2).is_out_of_bounds_of(&matrix));
-        assert!(Index::new(1, 3).is_out_of_bounds_of(&matrix));
-        assert!(Index::new(2, 2).is_out_of_bounds_of(&matrix));
-        assert!(Index::new(2, 3).is_out_of_bounds_of(&matrix));
+        assert!(!Index::new(1, 2).is_out_of_bounds(&matrix));
+        assert!(Index::new(1, 3).is_out_of_bounds(&matrix));
+        assert!(Index::new(2, 2).is_out_of_bounds(&matrix));
+        assert!(Index::new(2, 3).is_out_of_bounds(&matrix));
 
         assert_eq!((2, 3).row(), 2);
         assert_eq!((2, 3).col(), 3);
-        assert!(!(1, 2).is_out_of_bounds_of(&matrix));
-        assert!((1, 3).is_out_of_bounds_of(&matrix));
-        assert!((2, 2).is_out_of_bounds_of(&matrix));
-        assert!((2, 3).is_out_of_bounds_of(&matrix));
+        assert!(!(1, 2).is_out_of_bounds(&matrix));
+        assert!((1, 3).is_out_of_bounds(&matrix));
+        assert!((2, 2).is_out_of_bounds(&matrix));
+        assert!((2, 3).is_out_of_bounds(&matrix));
 
         assert_eq!([2, 3].row(), 2);
         assert_eq!([2, 3].col(), 3);
-        assert!(![1, 2].is_out_of_bounds_of(&matrix));
-        assert!([1, 3].is_out_of_bounds_of(&matrix));
-        assert!([2, 2].is_out_of_bounds_of(&matrix));
-        assert!([2, 3].is_out_of_bounds_of(&matrix));
+        assert!(![1, 2].is_out_of_bounds(&matrix));
+        assert!([1, 3].is_out_of_bounds(&matrix));
+        assert!([2, 2].is_out_of_bounds(&matrix));
+        assert!([2, 3].is_out_of_bounds(&matrix));
     }
 
     #[test]
