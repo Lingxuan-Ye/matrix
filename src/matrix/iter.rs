@@ -299,7 +299,8 @@ where
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// assert_eq!(matrix.par_iter_elements().sum::<i32>(), 15);
+    /// let sum = matrix.par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 15);
     /// ```
     pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T> {
         self.data.par_iter()
@@ -334,7 +335,8 @@ where
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// assert_eq!(matrix.into_par_iter_elements().sum::<i32>(), 15);
+    /// let sum = matrix.into_par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 15);
     /// ```
     pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T> {
         self.data.into_par_iter()
@@ -630,6 +632,7 @@ mod tests {
         assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
 
         matrix.switch_order();
+
         let mut data: Vec<&i32> = matrix.iter_elements().collect();
         data.sort();
         assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
@@ -645,6 +648,7 @@ mod tests {
         assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
+
         for element in matrix.iter_elements_mut() {
             *element -= 1;
         }
@@ -661,8 +665,104 @@ mod tests {
         assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
 
         matrix.switch_order();
+
         let mut data: Vec<i32> = matrix.clone().into_iter_elements().collect();
         data.sort();
         assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn test_enumerate_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        for (index, element) in matrix.enumerate_elements() {
+            assert_eq!(element, &matrix[index]);
+        }
+
+        matrix.switch_order();
+
+        for (index, element) in matrix.enumerate_elements() {
+            assert_eq!(element, &matrix[index]);
+        }
+    }
+
+    #[test]
+    fn test_enumerate_elements_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        for (index, element) in matrix.enumerate_elements_mut() {
+            *element += index.row as i32 + index.col as i32;
+        }
+        assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
+
+        matrix.switch_order();
+
+        for (index, element) in matrix.enumerate_elements_mut() {
+            *element -= index.row as i32 + index.col as i32;
+        }
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[test]
+    fn test_into_enumerate_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        for (index, element) in matrix.clone().into_enumerate_elements() {
+            assert_eq!(element, matrix[index]);
+        }
+
+        matrix.switch_order();
+
+        for (index, element) in matrix.clone().into_enumerate_elements() {
+            assert_eq!(element, matrix[index]);
+        }
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_iter_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let sum = matrix.par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
+
+        matrix.switch_order();
+
+        let sum = matrix.par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_iter_elements_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix
+            .par_iter_elements_mut()
+            .for_each(|element| *element += 1);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+
+        matrix.switch_order();
+
+        matrix
+            .par_iter_elements_mut()
+            .for_each(|element| *element -= 1);
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_into_par_iter_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
+
+        matrix.switch_order();
+
+        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
     }
 }
