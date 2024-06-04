@@ -206,8 +206,8 @@ pub trait IndexLike {
     /// Returns the column of the index.
     fn col(&self) -> usize;
 
-    /// Returns `true` if the index is out of bounds of given matrix.
-    fn is_out_of_bounds_of<T>(&self, matrix: &Matrix<T>) -> bool {
+    /// Returns `true` if the index is out of bounds for given matrix.
+    fn is_out_of_bounds<T>(&self, matrix: &Matrix<T>) -> bool {
         let shape = matrix.shape();
         self.row() >= shape.nrows || self.col() >= shape.ncols
     }
@@ -317,7 +317,7 @@ pub(super) struct AxisIndex {
 }
 
 impl AxisIndex {
-    pub(super) fn is_out_of_bounds_of(&self, shape: AxisShape) -> bool {
+    pub(super) fn is_out_of_bounds(&self, shape: AxisShape) -> bool {
         self.major >= shape.major() || self.minor >= shape.minor()
     }
 
