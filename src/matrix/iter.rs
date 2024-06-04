@@ -1,3 +1,4 @@
+use super::index::Index;
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
@@ -148,7 +149,7 @@ impl<T> Matrix<T> {
     /// data.sort();  // order of elements is not guaranteed
     /// assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
     /// ```
-    pub fn iter_elements(&self) -> impl Iterator<Item = &T> {
+    pub fn iter_elements(&self) -> impl DoubleEndedIterator<Item = &T> {
         self.data.iter()
     }
 
@@ -172,7 +173,7 @@ impl<T> Matrix<T> {
     /// }
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
-    pub fn iter_elements_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub fn iter_elements_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut T> {
         self.data.iter_mut()
     }
 
@@ -187,7 +188,7 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{matrix, Index};
+    /// use matreex::matrix;
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
@@ -195,8 +196,91 @@ impl<T> Matrix<T> {
     /// data.sort();  // order of elements is not guaranteed
     /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
     /// ```
-    pub fn into_iter_elements(self) -> impl Iterator<Item = T> {
+    pub fn into_iter_elements(self) -> impl DoubleEndedIterator<Item = T> {
         self.data.into_iter()
+    }
+
+    /// Returns an iterator over the elements of the matrix along with
+    /// their indices.
+    ///
+    /// # Notes
+    ///
+    /// The iteration order of elements is not guaranteed. In the current
+    /// implementation, elements are iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for (index, element) in matrix.enumerate_elements() {
+    ///     assert_eq!(element, &matrix[index]);
+    /// }
+    /// ```
+    pub fn enumerate_elements(&self) -> impl DoubleEndedIterator<Item = (Index, &T)> {
+        self.data.iter().enumerate().map(|(index, element)| {
+            let index = Self::unflatten_index(index, self.order, self.shape);
+            (index, element)
+        })
+    }
+
+    /// Returns an iterator that allows modifying each element
+    /// of the matrix along with its index.
+    ///
+    /// # Notes
+    ///
+    /// The iteration order of elements is not guaranteed. In the current
+    /// implementation, elements are iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for (index, element) in matrix.enumerate_elements_mut() {
+    ///     *element += index.row as i32 + index.col as i32;
+    /// }
+    ///
+    /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
+    /// ```
+    pub fn enumerate_elements_mut(&mut self) -> impl DoubleEndedIterator<Item = (Index, &mut T)> {
+        self.data.iter_mut().enumerate().map(|(index, element)| {
+            let index = Self::unflatten_index(index, self.order, self.shape);
+            (index, element)
+        })
+    }
+
+    /// Creates a consuming iterator, that is, one that moves each
+    /// element out of the matrix along with its index.
+    ///
+    /// # Notes
+    ///
+    /// The iteration order of elements is not guaranteed. In the current
+    /// implementation, elements are iterated in memory order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Index};
+    ///
+    /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for (index, element) in matrix.clone().into_enumerate_elements() {
+    ///     assert_eq!(element, matrix[index]);
+    /// }
+    /// ```
+    pub fn into_enumerate_elements(self) -> impl DoubleEndedIterator<Item = (Index, T)> {
+        self.data
+            .into_iter()
+            .enumerate()
+            .map(move |(index, element)| {
+                let index = Self::unflatten_index(index, self.order, self.shape);
+                (index, element)
+            })
     }
 }
 
@@ -215,7 +299,8 @@ where
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// assert_eq!(matrix.par_iter_elements().sum::<i32>(), 15);
+    /// let sum = matrix.par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 15);
     /// ```
     pub fn par_iter_elements(&self) -> impl ParallelIterator<Item = &T> {
         self.data.par_iter()
@@ -250,7 +335,8 @@ where
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// assert_eq!(matrix.into_par_iter_elements().sum::<i32>(), 15);
+    /// let sum = matrix.into_par_iter_elements().sum::<i32>();
+    /// assert_eq!(sum, 15);
     /// ```
     pub fn into_par_iter_elements(self) -> impl ParallelIterator<Item = T> {
         self.data.into_par_iter()
@@ -272,9 +358,10 @@ impl<T> Matrix<T> {
         n: usize,
     ) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.major() {
-            return Err(Error::IndexOutOfBounds);
+            Err(Error::IndexOutOfBounds)
+        } else {
+            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
         }
-        unsafe { Ok(self.iter_nth_major_axis_vector_unchecked(n)) }
     }
 
     pub(super) fn iter_by_major_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
@@ -295,9 +382,10 @@ impl<T> Matrix<T> {
         n: usize,
     ) -> Result<impl DoubleEndedIterator<Item = &T>> {
         if n >= self.minor() {
-            return Err(Error::IndexOutOfBounds);
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.iter_nth_minor_axis_vector_unchecked(n))
         }
-        Ok(self.iter_nth_minor_axis_vector_unchecked(n))
     }
 
     pub(super) fn iter_by_minor_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
@@ -544,6 +632,7 @@ mod tests {
         assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
 
         matrix.switch_order();
+
         let mut data: Vec<&i32> = matrix.iter_elements().collect();
         data.sort();
         assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
@@ -559,6 +648,7 @@ mod tests {
         assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
 
         matrix.switch_order();
+
         for element in matrix.iter_elements_mut() {
             *element -= 1;
         }
@@ -575,8 +665,104 @@ mod tests {
         assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
 
         matrix.switch_order();
+
         let mut data: Vec<i32> = matrix.clone().into_iter_elements().collect();
         data.sort();
         assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
+    }
+
+    #[test]
+    fn test_enumerate_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        for (index, element) in matrix.enumerate_elements() {
+            assert_eq!(element, &matrix[index]);
+        }
+
+        matrix.switch_order();
+
+        for (index, element) in matrix.enumerate_elements() {
+            assert_eq!(element, &matrix[index]);
+        }
+    }
+
+    #[test]
+    fn test_enumerate_elements_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        for (index, element) in matrix.enumerate_elements_mut() {
+            *element += index.row as i32 + index.col as i32;
+        }
+        assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
+
+        matrix.switch_order();
+
+        for (index, element) in matrix.enumerate_elements_mut() {
+            *element -= index.row as i32 + index.col as i32;
+        }
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[test]
+    fn test_into_enumerate_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        for (index, element) in matrix.clone().into_enumerate_elements() {
+            assert_eq!(element, matrix[index]);
+        }
+
+        matrix.switch_order();
+
+        for (index, element) in matrix.clone().into_enumerate_elements() {
+            assert_eq!(element, matrix[index]);
+        }
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_iter_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let sum = matrix.par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
+
+        matrix.switch_order();
+
+        let sum = matrix.par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_par_iter_elements_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        matrix
+            .par_iter_elements_mut()
+            .for_each(|element| *element += 1);
+        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+
+        matrix.switch_order();
+
+        matrix
+            .par_iter_elements_mut()
+            .for_each(|element| *element -= 1);
+        matrix.switch_order();
+        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[cfg(feature = "rayon")]
+    #[test]
+    fn test_into_par_iter_elements() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
+
+        matrix.switch_order();
+
+        let sum = matrix.clone().into_par_iter_elements().sum::<i32>();
+        assert_eq!(sum, 15);
     }
 }

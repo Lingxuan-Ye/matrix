@@ -168,14 +168,6 @@ impl AxisShape {
         shape.size()?;
         Ok(Self::from_shape_unchecked(shape, order))
     }
-
-    #[allow(dead_code)]
-    pub(super) fn from_shape<S: ShapeLike>(shape: S, order: Order) -> Self {
-        match Self::try_from_shape(shape, order) {
-            Err(error) => panic!("{error}"),
-            Ok(shape) => shape,
-        }
-    }
 }
 
 #[cfg(test)]

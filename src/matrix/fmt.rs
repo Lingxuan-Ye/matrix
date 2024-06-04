@@ -71,7 +71,8 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
                     write!(f, "{SPACE}")?;
                 }
                 for col in 0..ncols {
-                    let index = self.flatten_index_unchecked(Index::new(row, col));
+                    let index =
+                        Self::flatten_index_unchecked(Index::new(row, col), self.order, self.shape);
                     if line == 0 {
                         write_dim!(f, "{index:>index_width$}")?;
                     } else {
@@ -132,7 +133,8 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
                     write!(f, "{SPACE}")?;
                 }
                 for col in 0..ncols {
-                    let index = self.flatten_index_unchecked(Index::new(row, col));
+                    let index =
+                        Self::flatten_index_unchecked(Index::new(row, col), self.order, self.shape);
                     match cache[index].next() {
                         None => write!(f, "{SPACE:<element_width$}")?,
                         Some(element_line) => write!(f, "{element_line:<element_width$}")?,
