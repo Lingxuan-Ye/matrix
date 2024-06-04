@@ -148,7 +148,7 @@ impl<T> Matrix<T> {
     /// data.sort();  // order of elements is not guaranteed
     /// assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
     /// ```
-    pub fn iter_elements(&self) -> impl Iterator<Item = &T> {
+    pub fn iter_elements(&self) -> impl DoubleEndedIterator<Item = &T> {
         self.data.iter()
     }
 
@@ -172,7 +172,7 @@ impl<T> Matrix<T> {
     /// }
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
-    pub fn iter_elements_mut(&mut self) -> impl Iterator<Item = &mut T> {
+    pub fn iter_elements_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut T> {
         self.data.iter_mut()
     }
 
@@ -195,7 +195,7 @@ impl<T> Matrix<T> {
     /// data.sort();  // order of elements is not guaranteed
     /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
     /// ```
-    pub fn into_iter_elements(self) -> impl Iterator<Item = T> {
+    pub fn into_iter_elements(self) -> impl DoubleEndedIterator<Item = T> {
         self.data.into_iter()
     }
 }
