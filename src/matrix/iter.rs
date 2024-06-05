@@ -39,8 +39,12 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_rows(&self) -> MatrixIter<&T> {
         match self.order {
-            Order::RowMajor => Box::new(self.iter_by_major_axis()),
-            Order::ColMajor => Box::new(self.iter_by_minor_axis()),
+            Order::RowMajor => Box::new((0..self.major()).map(|n| -> VectorIter<&T> {
+                unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
+            })),
+            Order::ColMajor => Box::new((0..self.minor()).map(|n| -> VectorIter<&T> {
+                Box::new(self.iter_nth_minor_axis_vector_unchecked(n))
+            })),
         }
     }
 
@@ -73,8 +77,12 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_cols(&self) -> MatrixIter<&T> {
         match self.order {
-            Order::RowMajor => Box::new(self.iter_by_minor_axis()),
-            Order::ColMajor => Box::new(self.iter_by_major_axis()),
+            Order::RowMajor => Box::new((0..self.minor()).map(|n| -> VectorIter<&T> {
+                Box::new(self.iter_nth_minor_axis_vector_unchecked(n))
+            })),
+            Order::ColMajor => Box::new((0..self.major()).map(|n| -> VectorIter<&T> {
+                unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
+            })),
         }
     }
 
@@ -366,12 +374,6 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(super) fn iter_by_major_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
-        (0..self.major()).map(|n| -> VectorIter<&T> {
-            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
-        })
-    }
-
     pub(super) fn iter_nth_minor_axis_vector_unchecked(
         &self,
         n: usize,
@@ -388,11 +390,6 @@ impl<T> Matrix<T> {
         } else {
             Ok(self.iter_nth_minor_axis_vector_unchecked(n))
         }
-    }
-
-    pub(super) fn iter_by_minor_axis(&self) -> impl DoubleEndedIterator<Item = VectorIter<&T>> {
-        (0..self.minor())
-            .map(|n| -> VectorIter<&T> { Box::new(self.iter_nth_minor_axis_vector_unchecked(n)) })
     }
 }
 
