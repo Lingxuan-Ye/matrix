@@ -215,11 +215,11 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// for (index, element) in matrix.enumerate_elements() {
+    /// for (index, element) in matrix.iter_elements_with_index() {
     ///     assert_eq!(element, &matrix[index]);
     /// }
     /// ```
-    pub fn enumerate_elements(&self) -> impl DoubleEndedIterator<Item = (Index, &T)> {
+    pub fn iter_elements_with_index(&self) -> impl DoubleEndedIterator<Item = (Index, &T)> {
         self.data.iter().enumerate().map(|(index, element)| {
             let index = Self::unflatten_index(index, self.order, self.shape);
             (index, element)
@@ -241,13 +241,15 @@ impl<T> Matrix<T> {
     ///
     /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// for (index, element) in matrix.enumerate_elements_mut() {
+    /// for (index, element) in matrix.iter_elements_mut_with_index() {
     ///     *element += index.row as i32 + index.col as i32;
     /// }
     ///
     /// assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
     /// ```
-    pub fn enumerate_elements_mut(&mut self) -> impl DoubleEndedIterator<Item = (Index, &mut T)> {
+    pub fn iter_elements_mut_with_index(
+        &mut self,
+    ) -> impl DoubleEndedIterator<Item = (Index, &mut T)> {
         self.data.iter_mut().enumerate().map(|(index, element)| {
             let index = Self::unflatten_index(index, self.order, self.shape);
             (index, element)
@@ -269,11 +271,11 @@ impl<T> Matrix<T> {
     ///
     /// let matrix = matrix![[0, 1, 2], [3, 4, 5]];
     ///
-    /// for (index, element) in matrix.clone().into_enumerate_elements() {
+    /// for (index, element) in matrix.clone().into_iter_elements_with_index() {
     ///     assert_eq!(element, matrix[index]);
     /// }
     /// ```
-    pub fn into_enumerate_elements(self) -> impl DoubleEndedIterator<Item = (Index, T)> {
+    pub fn into_iter_elements_with_index(self) -> impl DoubleEndedIterator<Item = (Index, T)> {
         self.data
             .into_iter()
             .enumerate()
@@ -672,32 +674,32 @@ mod tests {
     }
 
     #[test]
-    fn test_enumerate_elements() {
+    fn test_iter_elements_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for (index, element) in matrix.enumerate_elements() {
+        for (index, element) in matrix.iter_elements_with_index() {
             assert_eq!(element, &matrix[index]);
         }
 
         matrix.switch_order();
 
-        for (index, element) in matrix.enumerate_elements() {
+        for (index, element) in matrix.iter_elements_with_index() {
             assert_eq!(element, &matrix[index]);
         }
     }
 
     #[test]
-    fn test_enumerate_elements_mut() {
+    fn test_iter_elements_mut_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for (index, element) in matrix.enumerate_elements_mut() {
+        for (index, element) in matrix.iter_elements_mut_with_index() {
             *element += index.row as i32 + index.col as i32;
         }
         assert_eq!(matrix, matrix![[0, 2, 4], [4, 6, 8]]);
 
         matrix.switch_order();
 
-        for (index, element) in matrix.enumerate_elements_mut() {
+        for (index, element) in matrix.iter_elements_mut_with_index() {
             *element -= index.row as i32 + index.col as i32;
         }
         matrix.switch_order();
@@ -705,16 +707,16 @@ mod tests {
     }
 
     #[test]
-    fn test_into_enumerate_elements() {
+    fn test_into_iter_elements_with_index() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        for (index, element) in matrix.clone().into_enumerate_elements() {
+        for (index, element) in matrix.clone().into_iter_elements_with_index() {
             assert_eq!(element, matrix[index]);
         }
 
         matrix.switch_order();
 
-        for (index, element) in matrix.clone().into_enumerate_elements() {
+        for (index, element) in matrix.clone().into_iter_elements_with_index() {
             assert_eq!(element, matrix[index]);
         }
     }
