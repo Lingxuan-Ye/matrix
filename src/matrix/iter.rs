@@ -6,11 +6,17 @@ use crate::error::{Error, Result};
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
+/// An iterator that knows its exact length and can yield elements
+/// from both ends.
+pub trait ExactSizeDoubleEndedIterator: ExactSizeIterator + DoubleEndedIterator {}
+
+impl<I> ExactSizeDoubleEndedIterator for I where I: ExactSizeIterator + DoubleEndedIterator {}
+
 /// A trait object that represents a double-ended iterator over a vector.
-pub type VectorIter<'a, T> = Box<dyn DoubleEndedIterator<Item = T> + 'a>;
+pub type VectorIter<'a, T> = Box<dyn ExactSizeDoubleEndedIterator<Item = T> + 'a>;
 
 /// A trait object that represents a double-ended iterator over a matrix.
-pub type MatrixIter<'a, T> = Box<dyn DoubleEndedIterator<Item = VectorIter<'a, T>> + 'a>;
+pub type MatrixIter<'a, T> = Box<dyn ExactSizeDoubleEndedIterator<Item = VectorIter<'a, T>> + 'a>;
 
 impl<T> Matrix<T> {
     /// Returns an iterator over the rows of the matrix.
@@ -157,7 +163,7 @@ impl<T> Matrix<T> {
     /// data.sort();  // order of elements is not guaranteed
     /// assert_eq!(data, vec![&0, &1, &2, &3, &4, &5]);
     /// ```
-    pub fn iter_elements(&self) -> impl DoubleEndedIterator<Item = &T> {
+    pub fn iter_elements(&self) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
         self.data.iter()
     }
 
@@ -181,7 +187,7 @@ impl<T> Matrix<T> {
     /// }
     /// assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
     /// ```
-    pub fn iter_elements_mut(&mut self) -> impl DoubleEndedIterator<Item = &mut T> {
+    pub fn iter_elements_mut(&mut self) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
         self.data.iter_mut()
     }
 
@@ -204,7 +210,7 @@ impl<T> Matrix<T> {
     /// data.sort();  // order of elements is not guaranteed
     /// assert_eq!(data, vec![0, 1, 2, 3, 4, 5]);
     /// ```
-    pub fn into_iter_elements(self) -> impl DoubleEndedIterator<Item = T> {
+    pub fn into_iter_elements(self) -> impl ExactSizeDoubleEndedIterator<Item = T> {
         self.data.into_iter()
     }
 
@@ -227,7 +233,9 @@ impl<T> Matrix<T> {
     ///     assert_eq!(element, &matrix[index]);
     /// }
     /// ```
-    pub fn iter_elements_with_index(&self) -> impl DoubleEndedIterator<Item = (Index, &T)> {
+    pub fn iter_elements_with_index(
+        &self,
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &T)> {
         self.data.iter().enumerate().map(|(index, element)| {
             let index = Self::unflatten_index(index, self.order, self.shape);
             (index, element)
@@ -257,7 +265,7 @@ impl<T> Matrix<T> {
     /// ```
     pub fn iter_elements_mut_with_index(
         &mut self,
-    ) -> impl DoubleEndedIterator<Item = (Index, &mut T)> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, &mut T)> {
         self.data.iter_mut().enumerate().map(|(index, element)| {
             let index = Self::unflatten_index(index, self.order, self.shape);
             (index, element)
@@ -283,7 +291,9 @@ impl<T> Matrix<T> {
     ///     assert_eq!(element, matrix[index]);
     /// }
     /// ```
-    pub fn into_iter_elements_with_index(self) -> impl DoubleEndedIterator<Item = (Index, T)> {
+    pub fn into_iter_elements_with_index(
+        self,
+    ) -> impl ExactSizeDoubleEndedIterator<Item = (Index, T)> {
         self.data
             .into_iter()
             .enumerate()
@@ -357,7 +367,7 @@ impl<T> Matrix<T> {
     pub(super) unsafe fn iter_nth_major_axis_vector_unchecked(
         &self,
         n: usize,
-    ) -> impl DoubleEndedIterator<Item = &T> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
         let lower = n * self.major_stride();
         let upper = lower + self.major_stride();
         unsafe { self.data.get_unchecked(lower..upper).iter() }
@@ -366,7 +376,7 @@ impl<T> Matrix<T> {
     pub(super) fn iter_nth_major_axis_vector(
         &self,
         n: usize,
-    ) -> Result<impl DoubleEndedIterator<Item = &T>> {
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         if n >= self.major() {
             Err(Error::IndexOutOfBounds)
         } else {
@@ -377,14 +387,14 @@ impl<T> Matrix<T> {
     pub(super) fn iter_nth_minor_axis_vector_unchecked(
         &self,
         n: usize,
-    ) -> impl DoubleEndedIterator<Item = &T> {
+    ) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
         self.data.iter().skip(n).step_by(self.major_stride())
     }
 
     pub(super) fn iter_nth_minor_axis_vector(
         &self,
         n: usize,
-    ) -> Result<impl DoubleEndedIterator<Item = &T>> {
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &T>> {
         if n >= self.minor() {
             Err(Error::IndexOutOfBounds)
         } else {
