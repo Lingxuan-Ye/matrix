@@ -1,4 +1,4 @@
-use super::super::super::iter::VectorIter;
+use super::super::super::iter::{ExactSizeDoubleEndedIterator, VectorIter};
 use super::super::super::order::Order;
 use super::super::super::shape::{AxisShape, Shape};
 use super::super::super::Matrix;
@@ -191,8 +191,8 @@ impl<L> Matrix<L> {
 
 #[inline]
 fn dot_product_static<'a, L, R, U>(
-    lhs: impl DoubleEndedIterator<Item = &'a L>,
-    rhs: impl DoubleEndedIterator<Item = &'a R>,
+    lhs: impl ExactSizeDoubleEndedIterator<Item = &'a L>,
+    rhs: impl ExactSizeDoubleEndedIterator<Item = &'a R>,
 ) -> Option<U>
 where
     L: Mul<R, Output = U> + Clone + 'a,
@@ -206,8 +206,8 @@ where
 
 #[inline]
 fn dot_product_dynamic<'a, L, R, U>(
-    lhs: impl DoubleEndedIterator<Item = &'a L>,
-    rhs: impl DoubleEndedIterator<Item = &'a R>,
+    lhs: impl ExactSizeDoubleEndedIterator<Item = &'a L>,
+    rhs: impl ExactSizeDoubleEndedIterator<Item = &'a R>,
 ) -> Option<U>
 where
     L: Mul<R, Output = U> + Clone + 'a,
