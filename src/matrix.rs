@@ -1,5 +1,9 @@
 //! This module defines [`Matrix`] and all its related components.
 
+use self::order::Order;
+use self::shape::{AxisShape, Shape, ShapeLike};
+use crate::error::{Error, Result};
+
 pub mod index;
 pub mod iter;
 pub mod order;
@@ -8,10 +12,6 @@ pub mod shape;
 mod conversion;
 mod fmt;
 mod operation;
-
-use self::order::Order;
-use self::shape::{AxisShape, Shape, ShapeLike};
-use crate::error::{Error, Result};
 
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
