@@ -226,4 +226,22 @@ mod tests {
         assert_ne!(Matrix::from(&vec[..]), expected);
         assert_ne!(Matrix::from_slice(&vec), expected);
     }
+
+    #[test]
+    fn test_from_iterator() {
+        let expected = matrix![[0, 1, 2], [3, 4, 5]];
+
+        let iterable = [[0, 1, 2], [3, 4, 5]];
+        assert_eq!(Matrix::from_iter(iterable), expected);
+
+        let iterable = [[0, 1], [2, 3], [4, 5]];
+        assert_ne!(Matrix::from_iter(iterable), expected);
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_from_iterator_fails() {
+        let iterable = [vec![0, 1, 2], vec![3, 4]];
+        Matrix::from_iter(iterable);
+    }
 }
