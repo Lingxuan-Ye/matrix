@@ -1,15 +1,15 @@
+use super::iter::VectorIter;
+use super::order::Order;
+use super::shape::{AxisShape, Shape};
+use super::Matrix;
+use crate::error::{Error, Result};
+
 mod arithmetic {
     mod add;
     mod div;
     mod mul;
     mod sub;
 }
-
-use super::iter::VectorIter;
-use super::order::Order;
-use super::shape::{AxisShape, Shape};
-use super::Matrix;
-use crate::error::{Error, Result};
 
 impl<L> Matrix<L> {
     /// Ensures that two matrices are conformable for elementwise operations.

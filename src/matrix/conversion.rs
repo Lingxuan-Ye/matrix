@@ -3,29 +3,6 @@ use super::shape::{AxisShape, Shape};
 use super::Matrix;
 use crate::error::{Error, Result};
 
-impl<T: Clone> Matrix<T> {
-    /// Creates a new [`Matrix`] instance from the given slice.
-    ///
-    /// # Notes
-    ///
-    /// The matrix returned will always have `1` row and `src.len()` columns.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use matreex::Matrix;
-    ///
-    /// let slice = [0, 1, 2, 3, 4, 5];
-    /// let matrix = Matrix::from_slice(&slice);
-    ///
-    /// assert_eq!(matrix.nrows(), 1);
-    /// assert_eq!(matrix.ncols(), 6);
-    /// ```
-    pub fn from_slice(value: &[T]) -> Self {
-        Self::from(value)
-    }
-}
-
 impl<T> Matrix<T> {
     /// Creates a new [`Matrix`] instance from the given 2D array.
     ///
@@ -40,14 +17,28 @@ impl<T> Matrix<T> {
     pub fn from_2darray<const R: usize, const C: usize>(value: [[T; C]; R]) -> Self {
         Self::from(value)
     }
-}
 
-impl<T: Clone> From<&[T]> for Matrix<T> {
-    fn from(value: &[T]) -> Self {
-        let order = Order::default();
-        let shape = AxisShape::from_shape_unchecked(Shape::new(1, value.len()), order);
-        let data = value.to_vec();
-        Self { order, shape, data }
+    /// Creates a new [`Matrix`] instance from the given slice.
+    ///
+    /// # Notes
+    ///
+    /// The matrix returned will always have `1` row and `src.len()` columns.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, Matrix};
+    ///
+    /// let slice = [0, 1, 2, 3, 4, 5];
+    /// let matrix = Matrix::from_slice(&slice);
+    ///
+    /// assert_eq!(matrix, matrix![[0, 1, 2, 3, 4, 5]]);
+    /// ```
+    pub fn from_slice(value: &[T]) -> Self
+    where
+        T: Clone,
+    {
+        Self::from(value)
     }
 }
 
@@ -90,12 +81,20 @@ impl<T: Clone> TryFrom<&[Vec<T>]> for Matrix<T> {
     }
 }
 
+impl<T: Clone> From<&[T]> for Matrix<T> {
+    fn from(value: &[T]) -> Self {
+        let order = Order::default();
+        let shape = AxisShape::from_shape_unchecked(Shape::new(1, value.len()), order);
+        let data = value.to_vec();
+        Self { order, shape, data }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::matrix;
 
-    // this test ensures that the `matrix!` macro works as expected
     #[test]
     fn test_from_2darray() {
         let order = Order::default();
@@ -112,27 +111,6 @@ mod tests {
         assert_ne!(Matrix::from(array), expected);
         assert_ne!(Matrix::from_2darray(array), expected);
         assert_ne!(matrix![[0, 1], [2, 3], [4, 5]], expected);
-    }
-
-    #[test]
-    fn test_from_slice() {
-        let expected = matrix![[0, 1, 2, 3, 4, 5]];
-
-        let array = [0, 1, 2, 3, 4, 5];
-        assert_eq!(Matrix::from(&array[..]), expected);
-        assert_eq!(Matrix::from_slice(&array), expected);
-
-        let array = [0; 6];
-        assert_ne!(Matrix::from(&array[..]), expected);
-        assert_ne!(Matrix::from_slice(&array), expected);
-
-        let vec = vec![0, 1, 2, 3, 4, 5];
-        assert_eq!(Matrix::from(&vec[..]), expected);
-        assert_eq!(Matrix::from_slice(&vec), expected);
-
-        let vec = vec![0; 6];
-        assert_ne!(Matrix::from(&vec[..]), expected);
-        assert_ne!(Matrix::from_slice(&vec), expected);
     }
 
     #[test]
@@ -185,5 +163,26 @@ mod tests {
             Matrix::<i32>::try_from(&vecs[..]),
             Err(Error::LengthInconsistent)
         );
+    }
+
+    #[test]
+    fn test_from_slice() {
+        let expected = matrix![[0, 1, 2, 3, 4, 5]];
+
+        let array = [0, 1, 2, 3, 4, 5];
+        assert_eq!(Matrix::from(&array[..]), expected);
+        assert_eq!(Matrix::from_slice(&array), expected);
+
+        let array = [0; 6];
+        assert_ne!(Matrix::from(&array[..]), expected);
+        assert_ne!(Matrix::from_slice(&array), expected);
+
+        let vec = vec![0, 1, 2, 3, 4, 5];
+        assert_eq!(Matrix::from(&vec[..]), expected);
+        assert_eq!(Matrix::from_slice(&vec), expected);
+
+        let vec = vec![0; 6];
+        assert_ne!(Matrix::from(&vec[..]), expected);
+        assert_ne!(Matrix::from_slice(&vec), expected);
     }
 }

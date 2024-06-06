@@ -327,11 +327,9 @@ impl AxisIndex {
     }
 }
 
-/*
-For `IndexLike`, `AxisIndex`, and `usize` (flattened index), we assume that
-the flattened index is always valid. Therefore, in the conversions among
-these three, only conversions to a flattened index require boundary checks.
-*/
+// For `IndexLike`, `AxisIndex`, and `usize` (flattened index), we assume that
+// the flattened index is always valid. Therefore, in the conversions among
+// these three, only conversions to a flattened index require boundary checks.
 impl AxisIndex {
     pub(super) fn from_index<I: IndexLike>(index: I, order: Order) -> Self {
         let (major, minor) = match order {
@@ -441,35 +439,34 @@ impl<T> Matrix<T> {
         src_shape: AxisShape,
         dest_shape: AxisShape,
     ) -> usize {
-        /*
-        This implementation is based on the idea that the element at the same
-        position remains the same across different orders. Assuming that the
-        original order is `src_order`, and given that the `Index` instance
-        representing the position is invariant, we have:
-
-        ```
-        let src_flattened_index = index;
-        let src_axis_index = AxisIndex::from_flattened(src_flattened_index, src_shape);
-
-        // invariant
-        let position = match src_order {
-            Order::RowMajor => Index::new(src_axis_index.major, src_axis_index.minor),
-            Order::ColMajor => Index::new(src_axis_index.minor, src_axis_index.major),
-        };
-
-        let dest_order = !src_order;
-        let (major, minor) = match dest_order {
-            Order::RowMajor => (position.row, position.col),
-            Order::ColMajor => (position.col, position.row),
-        };
-        let dest_axis_index = AxisIndex { major, minor };
-        let dest_flattened_index = dest_axis_index.into_flattened_unchecked(dest_shape);
-        dest_flattened_index
-        ```
-
-        Note that `dest_axis_index` is always the transpose of `src_axis_index`,
-        which allows us to simplify the code to the following:
-        */
+        // This implementation is based on the idea that the element at the
+        // same position remains the same across different orders. Assuming
+        // that the original order is `src_order`, and given that the `Index`
+        // instance representing the position is invariant, we have:
+        //
+        // ```
+        // let src_flattened_index = index;
+        // let src_axis_index = AxisIndex::from_flattened(src_flattened_index, src_shape);
+        //
+        // // invariant
+        // let position = match src_order {
+        //     Order::RowMajor => Index::new(src_axis_index.major, src_axis_index.minor),
+        //     Order::ColMajor => Index::new(src_axis_index.minor, src_axis_index.major),
+        // };
+        //
+        // let dest_order = src_order.switch();
+        // let (major, minor) = match dest_order {
+        //     Order::RowMajor => (position.row, position.col),
+        //     Order::ColMajor => (position.col, position.row),
+        // };
+        // let dest_axis_index = AxisIndex { major, minor };
+        // let dest_flattened_index = dest_axis_index.into_flattened_unchecked(dest_shape);
+        // dest_flattened_index
+        // ```
+        //
+        // Note that the variable `dest_axis_index` is always the transpose of
+        // `src_axis_index`, which allows us to simplify the code to the
+        // following:
         let mut index = AxisIndex::from_flattened(index, src_shape);
         index.transpose();
         index.into_flattened_unchecked(dest_shape)
@@ -605,7 +602,6 @@ mod tests {
     #[test]
     fn test_struct_index_new() {
         let expected = Index { row: 2, col: 3 };
-
         assert_eq!(Index::new(2, 3), expected);
         assert_ne!(Index::new(3, 2), expected);
     }
