@@ -10,6 +10,7 @@ pub mod order;
 pub mod shape;
 
 mod conversion;
+mod default;
 mod fmt;
 mod operation;
 
@@ -28,7 +29,7 @@ use rayon::prelude::*;
 /// ```
 ///
 /// [`matrix!`]: crate::matrix!
-#[derive(Clone, Default, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Matrix<T> {
     order: Order,
     shape: AxisShape,
