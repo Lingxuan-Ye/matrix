@@ -27,13 +27,12 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::Matrix;
+    /// use matreex::{matrix, Matrix};
     ///
     /// let slice = [0, 1, 2, 3, 4, 5];
     /// let matrix = Matrix::from_slice(&slice);
     ///
-    /// assert_eq!(matrix.nrows(), 1);
-    /// assert_eq!(matrix.ncols(), 6);
+    /// assert_eq!(matrix, matrix![[0, 1, 2, 3, 4, 5]]);
     /// ```
     pub fn from_slice(value: &[T]) -> Self
     where

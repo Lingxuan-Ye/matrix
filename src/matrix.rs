@@ -47,9 +47,10 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::Matrix;
+    /// use matreex::{matrix, Matrix};
     ///
     /// let matrix = Matrix::<i32>::new((2, 3));
+    /// assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
     /// ```
     ///
     /// ```should_panic
@@ -83,10 +84,10 @@ impl<T> Matrix<T> {
     /// # Examples
     ///
     /// ```
-    /// use matreex::{Error, Matrix};
+    /// use matreex::{matrix, Error, Matrix};
     ///
     /// let result = Matrix::<i32>::build((2, 3));
-    /// assert!(result.is_ok());
+    /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     ///
     /// let result = Matrix::<i32>::build((2, usize::MAX));
     /// assert_eq!(result, Err(Error::SizeOverflow));
@@ -513,7 +514,6 @@ mod tests {
     #[test]
     fn test_new() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
-
         assert_eq!(Matrix::new((2, 3)), expected);
         assert_ne!(Matrix::new((3, 2)), expected);
     }
@@ -521,14 +521,25 @@ mod tests {
     #[test]
     fn test_build() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
-
         assert_eq!(Matrix::build((2, 3)).unwrap(), expected);
         assert_ne!(Matrix::build((3, 2)).unwrap(), expected);
-
         assert_eq!(
-            Matrix::<i32>::build((usize::MAX, 2)),
+            Matrix::<i32>::build((2, usize::MAX)),
             Err(Error::SizeOverflow)
         );
+        assert_eq!(
+            Matrix::<i32>::build((1, isize::MAX as usize + 1)),
+            Err(Error::CapacityExceeded)
+        );
+    }
+
+    #[test]
+    fn test_empty() {
+        let matrix = Matrix::<i32>::empty();
+        assert_eq!(matrix.order, Order::default());
+        assert_eq!(matrix.nrows(), 0);
+        assert_eq!(matrix.ncols(), 0);
+        assert!(matrix.is_empty());
     }
 
     #[test]
