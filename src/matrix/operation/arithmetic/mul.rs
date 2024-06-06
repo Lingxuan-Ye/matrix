@@ -154,11 +154,9 @@ impl<L> Matrix<L> {
             (Order::ColMajor, Order::RowMajor) => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        /*
-                        In this scenario, dynamic dispatch proves to be more
-                        efficient than static dispatch, which can seem
-                        counterintuitive but is indeed true.
-                        */
+                        // In this scenario, dynamic dispatch proves to be
+                        // more efficient than static dispatch, which can seem
+                        // counterintuitive but is indeed true.
                         match dot_product_dynamic(
                             self.iter_nth_minor_axis_vector_unchecked(row),
                             rhs.iter_nth_minor_axis_vector_unchecked(col),

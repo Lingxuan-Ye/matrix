@@ -93,10 +93,8 @@ macro_rules! col_vec {
     };
 }
 
-/*
-For simplicity, all arithmetic operations rely on the behavior of `$t`,
-including those performed on references.
-*/
+// For simplicity, all arithmetic operations rely on the behavior of `$t`,
+// including those performed on references.
 
 /// Implements scalar addition for [`Matrix`].
 ///
