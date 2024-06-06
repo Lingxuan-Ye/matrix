@@ -210,10 +210,8 @@ mod tests {
         }
     }
 
-    /*
-    The expected strings are not formatted to multiple lines to prevent
-    the trailing whitespaces from being removed by the editor.
-    */
+    // The expected strings are not formatted to multiple lines to prevent
+    // the trailing whitespaces from being removed by the editor.
 
     #[test]
     fn test_debug() {
