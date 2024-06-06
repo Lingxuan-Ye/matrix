@@ -14,8 +14,7 @@
 #[macro_export]
 macro_rules! matrix {
     [] => {{
-        let shape = $crate::matrix::shape::Shape::new(0, 0);
-        $crate::matrix::Matrix::new(shape)
+        $crate::matrix::Matrix::empty()
     }};
 
     [$elem:expr; $n:expr] => {
@@ -47,8 +46,7 @@ macro_rules! matrix {
 #[macro_export]
 macro_rules! row_vec {
     [] => {{
-        let shape = $crate::matrix::shape::Shape::new(1, 0);
-        $crate::matrix::Matrix::new(shape)
+        $crate::matrix::Matrix::from([[]])
     }};
 
     [$elem:expr; $n:expr] => {
@@ -80,8 +78,9 @@ macro_rules! row_vec {
 #[macro_export]
 macro_rules! col_vec {
     [] => {{
-        let shape = $crate::matrix::shape::Shape::new(0, 1);
-        $crate::matrix::Matrix::new(shape)
+        let mut matrix = $crate::matrix::Matrix::from([[]]);
+        matrix.transpose();
+        matrix
     }};
 
     [$elem:expr; $n:expr] => {

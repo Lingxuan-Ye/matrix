@@ -195,7 +195,6 @@ mod tests {
     #[test]
     fn test_struct_shape_new() {
         let expected = Shape { nrows: 2, ncols: 3 };
-
         assert_eq!(Shape::new(2, 3), expected);
         assert_ne!(Shape::new(3, 2), expected);
     }

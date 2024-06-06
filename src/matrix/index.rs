@@ -602,7 +602,6 @@ mod tests {
     #[test]
     fn test_struct_index_new() {
         let expected = Index { row: 2, col: 3 };
-
         assert_eq!(Index::new(2, 3), expected);
         assert_ne!(Index::new(3, 2), expected);
     }
