@@ -36,7 +36,7 @@ pub struct Matrix<T> {
     data: Vec<T>,
 }
 
-impl<T: Default> Matrix<T> {
+impl<T> Matrix<T> {
     /// Creates a new [`Matrix`] instance with default values.
     ///
     /// # Panics
@@ -63,7 +63,10 @@ impl<T: Default> Matrix<T> {
     ///
     /// let matrix = Matrix::<i32>::new((1, isize::MAX as usize + 1));
     /// ```
-    pub fn new<S: ShapeLike>(shape: S) -> Self {
+    pub fn new<S: ShapeLike>(shape: S) -> Self
+    where
+        T: Default,
+    {
         match Self::build(shape) {
             Err(error) => panic!("{error}"),
             Ok(matrix) => matrix,
@@ -91,12 +94,31 @@ impl<T: Default> Matrix<T> {
     /// let result = Matrix::<i32>::build((1, isize::MAX as usize + 1));
     /// assert_eq!(result, Err(Error::CapacityExceeded));
     /// ```
-    pub fn build<S: ShapeLike>(shape: S) -> Result<Self> {
+    pub fn build<S: ShapeLike>(shape: S) -> Result<Self>
+    where
+        T: Default,
+    {
         let order = Order::default();
         let shape = AxisShape::try_from_shape(shape, order)?;
         let size = Self::check_size(shape.size())?;
         let data = std::iter::repeat_with(T::default).take(size).collect();
         Ok(Self { order, shape, data })
+    }
+
+    /// Creates an empty [`Matrix`] instance.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::Matrix;
+    ///
+    /// let matrix = Matrix::<i32>::empty();
+    /// assert_eq!(matrix.nrows(), 0);
+    /// assert_eq!(matrix.ncols(), 0);
+    /// assert!(matrix.is_empty());
+    /// ```
+    pub fn empty() -> Self {
+        Self::default()
     }
 }
 
