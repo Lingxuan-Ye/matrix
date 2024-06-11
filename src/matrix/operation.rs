@@ -365,10 +365,6 @@ impl<L> Matrix<L> {
 
     /// Performs multiplication-like operation on two matrices.
     ///
-    /// This method is designed to handle **multiplication-like**
-    /// operations. For multiplication itself, use [`Matrix::multiply`]
-    /// instead, which is more efficient.
-    ///
     /// # Errors
     ///
     /// - [`Error::NotConformable`] if the matrices are not conformable.
