@@ -76,30 +76,30 @@ where
 
 impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
 
-/// Performs multiplication on two matrices.
-///
-/// # Errors
-///
-/// - [`Error::NotConformable`] if the matrices are not conformable.
-///
-/// # Notes
-///
-/// The resulting matrix will always have the same order as `self`.
-///
-/// # Examples
-///
-/// ```
-/// use matreex::{matrix, VectorIter};
-///
-/// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-/// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
-///
-/// let result = lhs.multiply(&rhs);
-/// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
-/// ```
-///
-/// [`Error::NotConformable`]: crate::error::Error::NotConformable
 impl<L> Matrix<L> {
+    /// Performs multiplication on two matrices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Notes
+    ///
+    /// The resulting matrix will always have the same order as `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::{matrix, VectorIter};
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    ///
+    /// let result = lhs.multiply(&rhs);
+    /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
     pub fn multiply<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
         L: std::ops::Mul<R, Output = U> + Clone,
