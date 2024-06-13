@@ -1,4 +1,4 @@
-use super::super::super::iter::{ExactSizeDoubleEndedIterator, VectorIter};
+use super::super::super::iter::ExactSizeDoubleEndedIterator;
 use super::super::super::order::Order;
 use super::super::super::shape::{AxisShape, Shape};
 use super::super::super::Matrix;
@@ -15,7 +15,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.multiply(&rhs);
+        let result = self.multiply(rhs);
         match result {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
@@ -32,11 +32,8 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.multiply(rhs);
-        match result {
-            Err(error) => panic!("{error}"),
-            Ok(output) => output,
-        }
+        let rhs = rhs.clone();
+        self.mul(rhs)
     }
 }
 
@@ -49,11 +46,8 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.multiply(&rhs);
-        match result {
-            Err(error) => panic!("{error}"),
-            Ok(output) => output,
-        }
+        let lhs = self.clone();
+        lhs.mul(rhs)
     }
 }
 
@@ -66,47 +60,22 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.multiply(rhs);
-        match result {
-            Err(error) => panic!("{error}"),
-            Ok(output) => output,
-        }
+        let lhs = self.clone();
+        let rhs = rhs.clone();
+        lhs.mul(rhs)
     }
 }
 
 impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
 
-/// Performs multiplication on two matrices.
-///
-/// # Errors
-///
-/// - [`Error::NotConformable`] if the matrices are not conformable.
-///
-/// # Notes
-///
-/// The resulting matrix will always have the same order as `self`.
-///
-/// # Examples
-///
-/// ```
-/// use matreex::{matrix, VectorIter};
-///
-/// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-/// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
-///
-/// let result = lhs.multiply(&rhs);
-/// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
-/// ```
-///
-/// [`Error::NotConformable`]: crate::error::Error::NotConformable
 impl<L> Matrix<L> {
-    pub fn multiply<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
+    fn multiply<R, U>(mut self, mut rhs: Matrix<R>) -> Result<Matrix<U>>
     where
         L: std::ops::Mul<R, Output = U> + Clone,
         R: Clone,
         U: std::ops::Add<Output = U> + Default,
     {
-        self.ensure_multiplication_like_operation_conformable(rhs)?;
+        self.ensure_multiplication_like_operation_conformable(&rhs)?;
 
         let nrows = self.nrows();
         let ncols = rhs.ncols();
@@ -120,26 +89,14 @@ impl<L> Matrix<L> {
             return Ok(Matrix { order, shape, data });
         }
 
-        match (self.order, rhs.order) {
-            (Order::RowMajor, Order::RowMajor) => {
-                for row in 0..nrows {
-                    for col in 0..ncols {
-                        match dot_product_static(
-                            unsafe { self.iter_nth_major_axis_vector_unchecked(row) },
-                            rhs.iter_nth_minor_axis_vector_unchecked(col),
-                        ) {
-                            None => unreachable!(),
-                            Some(element) => data.push(element),
-                        }
-                    }
-                }
-            }
+        self.set_order(Order::RowMajor);
+        rhs.set_order(Order::ColMajor);
 
-            // best scenario
-            (Order::RowMajor, Order::ColMajor) => {
+        match order {
+            Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
-                        match dot_product_static(
+                        match dot_product(
                             unsafe { self.iter_nth_major_axis_vector_unchecked(row) },
                             unsafe { rhs.iter_nth_major_axis_vector_unchecked(col) },
                         ) {
@@ -149,30 +106,11 @@ impl<L> Matrix<L> {
                     }
                 }
             }
-
-            // worst scenario
-            (Order::ColMajor, Order::RowMajor) => {
+            Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
-                        // In this scenario, dynamic dispatch proves to be
-                        // more efficient than static dispatch, which can seem
-                        // counterintuitive but is indeed true.
-                        match dot_product_dynamic(
-                            self.iter_nth_minor_axis_vector_unchecked(row),
-                            rhs.iter_nth_minor_axis_vector_unchecked(col),
-                        ) {
-                            None => unreachable!(),
-                            Some(element) => data.push(element),
-                        }
-                    }
-                }
-            }
-
-            (Order::ColMajor, Order::ColMajor) => {
-                for col in 0..ncols {
-                    for row in 0..nrows {
-                        match dot_product_static(
-                            self.iter_nth_minor_axis_vector_unchecked(row),
+                        match dot_product(
+                            unsafe { self.iter_nth_major_axis_vector_unchecked(row) },
                             unsafe { rhs.iter_nth_major_axis_vector_unchecked(col) },
                         ) {
                             None => unreachable!(),
@@ -188,7 +126,7 @@ impl<L> Matrix<L> {
 }
 
 #[inline]
-fn dot_product_static<'a, L, R, U>(
+fn dot_product<'a, L, R, U>(
     lhs: impl ExactSizeDoubleEndedIterator<Item = &'a L>,
     rhs: impl ExactSizeDoubleEndedIterator<Item = &'a R>,
 ) -> Option<U>
@@ -200,21 +138,6 @@ where
     lhs.zip(rhs)
         .map(|(left, right)| left.clone() * right.clone())
         .reduce(|accumulator, product| accumulator + product)
-}
-
-#[inline]
-fn dot_product_dynamic<'a, L, R, U>(
-    lhs: impl ExactSizeDoubleEndedIterator<Item = &'a L>,
-    rhs: impl ExactSizeDoubleEndedIterator<Item = &'a R>,
-) -> Option<U>
-where
-    L: Mul<R, Output = U> + Clone + 'a,
-    R: Clone + 'a,
-    U: Add<Output = U>,
-{
-    let lhs: VectorIter<&L> = Box::new(lhs);
-    let rhs: VectorIter<&R> = Box::new(rhs);
-    dot_product_static(lhs, rhs)
 }
 
 #[cfg(test)]
