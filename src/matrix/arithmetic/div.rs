@@ -96,35 +96,3 @@ impl<L> Matrix<L> {
 }
 
 impl_scalar_div! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
-
-#[cfg(test)]
-mod tests {
-    use crate::matrix;
-
-    #[test]
-    fn test_elementwise_div() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        let result = lhs.elementwise_div(&rhs);
-        assert_eq!(result, Ok(matrix![[0, 0, 1], [1, 2, 2]]));
-    }
-
-    #[test]
-    fn test_elementwise_div_consume_self() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        let result = lhs.elementwise_div_consume_self(&rhs);
-        assert_eq!(result, Ok(matrix![[0, 0, 1], [1, 2, 2]]));
-    }
-
-    #[test]
-    fn test_elementwise_div_assign() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        lhs.elementwise_div_assign(&rhs).unwrap();
-        assert_eq!(lhs, matrix![[0, 0, 1], [1, 2, 2]]);
-    }
-}

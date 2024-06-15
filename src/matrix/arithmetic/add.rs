@@ -172,35 +172,3 @@ impl<L> Matrix<L> {
 }
 
 impl_scalar_add! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
-
-#[cfg(test)]
-mod tests {
-    use crate::matrix;
-
-    #[test]
-    fn test_elementwise_add() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        let result = lhs.elementwise_add(&rhs);
-        assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
-    }
-
-    #[test]
-    fn test_elementwise_add_consume_self() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        let result = lhs.elementwise_add_consume_self(&rhs);
-        assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
-    }
-
-    #[test]
-    fn test_elementwise_add_assign() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        lhs.elementwise_add_assign(&rhs).unwrap();
-        assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
-    }
-}

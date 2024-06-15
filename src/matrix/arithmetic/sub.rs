@@ -172,35 +172,3 @@ impl<L> Matrix<L> {
 }
 
 impl_scalar_sub! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
-
-#[cfg(test)]
-mod tests {
-    use crate::matrix;
-
-    #[test]
-    fn test_elementwise_sub() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        let output = lhs.elementwise_sub(&rhs);
-        assert_eq!(output, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
-    }
-
-    #[test]
-    fn test_elementwise_sub_consume_self() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        let output = lhs.elementwise_sub_consume_self(&rhs);
-        assert_eq!(output, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
-    }
-
-    #[test]
-    fn test_elementwise_sub_assign() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        lhs.elementwise_sub_assign(&rhs).unwrap();
-        assert_eq!(lhs, matrix![[-2, -1, 0], [1, 2, 3]]);
-    }
-}

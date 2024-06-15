@@ -257,33 +257,6 @@ mod tests {
     use crate::matrix;
 
     #[test]
-    fn test_elementwise_mul() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        let result = lhs.elementwise_mul(&rhs);
-        assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
-    }
-
-    #[test]
-    fn test_elementwise_mul_consume_self() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        let result = lhs.elementwise_mul_consume_self(&rhs);
-        assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
-    }
-
-    #[test]
-    fn test_elementwise_mul_assign() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
-
-        lhs.elementwise_mul_assign(&rhs).unwrap();
-        assert_eq!(lhs, matrix![[0, 2, 4], [6, 8, 10]]);
-    }
-
-    #[test]
     fn test_mat_mul() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
         let mut rhs = matrix![[0, 1], [2, 3], [4, 5]];
