@@ -26,6 +26,16 @@ impl<L> Matrix<L> {
     /// assert_eq!(result, Ok(matrix![[0, 0, 1], [1, 2, 2]]));
     /// ```
     ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, -1, -2], [-3, -4, -5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// let result = lhs.elementwise_div(&rhs);
+    /// assert_eq!(result, Ok(matrix![[0, 0, -1], [-1, -2, -2]]));
+    /// ```
+    ///
     /// [`Error::NotConformable`]: crate::error::Error::NotConformable
     pub fn elementwise_div<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
@@ -57,6 +67,16 @@ impl<L> Matrix<L> {
     /// assert_eq!(result, Ok(matrix![[0, 0, 1], [1, 2, 2]]));
     /// ```
     ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, -1, -2], [-3, -4, -5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// let result = lhs.elementwise_div_consume_self(&rhs);
+    /// assert_eq!(result, Ok(matrix![[0, 0, -1], [-1, -2, -2]]));
+    /// ```
+    ///
     /// [`Error::NotConformable`]: crate::error::Error::NotConformable
     pub fn elementwise_div_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
     where
@@ -83,6 +103,16 @@ impl<L> Matrix<L> {
     ///
     /// lhs.elementwise_div_assign(&rhs).unwrap();
     /// assert_eq!(lhs, matrix![[0, 0, 1], [1, 2, 2]]);
+    /// ```
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut lhs = matrix![[0, -1, -2], [-3, -4, -5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// lhs.elementwise_div_assign(&rhs).unwrap();
+    /// assert_eq!(lhs, matrix![[0, 0, -1], [-1, -2, -2]]);
     /// ```
     ///
     /// [`Error::NotConformable`]: crate::error::Error::NotConformable
