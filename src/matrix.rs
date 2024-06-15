@@ -542,10 +542,10 @@ impl<L> Matrix<L> {
     /// use matreex::matrix;
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     ///
     /// let result = lhs.elementwise_operation(&rhs, |(x, y)| x + y);
-    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation<R, F, U>(&self, rhs: &Matrix<R>, mut op: F) -> Result<Matrix<U>>
     where
@@ -589,10 +589,10 @@ impl<L> Matrix<L> {
     /// use matreex::matrix;
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     ///
     /// let result = lhs.elementwise_operation_consume_self(&rhs, |(x, y)| x + y);
-    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation_consume_self<R, F, U>(
         self,
@@ -637,10 +637,10 @@ impl<L> Matrix<L> {
     /// use matreex::matrix;
     ///
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     ///
     /// lhs.elementwise_operation_assign(&rhs, |(x, y)| *x += y).unwrap();
-    /// assert_eq!(lhs, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
     pub fn elementwise_operation_assign<R, F>(
         &mut self,
@@ -711,6 +711,11 @@ impl<L> Matrix<L> {
     ///
     /// The resulting matrix will always have the same order as `self`.
     ///
+    /// For performance reasons, this method consumes both `self` and `rhs`.
+    ///
+    /// The closure `op` is guaranteed to receive two non-empty, equal-length
+    /// vectors. It should always return a valid value derived from them.
+    ///
     /// # Examples
     ///
     /// ```
@@ -722,19 +727,19 @@ impl<L> Matrix<L> {
     ///     vl.zip(vr).map(|(x, y)| x * y).reduce(|acc, p| acc + p).unwrap()
     /// };
     ///
-    /// let result = lhs.multiplication_like_operation(&rhs, op);
+    /// let result = lhs.multiplication_like_operation(rhs, op);
     /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
     /// ```
     pub fn multiplication_like_operation<R, F, U>(
-        &self,
-        rhs: &Matrix<R>,
+        mut self,
+        mut rhs: Matrix<R>,
         mut op: F,
     ) -> Result<Matrix<U>>
     where
         F: FnMut(VectorIter<&L>, VectorIter<&R>) -> U,
         U: Default,
     {
-        self.ensure_multiplication_like_operation_conformable(rhs)?;
+        self.ensure_multiplication_like_operation_conformable(&rhs)?;
 
         let nrows = self.nrows();
         let ncols = rhs.ncols();
@@ -748,21 +753,11 @@ impl<L> Matrix<L> {
             return Ok(Matrix { order, shape, data });
         }
 
-        match (self.order, rhs.order) {
-            (Order::RowMajor, Order::RowMajor) => {
-                for row in 0..nrows {
-                    for col in 0..ncols {
-                        let element = op(
-                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
-                            Box::new(rhs.iter_nth_minor_axis_vector_unchecked(col)),
-                        );
-                        data.push(element);
-                    }
-                }
-            }
+        self.set_order(Order::RowMajor);
+        rhs.set_order(Order::ColMajor);
 
-            // best scenario
-            (Order::RowMajor, Order::ColMajor) => {
+        match order {
+            Order::RowMajor => {
                 for row in 0..nrows {
                     for col in 0..ncols {
                         let element = op(
@@ -774,24 +769,11 @@ impl<L> Matrix<L> {
                 }
             }
 
-            // worst scenario
-            (Order::ColMajor, Order::RowMajor) => {
+            Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
                         let element = op(
-                            Box::new(self.iter_nth_minor_axis_vector_unchecked(row)),
-                            Box::new(rhs.iter_nth_minor_axis_vector_unchecked(col)),
-                        );
-                        data.push(element);
-                    }
-                }
-            }
-
-            (Order::ColMajor, Order::ColMajor) => {
-                for col in 0..ncols {
-                    for row in 0..nrows {
-                        let element = op(
-                            Box::new(self.iter_nth_minor_axis_vector_unchecked(row)),
+                            unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(row)) },
                             unsafe { Box::new(rhs.iter_nth_major_axis_vector_unchecked(col)) },
                         );
                         data.push(element);

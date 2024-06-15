@@ -1,4 +1,5 @@
 use super::super::Matrix;
+use crate::error::Result;
 use crate::impl_scalar_add;
 use std::ops::{Add, AddAssign};
 
@@ -22,9 +23,7 @@ where
     type Output = Matrix<U>;
 
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
-        let result =
-            self.elementwise_operation_consume_self(rhs, |(left, right)| left + right.clone());
-        match result {
+        match self.elementwise_add_consume_self(rhs) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -51,8 +50,7 @@ where
     type Output = Matrix<U>;
 
     fn add(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation(rhs, |(left, right)| left.clone() + right.clone());
-        match result {
+        match self.elementwise_add(rhs) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -75,10 +73,101 @@ where
     R: Clone,
 {
     fn add_assign(&mut self, rhs: &Matrix<R>) {
-        let result = self.elementwise_operation_assign(rhs, |(left, right)| *left += right.clone());
-        if let Err(error) = result {
+        if let Err(error) = self.elementwise_add_assign(rhs) {
             panic!("{error}");
         }
+    }
+}
+
+impl<L> Matrix<L> {
+    /// Performs elementwise addition on two matrices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Notes
+    ///
+    /// The resulting matrix will always have the same order as `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// let result = lhs.elementwise_add(&rhs);
+    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn elementwise_add<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
+    where
+        L: Add<R, Output = U> + Clone,
+        R: Clone,
+    {
+        self.elementwise_operation(rhs, |(left, right)| left.clone() + right.clone())
+    }
+
+    /// Performs elementwise addition on two matrices, consuming `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Notes
+    ///
+    /// The resulting matrix will always have the same order as `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// let result = lhs.elementwise_add_consume_self(&rhs);
+    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn elementwise_add_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
+    where
+        L: Add<R, Output = U>,
+        R: Clone,
+    {
+        self.elementwise_operation_consume_self(rhs, |(left, right)| left + right.clone())
+    }
+
+    /// Performs elementwise addition on two matrices, assigning the result
+    /// to `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// lhs.elementwise_add_assign(&rhs).unwrap();
+    /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn elementwise_add_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
+    where
+        L: AddAssign<R>,
+        R: Clone,
+    {
+        self.elementwise_operation_assign(rhs, |(left, right)| *left += right.clone())
     }
 }
 

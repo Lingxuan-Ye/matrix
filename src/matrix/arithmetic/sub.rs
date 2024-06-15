@@ -1,4 +1,5 @@
 use super::super::Matrix;
+use crate::error::Result;
 use crate::impl_scalar_sub;
 use std::ops::{Sub, SubAssign};
 
@@ -22,9 +23,7 @@ where
     type Output = Matrix<U>;
 
     fn sub(self, rhs: &Matrix<R>) -> Self::Output {
-        let result =
-            self.elementwise_operation_consume_self(rhs, |(left, right)| left - right.clone());
-        match result {
+        match self.elementwise_sub_consume_self(rhs) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -51,8 +50,7 @@ where
     type Output = Matrix<U>;
 
     fn sub(self, rhs: &Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation(rhs, |(left, right)| left.clone() - right.clone());
-        match result {
+        match self.elementwise_sub(rhs) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -75,10 +73,101 @@ where
     R: Clone,
 {
     fn sub_assign(&mut self, rhs: &Matrix<R>) {
-        let result = self.elementwise_operation_assign(rhs, |(left, right)| *left -= right.clone());
-        if let Err(error) = result {
+        if let Err(error) = self.elementwise_sub_assign(rhs) {
             panic!("{error}");
         }
+    }
+}
+
+impl<L> Matrix<L> {
+    /// Performs elementwise subtraction on two matrices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Notes
+    ///
+    /// The resulting matrix will always have the same order as `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// let result = lhs.elementwise_sub(&rhs);
+    /// assert_eq!(result, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn elementwise_sub<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
+    where
+        L: Sub<R, Output = U> + Clone,
+        R: Clone,
+    {
+        self.elementwise_operation(rhs, |(left, right)| left.clone() - right.clone())
+    }
+
+    /// Performs elementwise subtraction on two matrices, consuming `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Notes
+    ///
+    /// The resulting matrix will always have the same order as `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// let result = lhs.elementwise_sub_consume_self(&rhs);
+    /// assert_eq!(result, Ok(matrix![[-2, -1, 0], [1, 2, 3]]));
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn elementwise_sub_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
+    where
+        L: Sub<R, Output = U>,
+        R: Clone,
+    {
+        self.elementwise_operation_consume_self(rhs, |(left, right)| left - right.clone())
+    }
+
+    /// Performs elementwise subtraction on two matrices, assigning the result
+    /// to `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// lhs.elementwise_sub_assign(&rhs).unwrap();
+    /// assert_eq!(lhs, matrix![[-2, -1, 0], [1, 2, 3]]);
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn elementwise_sub_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
+    where
+        L: SubAssign<R>,
+        R: Clone,
+    {
+        self.elementwise_operation_assign(rhs, |(left, right)| *left -= right.clone())
     }
 }
 
