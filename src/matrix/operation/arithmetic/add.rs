@@ -10,11 +10,7 @@ where
     type Output = Matrix<U>;
 
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.elementwise_operation_consume_both(rhs, |(left, right)| left + right);
-        match result {
-            Err(error) => panic!("{error}"),
-            Ok(output) => output,
-        }
+        self.add(&rhs)
     }
 }
 
@@ -43,12 +39,7 @@ where
     type Output = Matrix<U>;
 
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        let result =
-            self.elementwise_operation_consume_rhs(rhs, |(left, right)| left.clone() + right);
-        match result {
-            Err(error) => panic!("{error}"),
-            Ok(output) => output,
-        }
+        self.add(&rhs)
     }
 }
 
@@ -74,11 +65,7 @@ where
     R: Clone,
 {
     fn add_assign(&mut self, rhs: Matrix<R>) {
-        let result =
-            self.elementwise_operation_assign_consume_rhs(rhs, |(left, right)| *left += right);
-        if let Err(error) = result {
-            panic!("{error}");
-        }
+        self.add_assign(&rhs)
     }
 }
 
