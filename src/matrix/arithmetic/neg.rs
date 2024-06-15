@@ -19,6 +19,6 @@ where
     type Output = Matrix<U>;
 
     fn neg(self) -> Self::Output {
-        self.clone().neg()
+        -self.clone()
     }
 }

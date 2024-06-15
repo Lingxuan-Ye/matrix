@@ -31,7 +31,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        self.mul(rhs.clone())
+        self * rhs.clone()
     }
 }
 
@@ -44,7 +44,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        self.clone().mul(rhs)
+        self.clone() * rhs
     }
 }
 
@@ -57,7 +57,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        self.clone().mul(rhs.clone())
+        self.clone() * rhs.clone()
     }
 }
 

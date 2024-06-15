@@ -11,7 +11,7 @@ where
     type Output = Matrix<U>;
 
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        self.sub(&rhs)
+        self - &rhs
     }
 }
 
@@ -38,7 +38,7 @@ where
     type Output = Matrix<U>;
 
     fn sub(self, rhs: Matrix<R>) -> Self::Output {
-        self.sub(&rhs)
+        self - &rhs
     }
 }
 
@@ -63,7 +63,7 @@ where
     R: Clone,
 {
     fn sub_assign(&mut self, rhs: Matrix<R>) {
-        self.sub_assign(&rhs)
+        *self -= &rhs;
     }
 }
 

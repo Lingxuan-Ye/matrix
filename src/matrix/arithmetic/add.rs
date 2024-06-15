@@ -11,7 +11,7 @@ where
     type Output = Matrix<U>;
 
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        self.add(&rhs)
+        self + &rhs
     }
 }
 
@@ -38,7 +38,7 @@ where
     type Output = Matrix<U>;
 
     fn add(self, rhs: Matrix<R>) -> Self::Output {
-        self.add(&rhs)
+        self + &rhs
     }
 }
 
@@ -63,7 +63,7 @@ where
     R: Clone,
 {
     fn add_assign(&mut self, rhs: Matrix<R>) {
-        self.add_assign(&rhs)
+        *self += &rhs
     }
 }
 
