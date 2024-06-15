@@ -4,7 +4,7 @@ use super::super::shape::{AxisShape, Shape};
 use super::super::Matrix;
 use crate::error::Result;
 use crate::impl_scalar_mul;
-use std::ops::{Add, Mul};
+use std::ops::{Add, Mul, MulAssign};
 
 impl<L, R, U> Mul<Matrix<R>> for Matrix<L>
 where
@@ -60,9 +60,96 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let lhs = self.clone();
-        let rhs = rhs.clone();
-        lhs.mul(rhs)
+
+impl<L> Matrix<L> {
+    /// Performs elementwise multiplication on two matrices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Notes
+    ///
+    /// The resulting matrix will always have the same order as `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// let result = lhs.elementwise_mul(&rhs);
+    /// assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn elementwise_mul<R, U>(&self, rhs: &Matrix<R>) -> Result<Matrix<U>>
+    where
+        L: Mul<R, Output = U> + Clone,
+        R: Clone,
+    {
+        self.elementwise_operation(rhs, |(left, right)| left.clone() * right.clone())
+    }
+
+    /// Performs elementwise multiplication on two matrices, consuming `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Notes
+    ///
+    /// The resulting matrix will always have the same order as `self`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// let result = lhs.elementwise_mul_consume_self(&rhs);
+    /// assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn elementwise_mul_consume_self<R, U>(self, rhs: &Matrix<R>) -> Result<Matrix<U>>
+    where
+        L: Mul<R, Output = U>,
+        R: Clone,
+    {
+        self.elementwise_operation_consume_self(rhs, |(left, right)| left * right.clone())
+    }
+
+    /// Performs elementwise multiplication on two matrices, assigning the result
+    /// to `self`.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
+    ///
+    /// lhs.elementwise_mul_assign(&rhs).unwrap();
+    /// assert_eq!(lhs, matrix![[0, 2, 4], [6, 8, 10]]);
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn elementwise_mul_assign<R>(&mut self, rhs: &Matrix<R>) -> Result<&mut Self>
+    where
+        L: MulAssign<R>,
+        R: Clone,
+    {
+        self.elementwise_operation_assign(rhs, |(left, right)| *left *= right.clone())
     }
 }
 
