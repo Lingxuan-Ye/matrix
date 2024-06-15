@@ -253,302 +253,110 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::error::Error;
     use crate::matrix;
 
     #[test]
-    fn test_mul() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let mut rhs = matrix![[5, 4], [3, 2], [1, 0]];
-        let expected = matrix![[5, 2], [32, 20]];
-
-        {
-            let result = &lhs * &rhs;
-            assert_eq!(result, expected);
-        }
-
-        {
-            rhs.switch_order();
-
-            let result = &lhs * &rhs;
-            assert_eq!(result, expected);
-            assert_eq!(result.order, lhs.order);
-            assert_ne!(result.order, rhs.order);
-
-            rhs.switch_order();
-        }
-
-        {
-            lhs.switch_order();
-
-            let mut result = &lhs * &rhs;
-            assert_ne!(result, expected);
-            assert_eq!(result.order, lhs.order);
-            assert_ne!(result.order, rhs.order);
-            result.switch_order();
-            assert_eq!(result, expected);
-        }
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_mul_fails() {
+    fn test_elementwise_mul() {
         let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
 
-        let _ = &lhs * &rhs;
+        let result = lhs.elementwise_mul(&rhs);
+        assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
     }
 
     #[test]
-    fn test_mul_consume_rhs() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let mut rhs = matrix![[5, 4], [3, 2], [1, 0]];
-        let expected = matrix![[5, 2], [32, 20]];
-
-        {
-            let result = &lhs * rhs.clone();
-            assert_eq!(result, expected);
-        }
-
-        {
-            rhs.switch_order();
-
-            let result = &lhs * rhs.clone();
-            assert_eq!(result, expected);
-            assert_eq!(result.order, lhs.order);
-            assert_ne!(result.order, rhs.order);
-
-            rhs.switch_order();
-        }
-
-        {
-            lhs.switch_order();
-
-            let mut result = &lhs * rhs.clone();
-            assert_ne!(result, expected);
-            assert_eq!(result.order, lhs.order);
-            assert_ne!(result.order, rhs.order);
-            result.switch_order();
-            assert_eq!(result, expected);
-        }
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_mul_consume_rhs_fails() {
+    fn test_elementwise_mul_consume_self() {
         let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
 
-        let _ = &lhs * rhs;
+        let result = lhs.elementwise_mul_consume_self(&rhs);
+        assert_eq!(result, Ok(matrix![[0, 2, 4], [6, 8, 10]]));
     }
 
     #[test]
-    fn test_mul_consume_lhs() {
+    fn test_elementwise_mul_assign() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let mut rhs = matrix![[5, 4], [3, 2], [1, 0]];
-        let expected = matrix![[5, 2], [32, 20]];
+        let rhs = matrix![[2, 2, 2], [2, 2, 2]];
 
-        {
-            let result = lhs.clone() * &rhs;
-            assert_eq!(result, expected);
-        }
-
-        {
-            rhs.switch_order();
-
-            let result = lhs.clone() * &rhs;
-            assert_eq!(result, expected);
-            assert_eq!(result.order, lhs.order);
-            assert_ne!(result.order, rhs.order);
-
-            rhs.switch_order();
-        }
-
-        {
-            lhs.switch_order();
-
-            let mut result = lhs.clone() * &rhs;
-            assert_ne!(result, expected);
-            assert_eq!(result.order, lhs.order);
-            assert_ne!(result.order, rhs.order);
-            result.switch_order();
-            assert_eq!(result, expected);
-        }
+        lhs.elementwise_mul_assign(&rhs).unwrap();
+        assert_eq!(lhs, matrix![[0, 2, 4], [6, 8, 10]]);
     }
 
     #[test]
-    #[should_panic]
-    fn test_mul_consume_lhs_fails() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let _ = lhs * &rhs;
-    }
-
-    #[test]
-    fn test_mul_consume_both() {
+    fn test_mat_mul() {
         let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let mut rhs = matrix![[5, 4], [3, 2], [1, 0]];
-        let expected = matrix![[5, 2], [32, 20]];
+        let mut rhs = matrix![[0, 1], [2, 3], [4, 5]];
+        let expected = matrix![[10, 13], [28, 40]];
+
+        // RowMajor & RowMajor
+        {
+            let lhs = lhs.clone();
+            let rhs = rhs.clone();
+            let output = lhs.mat_mul(rhs).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        rhs.switch_order();
+
+        // RowMajor & ColMajor
+        {
+            let lhs = lhs.clone();
+            let rhs = rhs.clone();
+            let output = lhs.mat_mul(rhs).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        lhs.switch_order();
+
+        // ColMajor & ColMajor
+        {
+            let lhs = lhs.clone();
+            let rhs = rhs.clone();
+            let mut output = lhs.mat_mul(rhs).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        rhs.switch_order();
+
+        // ColMajor & RowMajor
+        {
+            let lhs = lhs.clone();
+            let rhs = rhs.clone();
+            let mut output = lhs.mat_mul(rhs).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        lhs.switch_order();
 
         {
-            let result = lhs.clone() * rhs.clone();
-            assert_eq!(result, expected);
+            let lhs = lhs.clone();
+            let rhs = matrix![[0], [1], [2]];
+            let output = lhs.mat_mul(rhs).unwrap();
+            assert_eq!(output, matrix![[5], [14]]);
         }
 
         {
-            rhs.switch_order();
-
-            let result = lhs.clone() * rhs.clone();
-            assert_eq!(result, expected);
-            assert_eq!(result.order, lhs.order);
-            assert_ne!(result.order, rhs.order);
-            rhs.switch_order();
+            let lhs = lhs.clone();
+            let rhs = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+            let output = lhs.mat_mul(rhs).unwrap();
+            assert_eq!(output, matrix![[15, 18, 21], [42, 54, 66]]);
         }
 
         {
-            lhs.switch_order();
-
-            let mut result = lhs.clone() * rhs.clone();
-            assert_ne!(result, expected);
-            assert_eq!(result.order, lhs.order);
-            assert_ne!(result.order, rhs.order);
-            result.switch_order();
-            assert_eq!(result, expected);
-        }
-    }
-
-    #[test]
-    #[should_panic]
-    fn test_mul_consume_both_fails() {
-        let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = matrix![[0, 1, 2], [3, 4, 5]];
-
-        let _ = lhs * rhs;
-    }
-
-    #[test]
-    #[allow(clippy::op_ref)]
-    fn test_matrix_mul_scalar() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = 2;
-        let expected = matrix![[0, 2, 4], [6, 8, 10]];
-
-        {
-            let result = &lhs * &rhs;
-            assert_eq!(result, expected);
-
-            let result = &lhs * rhs;
-            assert_eq!(result, expected);
-
-            let result = lhs.clone() * &rhs;
-            assert_eq!(result, expected);
-
-            let result = lhs.clone() * rhs;
-            assert_eq!(result, expected);
+            let lhs = lhs.clone();
+            let rhs = matrix![[0, 1], [2, 3]];
+            let error = lhs.mat_mul(rhs).unwrap_err();
+            assert_eq!(error, Error::NotConformable);
         }
 
         {
-            lhs.switch_order();
-
-            let mut result: Matrix<i32> = &lhs * &rhs;
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
-
-            let mut result: Matrix<i32> = &lhs * rhs;
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
-
-            let mut result: Matrix<i32> = lhs.clone() * &rhs;
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
-
-            let mut result: Matrix<i32> = lhs.clone() * rhs;
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
-        }
-    }
-
-    #[test]
-    #[allow(clippy::op_ref)]
-    fn test_scalar_mul_matrix() {
-        let lhs = 2;
-        let mut rhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let expected = matrix![[0, 2, 4], [6, 8, 10]];
-
-        {
-            let result = &lhs * &rhs;
-            assert_eq!(result, expected);
-
-            let result = lhs * &rhs;
-            assert_eq!(result, expected);
-
-            let result = &lhs * rhs.clone();
-            assert_eq!(result, expected);
-
-            let result = lhs * rhs.clone();
-            assert_eq!(result, expected);
-        }
-
-        {
-            rhs.switch_order();
-
-            let mut result: Matrix<i32> = &lhs * &rhs;
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
-
-            let mut result: Matrix<i32> = lhs * &rhs;
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
-
-            let mut result: Matrix<i32> = &lhs * rhs.clone();
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
-
-            let mut result: Matrix<i32> = lhs * rhs.clone();
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
-        }
-    }
-
-    #[test]
-    fn test_matrix_mul_scalar_assign() {
-        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-        let rhs = 2;
-        let expected = matrix![[0, 2, 4], [6, 8, 10]];
-
-        {
-            let mut result = lhs.clone();
-            result *= &rhs;
-            assert_eq!(result, expected);
-
-            let mut result = lhs.clone();
-            result *= rhs;
-            assert_eq!(result, expected);
-        }
-
-        {
-            lhs.switch_order();
-
-            let mut result = lhs.clone();
-            result *= &rhs;
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
-
-            let mut result = lhs.clone();
-            result *= rhs;
-            assert_ne!(result, expected);
-            result.switch_order();
-            assert_eq!(result, expected);
+            let lhs = lhs.clone();
+            let rhs = matrix![[0, 1, 3], [4, 5, 6]];
+            let error = lhs.mat_mul(rhs).unwrap_err();
+            assert_eq!(error, Error::NotConformable);
         }
     }
 }

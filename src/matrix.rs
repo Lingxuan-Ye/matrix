@@ -514,7 +514,7 @@ impl<L> Matrix<L> {
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
-    /// let rhs = Matrix::<i32>::new((2, 2));
+    /// let rhs = Matrix::<i32>::new((3, 2));
     /// let result = lhs.ensure_elementwise_operation_conformable(&rhs);
     /// assert_eq!(result, Err(Error::NotConformable));
     /// ```
@@ -682,7 +682,7 @@ impl<L> Matrix<L> {
     ///
     /// let lhs = Matrix::<i32>::new((2, 3));
     ///
-    /// let rhs = Matrix::<i32>::new((3, 1));
+    /// let rhs = Matrix::<i32>::new((3, 2));
     /// let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
     /// assert!(result.is_ok());
     ///
@@ -880,6 +880,9 @@ mod tests {
     use super::*;
     use crate::matrix;
 
+    // All tests are based on the assumption that
+    // the default order is `RowMajor`.
+
     #[test]
     fn test_new() {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
@@ -893,19 +896,19 @@ mod tests {
         assert_eq!(Matrix::build((2, 3)).unwrap(), expected);
         assert_ne!(Matrix::build((3, 2)).unwrap(), expected);
         assert_eq!(
-            Matrix::<i32>::build((2, usize::MAX)),
-            Err(Error::SizeOverflow)
+            Matrix::<i32>::build((2, usize::MAX)).unwrap_err(),
+            Error::SizeOverflow
         );
         assert_eq!(
-            Matrix::<i32>::build((1, isize::MAX as usize + 1)),
-            Err(Error::CapacityExceeded)
+            Matrix::<i32>::build((1, isize::MAX as usize + 1)).unwrap_err(),
+            Error::CapacityExceeded
         );
     }
 
     #[test]
     fn test_empty() {
         let matrix = Matrix::<i32>::empty();
-        assert_eq!(matrix.order, Order::default());
+        assert_eq!(matrix.order, Order::RowMajor);
         assert_eq!(matrix.nrows(), 0);
         assert_eq!(matrix.ncols(), 0);
         assert!(matrix.is_empty());
@@ -916,6 +919,7 @@ mod tests {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
         matrix.transpose();
+
         // column 0
         assert_eq!(matrix[(0, 0)], 0);
         assert_eq!(matrix[(1, 0)], 1);
@@ -926,6 +930,7 @@ mod tests {
         assert_eq!(matrix[(2, 1)], 5);
 
         matrix.transpose();
+
         // row 0
         assert_eq!(matrix[(0, 0)], 0);
         assert_eq!(matrix[(0, 1)], 1);
@@ -939,49 +944,95 @@ mod tests {
     #[test]
     fn test_switch_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.order, Order::default());
+
+        assert_eq!(matrix.order, Order::RowMajor);
         assert_eq!(matrix.major(), 2);
         assert_eq!(matrix.minor(), 3);
 
         matrix.switch_order();
-        assert_eq!(matrix[(0, 0)], 0);
-        assert_eq!(matrix[(0, 1)], 1);
-        assert_eq!(matrix[(0, 2)], 2);
-        assert_eq!(matrix[(1, 0)], 3);
-        assert_eq!(matrix[(1, 1)], 4);
-        assert_eq!(matrix[(1, 2)], 5);
-        assert_eq!(matrix.order, Order::default().switch());
-        assert_eq!(matrix.major(), 3);
-        assert_eq!(matrix.minor(), 2);
+
+        // ColMajor
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 1);
+            assert_eq!(matrix[(0, 2)], 2);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 3);
+            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 2)], 5);
+
+            assert_eq!(matrix.order, Order::ColMajor);
+            assert_eq!(matrix.major(), 3);
+            assert_eq!(matrix.minor(), 2);
+        }
 
         matrix.switch_order();
-        assert_eq!(matrix[(0, 0)], 0);
-        assert_eq!(matrix[(0, 1)], 1);
-        assert_eq!(matrix[(0, 2)], 2);
-        assert_eq!(matrix[(1, 0)], 3);
-        assert_eq!(matrix[(1, 1)], 4);
-        assert_eq!(matrix[(1, 2)], 5);
-        assert_eq!(matrix.order, Order::default());
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
+
+        // RowMajor
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 1);
+            assert_eq!(matrix[(0, 2)], 2);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 3);
+            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 2)], 5);
+
+            assert_eq!(matrix.order, Order::RowMajor);
+            assert_eq!(matrix.major(), 2);
+            assert_eq!(matrix.minor(), 3);
+        }
     }
 
     #[test]
     fn test_set_order() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
-        assert_eq!(matrix.order, Order::default());
-        assert_eq!(matrix.major(), 2);
-        assert_eq!(matrix.minor(), 3);
 
-        matrix.set_order(Order::RowMajor);
         assert_eq!(matrix.order, Order::RowMajor);
         assert_eq!(matrix.major(), 2);
         assert_eq!(matrix.minor(), 3);
 
         matrix.set_order(Order::ColMajor);
-        assert_eq!(matrix.order, Order::ColMajor);
-        assert_eq!(matrix.major(), 3);
-        assert_eq!(matrix.minor(), 2);
+
+        // ColMajor
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 1);
+            assert_eq!(matrix[(0, 2)], 2);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 3);
+            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 2)], 5);
+
+            assert_eq!(matrix.order, Order::ColMajor);
+            assert_eq!(matrix.major(), 3);
+            assert_eq!(matrix.minor(), 2);
+        }
+
+        matrix.set_order(Order::RowMajor);
+
+        // RowMajor
+        {
+            // row 0
+            assert_eq!(matrix[(0, 0)], 0);
+            assert_eq!(matrix[(0, 1)], 1);
+            assert_eq!(matrix[(0, 2)], 2);
+
+            // row 1
+            assert_eq!(matrix[(1, 0)], 3);
+            assert_eq!(matrix[(1, 1)], 4);
+            assert_eq!(matrix[(1, 2)], 5);
+
+            assert_eq!(matrix.order, Order::RowMajor);
+            assert_eq!(matrix.major(), 2);
+            assert_eq!(matrix.minor(), 3);
+        }
     }
 
     #[test]
@@ -1000,17 +1051,18 @@ mod tests {
         matrix.resize((2, 3)).unwrap();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
 
-        assert_eq!(matrix.resize((usize::MAX, 2)), Err(Error::SizeOverflow));
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
-
-        assert_eq!(
-            matrix.resize((isize::MAX as usize + 1, 1)),
-            Err(Error::CapacityExceeded)
-        );
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 0, 0]]);
-
         matrix.resize((2, 0)).unwrap();
         assert_eq!(matrix, matrix![[], []]);
+
+        let unchanged = matrix.clone();
+
+        let error = matrix.resize((usize::MAX, 2)).unwrap_err();
+        assert_eq!(error, Error::SizeOverflow);
+        assert_eq!(matrix, unchanged);
+
+        let error = matrix.resize((isize::MAX as usize + 1, 1)).unwrap_err();
+        assert_eq!(error, Error::CapacityExceeded);
+        assert_eq!(matrix, unchanged);
     }
 
     #[test]
@@ -1032,27 +1084,35 @@ mod tests {
         matrix.reshape((2, 3)).unwrap();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
 
-        assert_eq!(matrix.reshape((usize::MAX, 2)), Err(Error::SizeMismatch));
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        let unchanged = matrix.clone();
 
-        assert_eq!(matrix.reshape((2, 2)), Err(Error::SizeMismatch));
-        assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
+        let error = matrix.reshape((2, 2)).unwrap_err();
+        assert_eq!(error, Error::SizeMismatch);
+        assert_eq!(matrix, unchanged);
+
+        let error = matrix.reshape((usize::MAX, 2)).unwrap_err();
+        assert_eq!(error, Error::SizeMismatch);
+        assert_eq!(matrix, unchanged);
+
+        let error = matrix.reshape((isize::MAX as usize + 1, 1)).unwrap_err();
+        assert_eq!(error, Error::SizeMismatch);
+        assert_eq!(matrix, unchanged);
     }
 
     #[test]
     fn test_overwrite_with() {
-        let template = matrix![[0, 0, 0], [0, 0, 0]];
+        let blank = matrix![[0, 0, 0], [0, 0, 0]];
 
         {
             let mut other = matrix![[1, 2]];
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
 
             other.switch_order();
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 0], [0, 0, 0]]);
         }
@@ -1060,13 +1120,13 @@ mod tests {
         {
             let mut other = matrix![[1, 2], [3, 4]];
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
 
             other.switch_order();
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
         }
@@ -1074,13 +1134,13 @@ mod tests {
         {
             let mut other = matrix![[1, 2], [3, 4], [5, 6]];
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
 
             other.switch_order();
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 0], [3, 4, 0]]);
         }
@@ -1088,13 +1148,13 @@ mod tests {
         {
             let mut other = matrix![[1, 2, 3]];
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
 
             other.switch_order();
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
         }
@@ -1102,13 +1162,13 @@ mod tests {
         {
             let mut other = matrix![[1, 2, 3, 4]];
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
 
             other.switch_order();
 
-            let mut matrix = template.clone();
+            let mut matrix = blank.clone();
             matrix.overwrite_with(&other);
             assert_eq!(matrix, matrix![[1, 2, 3], [0, 0, 0]]);
         }
@@ -1118,11 +1178,12 @@ mod tests {
     fn test_apply() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        matrix.apply(|x| *x += 1);
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+        matrix.apply(|x| *x += 2);
+        assert_eq!(matrix, matrix![[2, 3, 4], [5, 6, 7]]);
 
         matrix.switch_order();
-        matrix.apply(|x| *x -= 1);
+
+        matrix.apply(|x| *x -= 2);
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
@@ -1135,6 +1196,7 @@ mod tests {
         assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
 
         matrix_f64.switch_order();
+
         let mut matrix_i32 = matrix_f64.map(|x| x as i32);
         matrix_i32.switch_order();
         assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
@@ -1145,11 +1207,12 @@ mod tests {
     fn test_par_apply() {
         let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
 
-        matrix.par_apply(|x| *x += 1);
-        assert_eq!(matrix, matrix![[1, 2, 3], [4, 5, 6]]);
+        matrix.par_apply(|x| *x += 2);
+        assert_eq!(matrix, matrix![[2, 3, 4], [5, 6, 7]]);
 
         matrix.switch_order();
-        matrix.par_apply(|x| *x -= 1);
+
+        matrix.par_apply(|x| *x -= 2);
         matrix.switch_order();
         assert_eq!(matrix, matrix![[0, 1, 2], [3, 4, 5]]);
     }
@@ -1163,8 +1226,399 @@ mod tests {
         assert_eq!(matrix_f64, matrix![[0.0, 1.0, 2.0], [3.0, 4.0, 5.0]]);
 
         matrix_f64.switch_order();
+
         let mut matrix_i32 = matrix_f64.par_map(|x| x as i32);
         matrix_i32.switch_order();
         assert_eq!(matrix_i32, matrix![[0, 1, 2], [3, 4, 5]]);
+    }
+
+    #[test]
+    fn test_ensure_elementwise_operation_conformable() {
+        let mut lhs = Matrix::<i32>::new((2, 3));
+        let mut rhs = Matrix::<i32>::new((2, 3));
+
+        // RowMajor & RowMajor
+        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        rhs.switch_order();
+
+        // RowMajor & ColMajor
+        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        lhs.switch_order();
+
+        // ColMajor & ColMajor
+        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        rhs.switch_order();
+
+        // ColMajor & RowMajor
+        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        let rhs = Matrix::<i32>::new((2, 2));
+        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
+        assert_eq!(result, Err(Error::NotConformable));
+
+        let rhs = Matrix::<i32>::new((3, 2));
+        let result = lhs.ensure_elementwise_operation_conformable(&rhs);
+        assert_eq!(result, Err(Error::NotConformable));
+    }
+
+    #[test]
+    fn test_elementwise_operation() {
+        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let op = |(x, y): (&i32, &i32)| x + y;
+        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+
+        // RowMajor & RowMajor
+        let output = lhs.elementwise_operation(&rhs, op).unwrap();
+        assert_eq!(output, expected);
+
+        rhs.switch_order();
+
+        // RowMajor & ColMajor
+        let output = lhs.elementwise_operation(&rhs, op).unwrap();
+        assert_eq!(output, expected);
+
+        lhs.switch_order();
+
+        // ColMajor & ColMajor
+        let mut output = lhs.elementwise_operation(&rhs, op).unwrap();
+        output.switch_order();
+        assert_eq!(output, expected);
+
+        rhs.switch_order();
+
+        // ColMajor & RowMajor
+        let mut output = lhs.elementwise_operation(&rhs, op).unwrap();
+        output.switch_order();
+        assert_eq!(output, expected);
+
+        let rhs = matrix![[2, 2], [2, 2]];
+        let error = lhs.elementwise_operation(&rhs, op).unwrap_err();
+        assert_eq!(error, Error::NotConformable);
+
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        let error = lhs.elementwise_operation(&rhs, op).unwrap_err();
+        assert_eq!(error, Error::NotConformable);
+    }
+
+    #[test]
+    fn test_elementwise_operation_consume_self() {
+        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let op = |(x, y): (i32, &i32)| x + y;
+        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+
+        // RowMajor & RowMajor
+        {
+            let lhs = lhs.clone();
+            let output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        rhs.switch_order();
+
+        // RowMajor & ColMajor
+        {
+            let lhs = lhs.clone();
+            let output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        lhs.switch_order();
+
+        // ColMajor & ColMajor
+        {
+            let lhs = lhs.clone();
+            let mut output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        rhs.switch_order();
+
+        // ColMajor & RowMajor
+        {
+            let lhs = lhs.clone();
+            let mut output = lhs.elementwise_operation_consume_self(&rhs, op).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        {
+            let lhs = lhs.clone();
+            let rhs = matrix![[2, 2], [2, 2]];
+            let error = lhs
+                .elementwise_operation_consume_self(&rhs, op)
+                .unwrap_err();
+            assert_eq!(error, Error::NotConformable);
+        }
+
+        {
+            let lhs = lhs.clone();
+            let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+            let error = lhs
+                .elementwise_operation_consume_self(&rhs, op)
+                .unwrap_err();
+            assert_eq!(error, Error::NotConformable);
+        }
+    }
+
+    #[test]
+    fn test_elementwise_operation_assign() {
+        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut rhs = matrix![[2, 2, 2], [2, 2, 2]];
+        let op = |(x, y): (&mut i32, &i32)| *x += y;
+        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+
+        // RowMajor & RowMajor
+        {
+            let mut lhs = lhs.clone();
+            lhs.elementwise_operation_assign(&rhs, op).unwrap();
+            assert_eq!(lhs, expected);
+        }
+
+        rhs.switch_order();
+
+        // RowMajor & ColMajor
+        {
+            let mut lhs = lhs.clone();
+            lhs.elementwise_operation_assign(&rhs, op).unwrap();
+            assert_eq!(lhs, expected);
+        }
+
+        lhs.switch_order();
+
+        // ColMajor & ColMajor
+        {
+            let mut lhs = lhs.clone();
+            lhs.elementwise_operation_assign(&rhs, op).unwrap();
+            lhs.switch_order();
+            assert_eq!(lhs, expected);
+        }
+
+        rhs.switch_order();
+
+        // ColMajor & RowMajor
+        {
+            let mut lhs = lhs.clone();
+            lhs.elementwise_operation_assign(&rhs, op).unwrap();
+            lhs.switch_order();
+            assert_eq!(lhs, expected);
+        }
+
+        let unchanged = lhs.clone();
+
+        let rhs = matrix![[2, 2], [2, 2]];
+        let error = lhs.elementwise_operation_assign(&rhs, op).unwrap_err();
+        assert_eq!(error, Error::NotConformable);
+        assert_eq!(lhs, unchanged);
+
+        let rhs = matrix![[2, 2], [2, 2], [2, 2]];
+        let error = lhs.elementwise_operation_assign(&rhs, op).unwrap_err();
+        assert_eq!(error, Error::NotConformable);
+        assert_eq!(lhs, unchanged);
+    }
+
+    #[test]
+    fn test_ensure_multiplication_like_operation_conformable() {
+        let mut lhs = Matrix::<i32>::new((2, 3));
+        let mut rhs = Matrix::<i32>::new((3, 2));
+
+        // RowMajor & RowMajor
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        rhs.switch_order();
+
+        // RowMajor & ColMajor
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        lhs.switch_order();
+
+        // ColMajor & ColMajor
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        rhs.switch_order();
+
+        // ColMajor & RowMajor
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        let rhs = Matrix::<i32>::new((3, 1));
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        let rhs = Matrix::<i32>::new((3, 3));
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert!(result.is_ok());
+
+        let rhs = Matrix::<i32>::new((2, 2));
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert_eq!(result, Err(Error::NotConformable));
+
+        let rhs = Matrix::<i32>::new((2, 3));
+        let result = lhs.ensure_multiplication_like_operation_conformable(&rhs);
+        assert_eq!(result, Err(Error::NotConformable));
+    }
+
+    #[test]
+    fn test_multiplication_like_operation() {
+        let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
+        let mut rhs = matrix![[0, 1], [2, 3], [4, 5]];
+        let op = |vl: VectorIter<&i32>, vr: VectorIter<&i32>| {
+            vl.zip(vr)
+                .map(|(x, y)| x * y)
+                .reduce(|acc, p| acc + p)
+                .unwrap()
+        };
+        let expected = matrix![[10, 13], [28, 40]];
+
+        // RowMajor & RowMajor
+        {
+            let lhs = lhs.clone();
+            let rhs = rhs.clone();
+            let output = lhs.multiplication_like_operation(rhs, op).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        rhs.switch_order();
+
+        // RowMajor & ColMajor
+        {
+            let lhs = lhs.clone();
+            let rhs = rhs.clone();
+            let output = lhs.multiplication_like_operation(rhs, op).unwrap();
+            assert_eq!(output, expected);
+        }
+
+        lhs.switch_order();
+
+        // ColMajor & ColMajor
+        {
+            let lhs = lhs.clone();
+            let rhs = rhs.clone();
+            let mut output = lhs.multiplication_like_operation(rhs, op).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        rhs.switch_order();
+
+        // ColMajor & RowMajor
+        {
+            let lhs = lhs.clone();
+            let rhs = rhs.clone();
+            let mut output = lhs.multiplication_like_operation(rhs, op).unwrap();
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+
+        lhs.switch_order();
+
+        {
+            let lhs = lhs.clone();
+            let rhs = matrix![[0], [1], [2]];
+            let output = lhs.multiplication_like_operation(rhs, op).unwrap();
+            assert_eq!(output, matrix![[5], [14]]);
+        }
+
+        {
+            let lhs = lhs.clone();
+            let rhs = matrix![[0, 1, 2], [3, 4, 5], [6, 7, 8]];
+            let output = lhs.multiplication_like_operation(rhs, op).unwrap();
+            assert_eq!(output, matrix![[15, 18, 21], [42, 54, 66]]);
+        }
+
+        {
+            let lhs = lhs.clone();
+            let rhs = matrix![[0, 1], [2, 3]];
+            let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
+            assert_eq!(error, Error::NotConformable);
+        }
+
+        {
+            let lhs = lhs.clone();
+            let rhs = matrix![[0, 1, 3], [4, 5, 6]];
+            let error = lhs.multiplication_like_operation(rhs, op).unwrap_err();
+            assert_eq!(error, Error::NotConformable);
+        }
+    }
+
+    #[test]
+    fn test_scalar_operation() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let scalar = 2;
+        let op = |x: &i32, y: &i32| x + y;
+        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+
+        // RowMajor
+        let output = matrix.scalar_operation(&scalar, op);
+        assert_eq!(output, expected);
+
+        matrix.switch_order();
+
+        // ColMajor
+        let mut output = matrix.scalar_operation(&scalar, op);
+        output.switch_order();
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_scalar_operation_consume_self() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let scalar = 2;
+        let op = |x: i32, y: &i32| x + y;
+        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+
+        // RowMajor
+        {
+            let matrix = matrix.clone();
+            let output = matrix.scalar_operation_consume_self(&scalar, op);
+            assert_eq!(output, expected);
+        }
+
+        matrix.switch_order();
+
+        // ColMajor
+        {
+            let matrix = matrix.clone();
+            let mut output = matrix.scalar_operation_consume_self(&scalar, op);
+            output.switch_order();
+            assert_eq!(output, expected);
+        }
+    }
+
+    #[test]
+    fn test_scalar_operation_assign() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+        let scalar = 2;
+        let op = |x: &mut i32, y: &i32| *x += y;
+        let expected = matrix![[2, 3, 4], [5, 6, 7]];
+
+        // RowMajor
+        {
+            let mut matrix = matrix.clone();
+            matrix.scalar_operation_assign(&scalar, op);
+            assert_eq!(matrix, expected);
+        }
+
+        matrix.switch_order();
+
+        // ColMajor
+        {
+            let mut matrix = matrix.clone();
+            matrix.scalar_operation_assign(&scalar, op);
+            matrix.switch_order();
+            assert_eq!(matrix, expected);
+        }
     }
 }
