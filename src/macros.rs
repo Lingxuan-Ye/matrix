@@ -761,3 +761,169 @@ macro_rules! impl_scalar_div {
         )*
     }
 }
+
+/// Implements scalar remainder operation for [`Matrix`].
+///
+/// # Notes
+///
+/// Refer to [`impl_scalar_add!`] for more information.
+///
+/// [`Matrix`]: crate::matrix::Matrix
+#[macro_export]
+macro_rules! impl_scalar_rem {
+    ($($t:ty)*) => {
+        $(
+            impl std::ops::Rem<$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element % scalar.clone())
+                }
+            }
+
+            impl std::ops::Rem<&$t> for $crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element % scalar.clone())
+                }
+            }
+
+            impl std::ops::Rem<$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| element.clone() % scalar.clone())
+                }
+            }
+
+            impl std::ops::Rem<&$t> for &$crate::matrix::Matrix<$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| element.clone() % scalar.clone())
+                }
+            }
+
+            impl std::ops::Rem<$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation_consume_self(&rhs, |element, scalar| element.clone() % scalar.clone())
+                }
+            }
+
+            impl std::ops::Rem<&$t> for $crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation_consume_self(rhs, |element, scalar| element.clone() % scalar.clone())
+                }
+            }
+
+            impl std::ops::Rem<$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: $t) -> Self::Output {
+                    self.scalar_operation(&rhs, |element, scalar| (*element).clone() % scalar.clone())
+                }
+            }
+
+            impl std::ops::Rem<&$t> for &$crate::matrix::Matrix<&$t> {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: &$t) -> Self::Output {
+                    self.scalar_operation(rhs, |element, scalar| (*element).clone() % scalar.clone())
+                }
+            }
+
+            impl std::ops::Rem<$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() % element)
+                }
+            }
+
+            impl std::ops::Rem<$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() % element)
+                }
+            }
+
+            impl std::ops::Rem<&$crate::matrix::Matrix<$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() % element.clone())
+                }
+            }
+
+            impl std::ops::Rem<&$crate::matrix::Matrix<$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() % element.clone())
+                }
+            }
+
+            impl std::ops::Rem<$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(&self, |element, scalar| scalar.clone() % element.clone())
+                }
+            }
+
+            impl std::ops::Rem<$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation_consume_self(self, |element, scalar| scalar.clone() % element.clone())
+                }
+            }
+
+            impl std::ops::Rem<&$crate::matrix::Matrix<&$t>> for $t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(&self, |element, scalar| scalar.clone() % (*element).clone())
+                }
+            }
+
+            impl std::ops::Rem<&$crate::matrix::Matrix<&$t>> for &$t {
+                type Output = $crate::matrix::Matrix<$t>;
+
+                fn rem(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
+                    rhs.scalar_operation(self, |element, scalar| scalar.clone() % (*element).clone())
+                }
+            }
+
+            impl std::ops::RemAssign<$t> for $crate::matrix::Matrix<$t> {
+                fn rem_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| *element %= scalar.clone());
+                }
+            }
+
+            impl std::ops::RemAssign<&$t> for $crate::matrix::Matrix<$t> {
+                fn rem_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(rhs, |element, scalar| *element %= scalar.clone());
+                }
+            }
+
+            impl std::ops::RemAssign<$t> for $crate::matrix::Matrix<&mut $t> {
+                fn rem_assign(&mut self, rhs: $t) {
+                    self.scalar_operation_assign(&rhs, |element, scalar| **element %= scalar.clone());
+                }
+            }
+
+            impl std::ops::RemAssign<&$t> for $crate::matrix::Matrix<&mut $t> {
+                fn rem_assign(&mut self, rhs: &$t) {
+                    self.scalar_operation_assign(rhs, |element, scalar| **element %= scalar.clone());
+                }
+            }
+        )*
+    }
+}
