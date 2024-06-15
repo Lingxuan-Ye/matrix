@@ -542,10 +542,10 @@ impl<L> Matrix<L> {
     /// use matreex::matrix;
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     ///
     /// let result = lhs.elementwise_operation(&rhs, |(x, y)| x + y);
-    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation<R, F, U>(&self, rhs: &Matrix<R>, mut op: F) -> Result<Matrix<U>>
     where
@@ -589,10 +589,10 @@ impl<L> Matrix<L> {
     /// use matreex::matrix;
     ///
     /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     ///
     /// let result = lhs.elementwise_operation_consume_self(&rhs, |(x, y)| x + y);
-    /// assert_eq!(result, Ok(matrix![[1, 2, 3], [4, 5, 6]]));
+    /// assert_eq!(result, Ok(matrix![[2, 3, 4], [5, 6, 7]]));
     /// ```
     pub fn elementwise_operation_consume_self<R, F, U>(
         self,
@@ -637,10 +637,10 @@ impl<L> Matrix<L> {
     /// use matreex::matrix;
     ///
     /// let mut lhs = matrix![[0, 1, 2], [3, 4, 5]];
-    /// let rhs = matrix![[1, 1, 1], [1, 1, 1]];
+    /// let rhs = matrix![[2, 2, 2], [2, 2, 2]];
     ///
     /// lhs.elementwise_operation_assign(&rhs, |(x, y)| *x += y).unwrap();
-    /// assert_eq!(lhs, matrix![[1, 2, 3], [4, 5, 6]]);
+    /// assert_eq!(lhs, matrix![[2, 3, 4], [5, 6, 7]]);
     /// ```
     pub fn elementwise_operation_assign<R, F>(
         &mut self,
