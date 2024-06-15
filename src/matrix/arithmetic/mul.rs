@@ -1,7 +1,7 @@
-use super::super::super::iter::ExactSizeDoubleEndedIterator;
-use super::super::super::order::Order;
-use super::super::super::shape::{AxisShape, Shape};
-use super::super::super::Matrix;
+use super::super::iter::ExactSizeDoubleEndedIterator;
+use super::super::order::Order;
+use super::super::shape::{AxisShape, Shape};
+use super::super::Matrix;
 use crate::error::Result;
 use crate::impl_scalar_mul;
 use std::ops::{Add, Mul};
