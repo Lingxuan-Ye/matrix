@@ -15,8 +15,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let result = self.multiply(rhs);
-        match result {
+        match self.mat_mul(rhs) {
             Err(error) => panic!("{error}"),
             Ok(output) => output,
         }
@@ -32,8 +31,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
-        let rhs = rhs.clone();
-        self.mul(rhs)
+        self.mul(rhs.clone())
     }
 }
 
@@ -46,8 +44,7 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: Matrix<R>) -> Self::Output {
-        let lhs = self.clone();
-        lhs.mul(rhs)
+        self.clone().mul(rhs)
     }
 }
 
@@ -60,6 +57,9 @@ where
     type Output = Matrix<U>;
 
     fn mul(self, rhs: &Matrix<R>) -> Self::Output {
+        self.clone().mul(rhs.clone())
+    }
+}
 
 impl<L> Matrix<L> {
     /// Performs elementwise multiplication on two matrices.
@@ -151,12 +151,33 @@ impl<L> Matrix<L> {
     {
         self.elementwise_operation_assign(rhs, |(left, right)| *left *= right.clone())
     }
-}
 
-impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
-
-impl<L> Matrix<L> {
-    fn multiply<R, U>(mut self, mut rhs: Matrix<R>) -> Result<Matrix<U>>
+    /// Performs matrix multiplication on two matrices.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::NotConformable`] if the matrices are not conformable.
+    ///
+    /// # Notes
+    ///
+    /// The resulting matrix will always have the same order as `self`.
+    ///
+    /// For performance reasons, this method consumes both `self` and `rhs`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let lhs = matrix![[0, 1, 2], [3, 4, 5]];
+    /// let rhs = matrix![[0, 1], [2, 3], [4, 5]];
+    ///
+    /// let result = lhs.mat_mul(rhs);
+    /// assert_eq!(result, Ok(matrix![[10, 13], [28, 40]]));
+    /// ```
+    ///
+    /// [`Error::NotConformable`]: crate::error::Error::NotConformable
+    pub fn mat_mul<R, U>(mut self, mut rhs: Matrix<R>) -> Result<Matrix<U>>
     where
         L: std::ops::Mul<R, Output = U> + Clone,
         R: Clone,
@@ -193,6 +214,7 @@ impl<L> Matrix<L> {
                     }
                 }
             }
+
             Order::ColMajor => {
                 for col in 0..ncols {
                     for row in 0..nrows {
@@ -211,6 +233,8 @@ impl<L> Matrix<L> {
         Ok(Matrix { order, shape, data })
     }
 }
+
+impl_scalar_mul! {u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize f32 f64}
 
 #[inline]
 fn dot_product<'a, L, R, U>(
