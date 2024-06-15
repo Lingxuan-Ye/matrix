@@ -399,7 +399,9 @@ impl<T> Matrix<T> {
         }
         self
     }
+}
 
+impl<T> Matrix<T> {
     /// Applies a closure to each element of the matrix,
     /// modifying the matrix in place.
     ///
