@@ -248,18 +248,6 @@ macro_rules! impl_scalar_add {
                     self.scalar_operation_assign(rhs, |element, scalar| *element += scalar.clone());
                 }
             }
-
-            impl std::ops::AddAssign<$t> for $crate::matrix::Matrix<&mut $t> {
-                fn add_assign(&mut self, rhs: $t) {
-                    self.scalar_operation_assign(&rhs, |element, scalar| **element += scalar.clone());
-                }
-            }
-
-            impl std::ops::AddAssign<&$t> for $crate::matrix::Matrix<&mut $t> {
-                fn add_assign(&mut self, rhs: &$t) {
-                    self.scalar_operation_assign(rhs, |element, scalar| **element += scalar.clone());
-                }
-            }
         )*
     }
 }
@@ -412,18 +400,6 @@ macro_rules! impl_scalar_sub {
             impl std::ops::SubAssign<&$t> for $crate::matrix::Matrix<$t> {
                 fn sub_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element -= scalar.clone());
-                }
-            }
-
-            impl std::ops::SubAssign<$t> for $crate::matrix::Matrix<&mut $t> {
-                fn sub_assign(&mut self, rhs: $t) {
-                    self.scalar_operation_assign(&rhs, |element, scalar| **element -= scalar.clone());
-                }
-            }
-
-            impl std::ops::SubAssign<&$t> for $crate::matrix::Matrix<&mut $t> {
-                fn sub_assign(&mut self, rhs: &$t) {
-                    self.scalar_operation_assign(rhs, |element, scalar| **element -= scalar.clone());
                 }
             }
         )*
@@ -580,18 +556,6 @@ macro_rules! impl_scalar_mul {
                     self.scalar_operation_assign(rhs, |element, scalar| *element *= scalar.clone());
                 }
             }
-
-            impl std::ops::MulAssign<$t> for $crate::matrix::Matrix<&mut $t> {
-                fn mul_assign(&mut self, rhs: $t) {
-                    self.scalar_operation_assign(&rhs, |element, scalar| **element *= scalar.clone());
-                }
-            }
-
-            impl std::ops::MulAssign<&$t> for $crate::matrix::Matrix<&mut $t> {
-                fn mul_assign(&mut self, rhs: &$t) {
-                    self.scalar_operation_assign(rhs, |element, scalar| **element *= scalar.clone());
-                }
-            }
         )*
     }
 }
@@ -744,18 +708,6 @@ macro_rules! impl_scalar_div {
             impl std::ops::DivAssign<&$t> for $crate::matrix::Matrix<$t> {
                 fn div_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element /= scalar.clone());
-                }
-            }
-
-            impl std::ops::DivAssign<$t> for $crate::matrix::Matrix<&mut $t> {
-                fn div_assign(&mut self, rhs: $t) {
-                    self.scalar_operation_assign(&rhs, |element, scalar| **element /= scalar.clone());
-                }
-            }
-
-            impl std::ops::DivAssign<&$t> for $crate::matrix::Matrix<&mut $t> {
-                fn div_assign(&mut self, rhs: &$t) {
-                    self.scalar_operation_assign(rhs, |element, scalar| **element /= scalar.clone());
                 }
             }
         )*
