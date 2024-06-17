@@ -6,6 +6,7 @@ const RIGHT_DELIMITER: &str = "]";
 const SPACE: &str = " ";
 const TAB_SIZE: usize = 4;
 const OUTER_GAP: usize = 2;
+const INTER_GAP: usize = 2;
 const INNER_GAP: usize = 1;
 
 macro_rules! write_dim {
@@ -48,47 +49,56 @@ impl<T: std::fmt::Debug> std::fmt::Debug for Matrix<T> {
         write!(f, "{SPACE:OUTER_GAP$}")?;
         write!(f, "{SPACE}")?;
         for col in 0..ncols {
+            if col != 0 {
+                write!(f, "{SPACE:INTER_GAP$}")?;
+            }
             write_dim!(f, "{col:>index_width$}")?;
             write!(f, "{SPACE:INNER_GAP$}")?;
             write!(f, "{SPACE:<element_width$}")?;
-            if col != (ncols - 1) {
-                write!(f, "{SPACE:OUTER_GAP$}")?;
-            }
         }
         writeln!(f)?;
 
         for row in 0..nrows {
-            for line in 0..element_hight {
+            // first line of the element representation
+            write!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}")?;
+            write!(f, "{SPACE:TAB_SIZE$}")?;
+            write_dim!(f, "{row:>index_width$}")?;
+            write!(f, "{SPACE:OUTER_GAP$}")?;
+            write!(f, "{LEFT_DELIMITER}")?;
+            for col in 0..ncols {
+                if col != 0 {
+                    write!(f, "{SPACE:<INTER_GAP$}")?;
+                }
+                let index =
+                    Self::flatten_index_unchecked(Index::new(row, col), self.order, self.shape);
+                write_dim!(f, "{index:>index_width$}")?;
+                write!(f, "{SPACE:INNER_GAP$}")?;
+                match cache[index].next() {
+                    None => write!(f, "{SPACE:<element_width$}")?,
+                    Some(line) => write!(f, "{line:<element_width$}")?,
+                }
+            }
+            writeln!(f, "{RIGHT_DELIMITER}")?;
+
+            // remaining lines of the element representation
+            for _ in 1..element_hight {
                 write!(f, "{SPACE:TAB_SIZE$}{SPACE:TAB_SIZE$}")?;
                 write!(f, "{SPACE:TAB_SIZE$}")?;
-                if line == 0 {
-                    write_dim!(f, "{row:>index_width$}")?;
-                    write!(f, "{SPACE:OUTER_GAP$}")?;
-                    write!(f, "{LEFT_DELIMITER}")?;
-                } else {
-                    write!(f, "{SPACE:>index_width$}")?;
-                    write!(f, "{SPACE:OUTER_GAP$}")?;
-                    write!(f, "{SPACE}")?;
-                }
+                write!(f, "{SPACE:>index_width$}")?;
+                write!(f, "{SPACE:OUTER_GAP$}")?;
+                write!(f, "{SPACE}")?;
                 for col in 0..ncols {
+                    if col != 0 {
+                        write!(f, "{SPACE:<INTER_GAP$}")?;
+                    }
                     let index =
                         Self::flatten_index_unchecked(Index::new(row, col), self.order, self.shape);
-                    if line == 0 {
-                        write_dim!(f, "{index:>index_width$}")?;
-                    } else {
-                        write!(f, "{SPACE:>index_width$}")?;
-                    }
+                    write!(f, "{SPACE:>index_width$}")?;
                     write!(f, "{SPACE:INNER_GAP$}")?;
                     match cache[index].next() {
                         None => write!(f, "{SPACE:<element_width$}")?,
-                        Some(element_line) => write!(f, "{element_line:<element_width$}")?,
+                        Some(line) => write!(f, "{line:<element_width$}")?,
                     }
-                    if col != (ncols - 1) {
-                        write!(f, "{SPACE:<OUTER_GAP$}")?;
-                    }
-                }
-                if line == 0 {
-                    write!(f, "{RIGHT_DELIMITER}")?;
                 }
                 writeln!(f)?;
             }
@@ -125,26 +135,36 @@ impl<T: std::fmt::Display> std::fmt::Display for Matrix<T> {
         writeln!(f, "{LEFT_DELIMITER}")?;
 
         for row in 0..nrows {
-            for line in 0..element_hight {
-                write!(f, "{SPACE:TAB_SIZE$}")?;
-                if line == 0 {
-                    write!(f, "{LEFT_DELIMITER}")?;
-                } else {
-                    write!(f, "{SPACE}")?;
+            // first line of the element representation
+            write!(f, "{SPACE:TAB_SIZE$}")?;
+            write!(f, "{LEFT_DELIMITER}")?;
+            for col in 0..ncols {
+                if col != 0 {
+                    write!(f, "{SPACE:INTER_GAP$}")?;
                 }
+                let index =
+                    Self::flatten_index_unchecked(Index::new(row, col), self.order, self.shape);
+                match cache[index].next() {
+                    None => write!(f, "{SPACE:<element_width$}")?,
+                    Some(line) => write!(f, "{line:<element_width$}")?,
+                }
+            }
+            writeln!(f, "{RIGHT_DELIMITER}")?;
+
+            // remaining lines of the element representation
+            for _ in 1..element_hight {
+                write!(f, "{SPACE:TAB_SIZE$}")?;
+                write!(f, "{SPACE}")?;
                 for col in 0..ncols {
+                    if col != 0 {
+                        write!(f, "{SPACE:INTER_GAP$}")?;
+                    }
                     let index =
                         Self::flatten_index_unchecked(Index::new(row, col), self.order, self.shape);
                     match cache[index].next() {
                         None => write!(f, "{SPACE:<element_width$}")?,
-                        Some(element_line) => write!(f, "{element_line:<element_width$}")?,
+                        Some(line) => write!(f, "{line:<element_width$}")?,
                     }
-                    if col != (ncols - 1) {
-                        write!(f, "{SPACE:OUTER_GAP$}")?;
-                    }
-                }
-                if line == 0 {
-                    write!(f, "{RIGHT_DELIMITER}")?;
                 }
                 writeln!(f)?;
             }
