@@ -431,17 +431,10 @@ impl<T> Matrix<T> {
         AxisIndex::from_index(index, order).try_into_flattened(shape)
     }
 
-    /// # Notes
-    ///
-    /// For performance reasons, this associated function does not
-    /// transpose `src_shape` itself, but **strictly requires** that
-    /// `src_shape` and `dest_shape` must be transposes of each other.
-    /// Failing to meet this condition will result in undefined results.
     #[inline]
     pub(super) fn reindex_to_different_order_unchecked(
         index: usize,
         src_shape: AxisShape,
-        dest_shape: AxisShape,
     ) -> usize {
         // This implementation is based on the idea that the element at the
         // same position remains the same across different orders. Assuming
@@ -459,11 +452,12 @@ impl<T> Matrix<T> {
         // };
         //
         // let dest_order = src_order.switch();
-        // let (major, minor) = match dest_order {
-        //     Order::RowMajor => (position.row, position.col),
-        //     Order::ColMajor => (position.col, position.row),
+        // let dest_axis_index = match dest_order {
+        //     Order::RowMajor => AxisIndex::new(position.row, position.col),
+        //     Order::ColMajor => AxisIndex::new(position.col, position.row),
         // };
-        // let dest_axis_index = AxisIndex { major, minor };
+        // let mut dest_shape = src_shape;
+        // dest_shape.transpose();
         // let dest_flattened_index = dest_axis_index.into_flattened_unchecked(dest_shape);
         // dest_flattened_index
         // ```
@@ -473,6 +467,10 @@ impl<T> Matrix<T> {
         // following:
         let mut index = AxisIndex::from_flattened(index, src_shape);
         index.transpose();
+
+        let mut dest_shape = src_shape;
+        dest_shape.transpose();
+
         index.into_flattened_unchecked(dest_shape)
     }
 }
