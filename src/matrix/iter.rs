@@ -672,11 +672,13 @@ mod tests {
             assert_eq!(row_0.next(), Some(&1));
             assert_eq!(row_0.next(), Some(&2));
             assert_eq!(row_0.next(), None);
+
             let mut row_1 = matrix.iter_nth_row(1).unwrap();
             assert_eq!(row_1.next(), Some(&3));
             assert_eq!(row_1.next(), Some(&4));
             assert_eq!(row_1.next(), Some(&5));
             assert_eq!(row_1.next(), None);
+
             assert!(matches!(
                 matrix.iter_nth_row(2),
                 Err(Error::IndexOutOfBounds)
@@ -691,15 +693,67 @@ mod tests {
             assert_eq!(row_0.next(), Some(&1));
             assert_eq!(row_0.next(), Some(&2));
             assert_eq!(row_0.next(), None);
+
             let mut row_1 = matrix.iter_nth_row(1).unwrap();
             assert_eq!(row_1.next(), Some(&3));
             assert_eq!(row_1.next(), Some(&4));
             assert_eq!(row_1.next(), Some(&5));
             assert_eq!(row_1.next(), None);
+
             assert!(matches!(
                 matrix.iter_nth_row(2),
                 Err(Error::IndexOutOfBounds)
             ));
+        }
+    }
+
+    #[test]
+    fn test_iter_nth_row_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        {
+            let mut matrix = matrix.clone();
+
+            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            for element in row_0 {
+                *element += 1;
+            }
+
+            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
+            for element in row_1.rev() {
+                *element -= 1;
+            }
+
+            assert!(matches!(
+                matrix.iter_nth_row_mut(2),
+                Err(Error::IndexOutOfBounds)
+            ));
+
+            assert_eq!(matrix, matrix![[1, 2, 3], [2, 3, 4]]);
+        }
+
+        matrix.switch_order();
+
+        {
+            let mut matrix = matrix.clone();
+
+            let row_0 = matrix.iter_nth_row_mut(0).unwrap();
+            for element in row_0 {
+                *element += 1;
+            }
+
+            let row_1 = matrix.iter_nth_row_mut(1).unwrap();
+            for element in row_1.rev() {
+                *element -= 1;
+            }
+
+            assert!(matches!(
+                matrix.iter_nth_row_mut(2),
+                Err(Error::IndexOutOfBounds)
+            ));
+
+            matrix.switch_order();
+            assert_eq!(matrix, matrix![[1, 2, 3], [2, 3, 4]]);
         }
     }
 
@@ -712,14 +766,17 @@ mod tests {
             assert_eq!(col_0.next(), Some(&0));
             assert_eq!(col_0.next(), Some(&3));
             assert_eq!(col_0.next(), None);
+
             let mut col_1 = matrix.iter_nth_col(1).unwrap();
             assert_eq!(col_1.next(), Some(&1));
             assert_eq!(col_1.next(), Some(&4));
             assert_eq!(col_1.next(), None);
+
             let mut col_2 = matrix.iter_nth_col(2).unwrap();
             assert_eq!(col_2.next(), Some(&2));
             assert_eq!(col_2.next(), Some(&5));
             assert_eq!(col_2.next(), None);
+
             assert!(matches!(
                 matrix.iter_nth_col(3),
                 Err(Error::IndexOutOfBounds)
@@ -733,18 +790,81 @@ mod tests {
             assert_eq!(col_0.next(), Some(&0));
             assert_eq!(col_0.next(), Some(&3));
             assert_eq!(col_0.next(), None);
+
             let mut col_1 = matrix.iter_nth_col(1).unwrap();
             assert_eq!(col_1.next(), Some(&1));
             assert_eq!(col_1.next(), Some(&4));
             assert_eq!(col_1.next(), None);
+
             let mut col_2 = matrix.iter_nth_col(2).unwrap();
             assert_eq!(col_2.next(), Some(&2));
             assert_eq!(col_2.next(), Some(&5));
             assert_eq!(col_2.next(), None);
+
             assert!(matches!(
                 matrix.iter_nth_col(3),
                 Err(Error::IndexOutOfBounds)
             ));
+        }
+    }
+
+    #[test]
+    fn test_iter_nth_col_mut() {
+        let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+
+        {
+            let mut matrix = matrix.clone();
+
+            let col_0 = matrix.iter_nth_col_mut(0).unwrap();
+            for element in col_0 {
+                *element += 1;
+            }
+
+            let col_1 = matrix.iter_nth_col_mut(1).unwrap();
+            for element in col_1.rev() {
+                *element -= 1;
+            }
+
+            let col_2 = matrix.iter_nth_col_mut(2).unwrap();
+            for element in col_2 {
+                *element *= 2;
+            }
+
+            assert!(matches!(
+                matrix.iter_nth_col_mut(3),
+                Err(Error::IndexOutOfBounds)
+            ));
+
+            assert_eq!(matrix, matrix![[1, 0, 4], [4, 3, 10]]);
+        }
+
+        matrix.switch_order();
+
+        {
+            let mut matrix = matrix.clone();
+
+            let col_0 = matrix.iter_nth_col_mut(0).unwrap();
+            for element in col_0 {
+                *element += 1;
+            }
+
+            let col_1 = matrix.iter_nth_col_mut(1).unwrap();
+            for element in col_1.rev() {
+                *element -= 1;
+            }
+
+            let col_2 = matrix.iter_nth_col_mut(2).unwrap();
+            for element in col_2 {
+                *element *= 2;
+            }
+
+            assert!(matches!(
+                matrix.iter_nth_col_mut(3),
+                Err(Error::IndexOutOfBounds)
+            ));
+
+            matrix.switch_order();
+            assert_eq!(matrix, matrix![[1, 0, 4], [4, 3, 10]]);
         }
     }
 
