@@ -230,11 +230,8 @@ impl<T> Matrix<T> {
     /// ```
     pub fn switch_order(&mut self) -> &mut Self {
         let size = self.size();
-        let src_shape = self.shape;
-        self.shape.transpose();
-        let dest_shape = self.shape;
-
         let mut visited = vec![false; size];
+
         for index in 0..size {
             if visited[index] {
                 continue;
@@ -242,14 +239,14 @@ impl<T> Matrix<T> {
             let mut current = index;
             while !visited[current] {
                 visited[current] = true;
-                let next =
-                    Self::reindex_to_different_order_unchecked(current, src_shape, dest_shape);
+                let next = Self::reindex_to_different_order_unchecked(current, self.shape);
                 self.data.swap(index, next);
                 current = next;
             }
         }
 
         self.order = self.order.switch();
+        self.shape.transpose();
         self
     }
 
@@ -331,11 +328,12 @@ impl<T> Matrix<T> {
     /// ```
     pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         match shape.size() {
-            Ok(size) if (self.size() == size) => (),
-            _ => return Err(Error::SizeMismatch),
+            Ok(size) if (self.size() == size) => {
+                self.shape = AxisShape::from_shape_unchecked(shape, self.order);
+                Ok(self)
+            }
+            _ => Err(Error::SizeMismatch),
         }
-        self.shape = AxisShape::from_shape_unchecked(shape, self.order);
-        Ok(self)
     }
 
     /// Shrinks the capacity of the matrix as much as possible.
@@ -564,8 +562,7 @@ impl<L> Matrix<L> {
                 .iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index =
-                        Self::reindex_to_different_order_unchecked(index, self.shape, rhs.shape);
+                    let index = Self::reindex_to_different_order_unchecked(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op((left, right))
                 })
@@ -615,8 +612,7 @@ impl<L> Matrix<L> {
                 .into_iter()
                 .enumerate()
                 .map(|(index, left)| {
-                    let index =
-                        Self::reindex_to_different_order_unchecked(index, self.shape, rhs.shape);
+                    let index = Self::reindex_to_different_order_unchecked(index, self.shape);
                     let right = unsafe { rhs.data.get_unchecked(index) };
                     op((left, right))
                 })
@@ -658,8 +654,7 @@ impl<L> Matrix<L> {
             self.data.iter_mut().zip(rhs.data.iter()).for_each(op);
         } else {
             self.data.iter_mut().enumerate().for_each(|(index, left)| {
-                let index =
-                    Self::reindex_to_different_order_unchecked(index, self.shape, rhs.shape);
+                let index = Self::reindex_to_different_order_unchecked(index, self.shape);
                 let right = unsafe { rhs.data.get_unchecked(index) };
                 op((left, right))
             });
