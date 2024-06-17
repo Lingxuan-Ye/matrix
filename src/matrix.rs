@@ -331,11 +331,12 @@ impl<T> Matrix<T> {
     /// ```
     pub fn reshape<S: ShapeLike>(&mut self, shape: S) -> Result<&mut Self> {
         match shape.size() {
-            Ok(size) if (self.size() == size) => (),
-            _ => return Err(Error::SizeMismatch),
+            Ok(size) if (self.size() == size) => {
+                self.shape = AxisShape::from_shape_unchecked(shape, self.order);
+                Ok(self)
+            }
+            _ => Err(Error::SizeMismatch),
         }
-        self.shape = AxisShape::from_shape_unchecked(shape, self.order);
-        Ok(self)
     }
 
     /// Shrinks the capacity of the matrix as much as possible.
