@@ -1,6 +1,7 @@
 /// Represents the memory order of a matrix.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Order {
+    #[default]
     RowMajor,
     ColMajor,
 }
@@ -11,12 +12,6 @@ impl Order {
             Self::RowMajor => Self::ColMajor,
             Self::ColMajor => Self::RowMajor,
         }
-    }
-}
-
-impl Default for Order {
-    fn default() -> Self {
-        Self::RowMajor
     }
 }
 
