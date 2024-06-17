@@ -119,6 +119,33 @@ impl<T> Matrix<T> {
         }
     }
 
+    /// Returns an iterator that allows modifying each element of the
+    /// nth row in the matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
+    /// the number of rows in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for element in matrix.iter_nth_row_mut(1).unwrap() {
+    ///    *element += 1;
+    /// }
+    /// assert_eq!(matrix, matrix![[0, 1, 2], [4, 5, 6]]);
+    /// ```
+    pub fn iter_nth_row_mut(&mut self, n: usize) -> Result<VectorIter<&mut T>> {
+        match self.order {
+            Order::RowMajor => Ok(Box::new(self.iter_nth_major_axis_vector_mut(n)?)),
+            Order::ColMajor => Ok(Box::new(self.iter_nth_minor_axis_vector_mut(n)?)),
+        }
+    }
+
     /// Returns an iterator over the elements of the nth column in the matrix.
     ///
     /// # Errors
@@ -142,6 +169,33 @@ impl<T> Matrix<T> {
         match self.order {
             Order::RowMajor => Ok(Box::new(self.iter_nth_minor_axis_vector(n)?)),
             Order::ColMajor => Ok(Box::new(self.iter_nth_major_axis_vector(n)?)),
+        }
+    }
+
+    /// Returns an iterator that allows modifying each element of the
+    /// nth column in the matrix.
+    ///
+    /// # Errors
+    ///
+    /// - [`Error::IndexOutOfBounds`] if `n` is greater than or equal to
+    /// the number of columns in the matrix.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use matreex::matrix;
+    ///
+    /// let mut matrix = matrix![[0, 1, 2], [3, 4, 5]];
+    ///
+    /// for element in matrix.iter_nth_col_mut(1).unwrap() {
+    ///    *element += 1;
+    /// }
+    /// assert_eq!(matrix, matrix![[0, 2, 2], [3, 5, 5]]);
+    /// ```
+    pub fn iter_nth_col_mut(&mut self, n: usize) -> Result<VectorIter<&mut T>> {
+        match self.order {
+            Order::RowMajor => Ok(Box::new(self.iter_nth_minor_axis_vector_mut(n)?)),
+            Order::ColMajor => Ok(Box::new(self.iter_nth_major_axis_vector_mut(n)?)),
         }
     }
 
@@ -391,6 +445,31 @@ impl<T> Matrix<T> {
 
     /// # Safety
     ///
+    /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    pub(super) unsafe fn iter_nth_major_axis_vector_unchecked_mut(
+        &mut self,
+        n: usize,
+    ) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
+        let lower = n * self.major_stride();
+        let upper = lower + self.major_stride();
+        unsafe { self.data.get_unchecked_mut(lower..upper).iter_mut() }
+    }
+
+    pub(super) fn iter_nth_major_axis_vector_mut(
+        &mut self,
+        n: usize,
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
+        if n >= self.major() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            unsafe { Ok(self.iter_nth_major_axis_vector_unchecked_mut(n)) }
+        }
+    }
+
+    /// # Safety
+    ///
     /// Calling this method when `n >= self.minor()` is *[undefined behavior]*.
     /// To be more specific, the last element accessed will be out of bounds,
     /// while other elements might either be incorrect or out of bounds.
@@ -414,6 +493,28 @@ impl<T> Matrix<T> {
             Err(Error::IndexOutOfBounds)
         } else {
             unsafe { Ok(self.iter_nth_minor_axis_vector_unchecked(n)) }
+        }
+    }
+
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.minor()` is safe but incorrect.
+    pub(super) fn iter_nth_minor_axis_vector_unchecked_mut(
+        &mut self,
+        n: usize,
+    ) -> impl ExactSizeDoubleEndedIterator<Item = &mut T> {
+        let step = self.major_stride();
+        self.data.iter_mut().skip(n).step_by(step)
+    }
+
+    pub(super) fn iter_nth_minor_axis_vector_mut(
+        &mut self,
+        n: usize,
+    ) -> Result<impl ExactSizeDoubleEndedIterator<Item = &mut T>> {
+        if n >= self.minor() {
+            Err(Error::IndexOutOfBounds)
+        } else {
+            Ok(self.iter_nth_minor_axis_vector_unchecked_mut(n))
         }
     }
 }
