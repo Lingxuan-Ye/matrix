@@ -364,6 +364,11 @@ where
 }
 
 impl<T> Matrix<T> {
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     pub(super) unsafe fn iter_nth_major_axis_vector_unchecked(
         &self,
         n: usize,
@@ -384,6 +389,13 @@ impl<T> Matrix<T> {
         }
     }
 
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.minor()` is *[undefined behavior]*.
+    /// To be more specific, the last element accessed will be out of bounds,
+    /// while other elements might either be incorrect or out of bounds.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     pub(super) unsafe fn iter_nth_minor_axis_vector_unchecked(
         &self,
         n: usize,
