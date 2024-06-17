@@ -892,12 +892,22 @@ mod tests {
         let expected = matrix![[0, 0, 0], [0, 0, 0]];
         assert_eq!(Matrix::build((2, 3)).unwrap(), expected);
         assert_ne!(Matrix::build((3, 2)).unwrap(), expected);
+
         assert_eq!(
-            Matrix::<i32>::build((2, usize::MAX)).unwrap_err(),
+            Matrix::<u8>::build((usize::MAX, 2)).unwrap_err(),
             Error::SizeOverflow
         );
         assert_eq!(
-            Matrix::<i32>::build((1, isize::MAX as usize + 1)).unwrap_err(),
+            Matrix::<u8>::build((isize::MAX as usize + 1, 1)).unwrap_err(),
+            Error::CapacityExceeded
+        );
+
+        assert_eq!(
+            Matrix::<i32>::build((usize::MAX, 2)).unwrap_err(),
+            Error::SizeOverflow
+        );
+        assert_eq!(
+            Matrix::<i32>::build((isize::MAX as usize / 4 + 1, 1)).unwrap_err(),
             Error::CapacityExceeded
         );
     }
