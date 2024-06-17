@@ -864,18 +864,6 @@ macro_rules! impl_scalar_rem {
                     self.scalar_operation_assign(rhs, |element, scalar| *element %= scalar.clone());
                 }
             }
-
-            impl std::ops::RemAssign<$t> for $crate::matrix::Matrix<&mut $t> {
-                fn rem_assign(&mut self, rhs: $t) {
-                    self.scalar_operation_assign(&rhs, |element, scalar| **element %= scalar.clone());
-                }
-            }
-
-            impl std::ops::RemAssign<&$t> for $crate::matrix::Matrix<&mut $t> {
-                fn rem_assign(&mut self, rhs: &$t) {
-                    self.scalar_operation_assign(rhs, |element, scalar| **element %= scalar.clone());
-                }
-            }
         )*
     }
 }
