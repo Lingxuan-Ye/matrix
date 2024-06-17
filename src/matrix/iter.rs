@@ -1,4 +1,4 @@
-use super::index::Index;
+use super::index::{AxisIndex, Index};
 use super::order::Order;
 use super::Matrix;
 use crate::error::{Error, Result};
@@ -49,7 +49,7 @@ impl<T> Matrix<T> {
                 unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
             })),
             Order::ColMajor => Box::new((0..self.minor()).map(|n| -> VectorIter<&T> {
-                Box::new(self.iter_nth_minor_axis_vector_unchecked(n))
+                unsafe { Box::new(self.iter_nth_minor_axis_vector_unchecked(n)) }
             })),
         }
     }
@@ -84,7 +84,7 @@ impl<T> Matrix<T> {
     pub fn iter_cols(&self) -> MatrixIter<&T> {
         match self.order {
             Order::RowMajor => Box::new((0..self.minor()).map(|n| -> VectorIter<&T> {
-                Box::new(self.iter_nth_minor_axis_vector_unchecked(n))
+                unsafe { Box::new(self.iter_nth_minor_axis_vector_unchecked(n)) }
             })),
             Order::ColMajor => Box::new((0..self.major()).map(|n| -> VectorIter<&T> {
                 unsafe { Box::new(self.iter_nth_major_axis_vector_unchecked(n)) }
@@ -364,6 +364,11 @@ where
 }
 
 impl<T> Matrix<T> {
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.major()` is *[undefined behavior]*.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
     pub(super) unsafe fn iter_nth_major_axis_vector_unchecked(
         &self,
         n: usize,
@@ -384,11 +389,21 @@ impl<T> Matrix<T> {
         }
     }
 
-    pub(super) fn iter_nth_minor_axis_vector_unchecked(
+    /// # Safety
+    ///
+    /// Calling this method when `n >= self.minor()` is *[undefined behavior]*.
+    /// To be more specific, the last element accessed will be out of bounds,
+    /// while other elements might either be incorrect or out of bounds.
+    ///
+    /// [undefined behavior]: https://doc.rust-lang.org/reference/behavior-considered-undefined.html
+    pub(super) unsafe fn iter_nth_minor_axis_vector_unchecked(
         &self,
         n: usize,
     ) -> impl ExactSizeDoubleEndedIterator<Item = &T> {
-        self.data.iter().skip(n).step_by(self.major_stride())
+        (0..self.major()).map(move |m| {
+            let index = AxisIndex::new(m, n);
+            unsafe { self.get_unchecked(index) }
+        })
     }
 
     pub(super) fn iter_nth_minor_axis_vector(
@@ -398,7 +413,7 @@ impl<T> Matrix<T> {
         if n >= self.minor() {
             Err(Error::IndexOutOfBounds)
         } else {
-            Ok(self.iter_nth_minor_axis_vector_unchecked(n))
+            unsafe { Ok(self.iter_nth_minor_axis_vector_unchecked(n)) }
         }
     }
 }
