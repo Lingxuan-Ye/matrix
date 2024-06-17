@@ -50,20 +50,20 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{matrix, Matrix};
     ///
-    /// let matrix = Matrix::<i32>::new((2, 3));
+    /// let matrix = Matrix::new((2, 3));
     /// assert_eq!(matrix, matrix![[0, 0, 0], [0, 0, 0]]);
     /// ```
     ///
     /// ```should_panic
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<i32>::new((2, usize::MAX));
+    /// let matrix = Matrix::<u8>::new((usize::MAX, 2));
     /// ```
     ///
     /// ```should_panic
     /// use matreex::Matrix;
     ///
-    /// let matrix = Matrix::<i32>::new((1, isize::MAX as usize + 1));
+    /// let matrix = Matrix::<u8>::new((isize::MAX as usize + 1, 1));
     /// ```
     pub fn new<S: ShapeLike>(shape: S) -> Self
     where
@@ -87,13 +87,13 @@ impl<T> Matrix<T> {
     /// ```
     /// use matreex::{matrix, Error, Matrix};
     ///
-    /// let result = Matrix::<i32>::build((2, 3));
+    /// let result = Matrix::build((2, 3));
     /// assert_eq!(result, Ok(matrix![[0, 0, 0], [0, 0, 0]]));
     ///
-    /// let result = Matrix::<i32>::build((2, usize::MAX));
+    /// let result = Matrix::<u8>::build((usize::MAX, 2));
     /// assert_eq!(result, Err(Error::SizeOverflow));
     ///
-    /// let result = Matrix::<i32>::build((1, isize::MAX as usize + 1));
+    /// let result = Matrix::<u8>::build((isize::MAX as usize + 1, 1));
     /// assert_eq!(result, Err(Error::CapacityExceeded));
     /// ```
     pub fn build<S: ShapeLike>(shape: S) -> Result<Self>
