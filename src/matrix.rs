@@ -1,4 +1,4 @@
-//! This module defines [`Matrix`] and all its related components.
+//! This module defines [`Matrix<T>`] and all its related components.
 
 use self::iter::VectorIter;
 use self::order::Order;
@@ -18,7 +18,7 @@ mod fmt;
 #[cfg(feature = "rayon")]
 use rayon::prelude::*;
 
-/// [`Matrix`] means matrix.
+/// [`Matrix<T>`] means ... matrix.
 ///
 /// Instead of using constructor methods, you may prefer to create a
 /// matrix using the [`matrix!`] macro:
@@ -38,7 +38,7 @@ pub struct Matrix<T> {
 }
 
 impl<T> Matrix<T> {
-    /// Creates a new [`Matrix`] instance with default values.
+    /// Creates a new [`Matrix<T>`] instance with default values.
     ///
     /// # Panics
     ///
@@ -75,7 +75,7 @@ impl<T> Matrix<T> {
         }
     }
 
-    /// Builds a new [`Matrix`] instance with default values.
+    /// Builds a new [`Matrix<T>`] instance with default values.
     ///
     /// # Errors
     ///
@@ -107,7 +107,7 @@ impl<T> Matrix<T> {
         Ok(Self { order, shape, data })
     }
 
-    /// Creates an empty [`Matrix`] instance.
+    /// Creates an empty [`Matrix<T>`] instance.
     ///
     /// # Examples
     ///

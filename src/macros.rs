@@ -1,4 +1,4 @@
-/// Creates a new [`Matrix`] instance from literal.
+/// Creates a new [`Matrix<T>`] instance from literal.
 ///
 /// # Examples
 ///
@@ -10,7 +10,7 @@
 /// let baz = matrix![[0, 1, 2], [3, 4, 5]];
 /// ```
 ///
-/// [`Matrix`]: crate::matrix::Matrix
+/// [`Matrix<T>`]: crate::matrix::Matrix<T>
 #[macro_export]
 macro_rules! matrix {
     [] => {{
@@ -95,16 +95,17 @@ macro_rules! col_vec {
 // For simplicity, all arithmetic operations rely on the behavior of `$t`,
 // including those performed on references.
 
-/// Implements scalar addition for [`Matrix`].
+/// Implements scalar addition for [`Matrix<T>`].
 ///
 /// # Notes
 ///
-/// A `scalar` does not have to be a scalar in the mathematical sense. Instead,
-/// it can be any type except for [`Matrix`]. However, if you do need to treat
-/// some concrete type of [`Matrix`] as a scalar, you can wrap it in a newtype
-/// and implement all the necessary trait bounds for it.
+/// A `scalar` does not have to be a scalar in the mathematical sense.
+/// Instead, it can be any type except for [`Matrix<T>`]. However, if
+/// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
+/// you can wrap it in a newtype and implement all the necessary trait
+/// bounds for it.
 ///
-/// [`Matrix`]: crate::matrix::Matrix
+/// [`Matrix<T>`]: crate::matrix::Matrix<T>
 #[macro_export]
 macro_rules! impl_scalar_add {
     ($($t:ty)*) => {
@@ -252,13 +253,17 @@ macro_rules! impl_scalar_add {
     }
 }
 
-/// Implements scalar subtraction for [`Matrix`].
+/// Implements scalar subtraction for [`Matrix<T>`].
 ///
 /// # Notes
 ///
-/// Refer to [`impl_scalar_add!`] for more information.
+/// A `scalar` does not have to be a scalar in the mathematical sense.
+/// Instead, it can be any type except for [`Matrix<T>`]. However, if
+/// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
+/// you can wrap it in a newtype and implement all the necessary trait
+/// bounds for it.
 ///
-/// [`Matrix`]: crate::matrix::Matrix
+/// [`Matrix<T>`]: crate::matrix::Matrix<T>
 #[macro_export]
 macro_rules! impl_scalar_sub {
     ($($t:ty)*) => {
@@ -406,13 +411,17 @@ macro_rules! impl_scalar_sub {
     }
 }
 
-/// Implements scalar multiplication for [`Matrix`].
+/// Implements scalar multiplication for [`Matrix<T>`].
 ///
 /// # Notes
 ///
-/// Refer to [`impl_scalar_add!`] for more information.
+/// A `scalar` does not have to be a scalar in the mathematical sense.
+/// Instead, it can be any type except for [`Matrix<T>`]. However, if
+/// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
+/// you can wrap it in a newtype and implement all the necessary trait
+/// bounds for it.
 ///
-/// [`Matrix`]: crate::matrix::Matrix
+/// [`Matrix<T>`]: crate::matrix::Matrix<T>
 #[macro_export]
 macro_rules! impl_scalar_mul {
     ($($t:ty)*) => {
@@ -560,13 +569,17 @@ macro_rules! impl_scalar_mul {
     }
 }
 
-/// Implements scalar division for [`Matrix`].
+/// Implements scalar division for [`Matrix<T>`].
 ///
 /// # Notes
 ///
-/// Refer to [`impl_scalar_add!`] for more information.
+/// A `scalar` does not have to be a scalar in the mathematical sense.
+/// Instead, it can be any type except for [`Matrix<T>`]. However, if
+/// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
+/// you can wrap it in a newtype and implement all the necessary trait
+/// bounds for it.
 ///
-/// [`Matrix`]: crate::matrix::Matrix
+/// [`Matrix<T>`]: crate::matrix::Matrix<T>
 #[macro_export]
 macro_rules! impl_scalar_div {
     ($($t:ty)*) => {
@@ -714,13 +727,17 @@ macro_rules! impl_scalar_div {
     }
 }
 
-/// Implements scalar remainder operation for [`Matrix`].
+/// Implements scalar remainder operation for [`Matrix<T>`].
 ///
 /// # Notes
 ///
-/// Refer to [`impl_scalar_add!`] for more information.
+/// A `scalar` does not have to be a scalar in the mathematical sense.
+/// Instead, it can be any type except for [`Matrix<T>`]. However, if
+/// you do need to treat some concrete type of [`Matrix<T>`] as a scalar,
+/// you can wrap it in a newtype and implement all the necessary trait
+/// bounds for it.
 ///
-/// [`Matrix`]: crate::matrix::Matrix
+/// [`Matrix<T>`]: crate::matrix::Matrix<T>
 #[macro_export]
 macro_rules! impl_scalar_rem {
     ($($t:ty)*) => {
