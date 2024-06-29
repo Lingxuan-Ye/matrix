@@ -67,7 +67,7 @@ impl Shape {
 }
 
 impl std::fmt::Display for Shape {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "({}, {})", self.nrows, self.ncols)
     }
 }
@@ -139,7 +139,7 @@ impl AxisShape {
             Order::RowMajor => (self.major, self.minor),
             Order::ColMajor => (self.minor, self.major),
         };
-        Shape::new(nrows, ncols)
+        Shape { nrows, ncols }
     }
 
     pub(super) fn interpret_nrows(&self, order: Order) -> usize {
