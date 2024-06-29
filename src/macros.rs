@@ -92,8 +92,10 @@ macro_rules! col_vec {
     };
 }
 
-// For simplicity, all arithmetic operations rely on the behavior of `$t`,
-// including those performed on references.
+// For simplicity, all scalar operations rely on the behavior of `$t`,
+// including those performed on references. The `where` clauses prevent
+// `(&$t).clone` from returning a reference, which helps avoid misleading
+// error messages.
 
 /// Implements scalar addition for [`Matrix<T>`].
 ///
@@ -110,7 +112,10 @@ macro_rules! col_vec {
 macro_rules! impl_scalar_add {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Add<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Add<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: $t) -> Self::Output {
@@ -118,7 +123,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Add<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: &$t) -> Self::Output {
@@ -126,7 +134,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Add<$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: $t) -> Self::Output {
@@ -134,7 +145,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: &$t) -> Self::Output {
@@ -142,7 +156,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Add<$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: $t) -> Self::Output {
@@ -150,7 +167,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Add<&$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: &$t) -> Self::Output {
@@ -158,7 +178,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Add<$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: $t) -> Self::Output {
@@ -166,7 +189,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Add<&$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: &$t) -> Self::Output {
@@ -174,7 +200,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Add<$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -182,7 +211,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -190,7 +222,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -198,7 +233,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -206,7 +244,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Add<$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -214,7 +255,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Add<&$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -222,7 +266,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Add<$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -230,7 +277,10 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Add<&$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn add(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -238,13 +288,19 @@ macro_rules! impl_scalar_add {
                 }
             }
 
-            impl std::ops::AddAssign<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::AddAssign<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn add_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element += scalar.clone());
                 }
             }
 
-            impl std::ops::AddAssign<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::AddAssign<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn add_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element += scalar.clone());
                 }
@@ -268,7 +324,10 @@ macro_rules! impl_scalar_add {
 macro_rules! impl_scalar_sub {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Sub<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Sub<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $t) -> Self::Output {
@@ -276,7 +335,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$t) -> Self::Output {
@@ -284,7 +346,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $t) -> Self::Output {
@@ -292,7 +357,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$t) -> Self::Output {
@@ -300,7 +368,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Sub<$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $t) -> Self::Output {
@@ -308,7 +379,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Sub<&$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$t) -> Self::Output {
@@ -316,7 +390,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Sub<$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $t) -> Self::Output {
@@ -324,7 +401,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Sub<&$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$t) -> Self::Output {
@@ -332,7 +412,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -340,7 +423,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -348,7 +434,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -356,7 +445,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -364,7 +456,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Sub<$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -372,7 +467,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Sub<&$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -380,7 +478,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Sub<$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -388,7 +489,10 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Sub<&$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn sub(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -396,13 +500,19 @@ macro_rules! impl_scalar_sub {
                 }
             }
 
-            impl std::ops::SubAssign<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::SubAssign<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn sub_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element -= scalar.clone());
                 }
             }
 
-            impl std::ops::SubAssign<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::SubAssign<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn sub_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element -= scalar.clone());
                 }
@@ -426,7 +536,10 @@ macro_rules! impl_scalar_sub {
 macro_rules! impl_scalar_mul {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Mul<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Mul<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: $t) -> Self::Output {
@@ -434,7 +547,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: &$t) -> Self::Output {
@@ -442,7 +558,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: $t) -> Self::Output {
@@ -450,7 +569,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: &$t) -> Self::Output {
@@ -458,7 +580,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Mul<$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: $t) -> Self::Output {
@@ -466,7 +591,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Mul<&$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: &$t) -> Self::Output {
@@ -474,7 +602,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Mul<$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: $t) -> Self::Output {
@@ -482,7 +613,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Mul<&$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: &$t) -> Self::Output {
@@ -490,7 +624,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -498,7 +635,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -506,7 +646,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -514,7 +657,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -522,7 +668,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Mul<$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -530,7 +679,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Mul<&$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -538,7 +690,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Mul<$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -546,7 +701,10 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Mul<&$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn mul(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -554,13 +712,19 @@ macro_rules! impl_scalar_mul {
                 }
             }
 
-            impl std::ops::MulAssign<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::MulAssign<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn mul_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element *= scalar.clone());
                 }
             }
 
-            impl std::ops::MulAssign<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::MulAssign<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn mul_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element *= scalar.clone());
                 }
@@ -584,7 +748,10 @@ macro_rules! impl_scalar_mul {
 macro_rules! impl_scalar_div {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Div<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Div<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: $t) -> Self::Output {
@@ -592,7 +759,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Div<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: &$t) -> Self::Output {
@@ -600,7 +770,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Div<$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: $t) -> Self::Output {
@@ -608,7 +781,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: &$t) -> Self::Output {
@@ -616,7 +792,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Div<$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: $t) -> Self::Output {
@@ -624,7 +803,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Div<&$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: &$t) -> Self::Output {
@@ -632,7 +814,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Div<$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: $t) -> Self::Output {
@@ -640,7 +825,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Div<&$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: &$t) -> Self::Output {
@@ -648,7 +836,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Div<$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -656,7 +847,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -664,7 +858,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -672,7 +869,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -680,7 +880,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Div<$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -688,7 +891,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Div<&$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -696,7 +902,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Div<$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -704,7 +913,10 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Div<&$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn div(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -712,13 +924,19 @@ macro_rules! impl_scalar_div {
                 }
             }
 
-            impl std::ops::DivAssign<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::DivAssign<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn div_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element /= scalar.clone());
                 }
             }
 
-            impl std::ops::DivAssign<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::DivAssign<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn div_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element /= scalar.clone());
                 }
@@ -742,7 +960,10 @@ macro_rules! impl_scalar_div {
 macro_rules! impl_scalar_rem {
     ($($t:ty)*) => {
         $(
-            impl std::ops::Rem<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Rem<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: $t) -> Self::Output {
@@ -750,7 +971,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::Rem<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: &$t) -> Self::Output {
@@ -758,7 +982,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Rem<$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: $t) -> Self::Output {
@@ -766,7 +993,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$t> for &$crate::matrix::Matrix<$t> {
+            impl std::ops::Rem<&$t> for &$crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: &$t) -> Self::Output {
@@ -774,7 +1004,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Rem<$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: $t) -> Self::Output {
@@ -782,7 +1015,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$t> for $crate::matrix::Matrix<&$t> {
+            impl std::ops::Rem<&$t> for $crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: &$t) -> Self::Output {
@@ -790,7 +1026,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Rem<$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: $t) -> Self::Output {
@@ -798,7 +1037,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$t> for &$crate::matrix::Matrix<&$t> {
+            impl std::ops::Rem<&$t> for &$crate::matrix::Matrix<&$t>
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: &$t) -> Self::Output {
@@ -806,7 +1048,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Rem<$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -814,7 +1059,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$crate::matrix::Matrix<$t>> for $t {
+            impl std::ops::Rem<&$crate::matrix::Matrix<$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -822,7 +1070,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Rem<$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -830,7 +1081,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$crate::matrix::Matrix<&$t>> for $t {
+            impl std::ops::Rem<&$crate::matrix::Matrix<&$t>> for $t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -838,7 +1092,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Rem<$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: $crate::matrix::Matrix<$t>) -> Self::Output {
@@ -846,7 +1103,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$crate::matrix::Matrix<$t>> for &$t {
+            impl std::ops::Rem<&$crate::matrix::Matrix<$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: &$crate::matrix::Matrix<$t>) -> Self::Output {
@@ -854,7 +1114,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Rem<$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: $crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -862,7 +1125,10 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::Rem<&$crate::matrix::Matrix<&$t>> for &$t {
+            impl std::ops::Rem<&$crate::matrix::Matrix<&$t>> for &$t
+            where
+                $t: Clone,
+            {
                 type Output = $crate::matrix::Matrix<$t>;
 
                 fn rem(self, rhs: &$crate::matrix::Matrix<&$t>) -> Self::Output {
@@ -870,13 +1136,19 @@ macro_rules! impl_scalar_rem {
                 }
             }
 
-            impl std::ops::RemAssign<$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::RemAssign<$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn rem_assign(&mut self, rhs: $t) {
                     self.scalar_operation_assign(&rhs, |element, scalar| *element %= scalar.clone());
                 }
             }
 
-            impl std::ops::RemAssign<&$t> for $crate::matrix::Matrix<$t> {
+            impl std::ops::RemAssign<&$t> for $crate::matrix::Matrix<$t>
+            where
+                $t: Clone,
+            {
                 fn rem_assign(&mut self, rhs: &$t) {
                     self.scalar_operation_assign(rhs, |element, scalar| *element %= scalar.clone());
                 }
